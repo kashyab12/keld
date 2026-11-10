@@ -1,0 +1,4 @@
+2026-11-10T23:21:12.853365702 [job-0:main] Running Firecracker v1.18.0
+2026-11-10T23:21:12.853474145 [job-0:main] RunWithoutApiError error: Failed to build MicroVM from Json: Configuration for VMM from one single json failed: Invalid JSON: missing field `drives` at line 12 column 1
+Error: RunWithoutApiError(BuildMicroVMFromJson(ParseFromJson(InvalidJson(Error("missing field `drives`", line: 12, column: 1)))))
+2026-11-10T23:21:12.853493466 [job-0:main] Firecracker exiting with error. exit_code=1

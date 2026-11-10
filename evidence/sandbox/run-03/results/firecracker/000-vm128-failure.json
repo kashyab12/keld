@@ -1,0 +1,30 @@
+{
+  "block": 0,
+  "mode": "vm128",
+  "error": "owned job exceeded 30 seconds",
+  "launcher_exit": 0,
+  "vmm_pid": 4159,
+  "last_valid_status": {
+    "Uid": "20000\t20000\t20000\t20000",
+    "Gid": "20000\t20000\t20000\t20000",
+    "CapEff": "0000000000000000",
+    "NoNewPrivs": "1",
+    "Seccomp": "2",
+    "NSpid": "4159\t1",
+    "VmRSS": "58016 kB",
+    "Threads": "3",
+    "State": "S (sleeping)",
+    "namespaces": {
+      "pid": "pid:[4026532672]",
+      "mnt": "mnt:[4026532671]",
+      "net": "net:[4026532609]"
+    },
+    "pss_kib": 58004
+  },
+  "cgroup": {
+    "cgroup.procs": "4159",
+    "memory.peak": "57856000",
+    "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+    "cpu.stat": "usage_usec 298245\nuser_usec 264881\nsystem_usec 33363\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 7\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0"
+  }
+}

@@ -1,0 +1,14 @@
+    Checking sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.79s
+   Compiling sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `release` profile [optimized] target(s) in 44.61s
+     Running unittests src/lib.rs (target/release/deps/sable-9c10c40c90400f90)
+     Running unittests src/main.rs (target/release/deps/sable-1f3c31c5b2d26a07)
+     Running tests/chained.rs (target/release/deps/chained-6d31c58e6ada34a3)
+     Running tests/dynamic.rs (target/release/deps/dynamic-218520b832dc3168)
+     Running tests/execution.rs (target/release/deps/execution-bd0edd34097ab69e)
+     Running tests/initializers.rs (target/release/deps/initializers-613fdf5bfb83d17e)
+     Running tests/memory_flags.rs (target/release/deps/memory_flags-75bf359028419102)
+   Doc-tests sable
+   Compiling sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `release` profile [optimized] target(s) in 4.49s

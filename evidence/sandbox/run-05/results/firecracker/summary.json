@@ -1,0 +1,33 @@
+{
+  "blocks": 31,
+  "measure": "cold lifecycle through validated output and VMM exit; process control has no matched isolation",
+  "all_correct": true,
+  "summaries": {
+    "process": {
+      "samples": 31,
+      "median_seconds": 0.010783096,
+      "p95_seconds": 0.012113288,
+      "median_full_job_seconds": 0.011023205,
+      "p95_full_job_seconds": 0.012354914,
+      "max_cgroup_peak_bytes": null
+    },
+    "vm128": {
+      "samples": 31,
+      "median_seconds": 0.738540917,
+      "p95_seconds": 0.744210281,
+      "median_full_job_seconds": 0.739338566,
+      "p95_full_job_seconds": 0.746454432,
+      "max_cgroup_peak_bytes": 58163200
+    },
+    "vm256": {
+      "samples": 31,
+      "median_seconds": 0.743711666,
+      "p95_seconds": 0.752034092,
+      "median_full_job_seconds": 0.744567686,
+      "p95_full_job_seconds": 0.75293218,
+      "max_cgroup_peak_bytes": 61022208
+    }
+  },
+  "app_workflows": 0,
+  "competitive_speedup_claim": false
+}

@@ -1,0 +1,17 @@
+2026-11-10T23:38:18.212616959 [job-63:main] Running Firecracker v1.18.0
+2026-11-10T23:38:18.224355961 [job-63:main] Artificially kick devices
+2026-11-10T23:38:18.224445494 [job-63:fc_vcpu 0] Received a VcpuEvent::Resume message with immediate_exit enabled. immediate_exit was disabled before proceeding
+2026-11-10T23:38:18.224453891 [job-63:main] Successfully started microvm that was configured from one single json
+2026-11-10T23:38:18.247354621 [job-63:fc_vcpu 0] vcpu: IO write @ 0xcf8:0x4 failed: Failed to find address range.
+2026-11-10T23:38:18.247397686 [job-63:fc_vcpu 0] vcpu: IO read @ 0xcfc:0x2 failed: Failed to find address range.
+2026-11-10T23:38:18.326542343 [job-63:fc_vcpu 0] vcpu: IO read @ 0x87:0x1 failed: Failed to find address range.
+SABLE_VM_READY
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+SABLE_VM_OK
+[    0.639950] reboot: Restarting system
+2026-11-10T23:38:18.934105931 [job-63:main] Vmm is stopping.
+2026-11-10T23:38:18.934129719 [job-63:main] Killing vCPU threads
+2026-11-10T23:38:18.947709916 [job-63:main] Firecracker exiting successfully. exit_code=0

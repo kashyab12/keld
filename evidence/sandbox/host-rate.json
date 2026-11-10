@@ -1,0 +1,23 @@
+[
+  {
+    "observed_date": "2026-11-10",
+    "instance": "c8i.large",
+    "location": "US East (N. Virginia)",
+    "sku": "UB6JUKHQXXVYCEHT",
+    "terms": [
+      {
+        "effective_date": "2026-11-01T00:00:00Z",
+        "dimensions": [
+          {
+            "unit": "Hrs",
+            "description": "$0.09371 per On Demand Linux c8i.large Instance Hour",
+            "price_per_unit": {
+              "USD": "0.0937100000"
+            }
+          }
+        ]
+      }
+    ],
+    "scope": "Compute rate only; not invoice or total workflow cost"
+  }
+]

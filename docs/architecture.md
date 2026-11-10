@@ -51,8 +51,9 @@ semantics. Signed loads, SIMD, unprivileged access forms and atomics remain unsu
 
 `memory.rs` forks writable image buffers into each run, shares immutable image
 bytes through `Arc<Vec<u8>>`, and adds a reserved 1 MiB stack.
-The process starts with aligned SP at the stack top; no argc/argv/TLS startup
-contract exists yet. Loads zero-extend, stores truncate to the access width, and
+The freestanding process starts with aligned SP at the stack top. Images with
+initializers use the bounded [startup arguments](initializers.md); TLS remains
+unsupported. Loads zero-extend, stores truncate to the access width, and
 an access must fit wholly in one region with the required permission. SP-based
 accesses check 16-byte alignment. Failed memory operations preserve registers,
 base writeback, memory and the remaining instruction count; pair stores validate

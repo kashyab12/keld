@@ -1,0 +1,33 @@
+{
+  "scope": "trusted original ARM64 fixtures in jailed Linux microVMs; no iOS UI",
+  "driver_sha256": "186b45fd29b612b3b0a32e4d605e1f3197383e47e057330e3d6b8aef6ae2db7b",
+  "payload_driver_sha256": "ee650f773cf7fbf9dc385db887777668971969c2b9f96f3d5955c0c3658c7624",
+  "drop_source_sha256": "4065902a8db063aa152dafa91e638532d4bd8c00919f083ef8eee38a4e84af03",
+  "host_kernel": "7.0.0-1014-aws",
+  "host_arch": "x86_64",
+  "kvm_api": 12,
+  "firecracker_version": "Firecracker v1.18.0\n\n2026-11-10T23:29:15.795993145 [anonymous-instance:main] Firecracker exiting successfully. exit_code=0",
+  "jailer_version": "Jailer v1.18.0",
+  "pins": {
+    "firecracker": {
+      "version": "v1.18.0",
+      "url": "https://github.com/firecracker-microvm/firecracker/releases/download/v1.18.0/firecracker-v1.18.0-x86_64.tgz",
+      "sha256": "1ac8eec866dd5eea14efecf6323e22b23eea24054545338a5b34bc5bca6623cd"
+    },
+    "kernel": {
+      "url": "https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20261105-6ea6634994fa-0/x86_64/vmlinux-6.1.188",
+      "sha256": "31fe88d6c72b93d5c9c63cca599ccadec49fd35673bbfd04850d6c00ff27f032",
+      "config_url": "https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20261105-6ea6634994fa-0/x86_64/vmlinux-6.1.188.config",
+      "config_sha256": "4b573433ff9fbad2d0c944937404f357be6b3f64b1ed0aee7c8c4f2d979e2423"
+    }
+  },
+  "sable_sha256": "3ececfcee08f570ca9a11d1b238b09dee14fbc672f7181b87ebd52dc3a456765",
+  "initrd_sha256": "b50142f11c3912604b8945f030775c9e5dd7f48cd04a7a9e74067fd8a0dd5c62",
+  "initrd_bytes": 6028800,
+  "busybox_sha256": "dbac288c29ba568459550a2da9e7ae0ded6b1fc728ee9fad3044c44e62d6ac14",
+  "uid_gid": 1000,
+  "guest_vcpus": 1,
+  "network_devices": 0,
+  "block_devices": 0,
+  "mmds_configured": false
+}

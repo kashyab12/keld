@@ -5,13 +5,25 @@
 python3 scripts/aws-smoke.py run
 # Dynamic libraries, prepared execution, dispatch controls and journals:
 python3 scripts/aws-smoke.py run --dynamic --output evidence/s2/new-run
+# Separate nested-KVM experiment on a small C8i host:
+python3 scripts/aws-smoke.py run --firecracker --output evidence/sandbox/new-run
 ```
 
-The script launches one Ubuntu 24.04 x86-64 `c7i.large` with a 12 GiB gp3 root
+The default CPU check launches one Ubuntu 24.04 x86-64 `c7i.large` with a 12 GiB gp3 root
 disk, delete-on-termination, IMDSv2, an owned SSH key and caller-IP-only port 22.
 No KVM, nested virtualization, GPU, macOS guest, Apple runtime or remote Mac is
 used. Rust 1.93.1 and Clang are installed, then our source and original fixtures
 are transferred over SSH.
+
+`--firecracker` is a separate experiment on `c8i.large` with nested virtualization
+explicitly enabled. It verifies KVM, builds static Sable, and runs the pinned
+Firecracker/jailer harness on that owned host. It uses 31 randomized blocks of
+an unisolated process control and fresh 128/256 MiB Linux microVMs. Only original
+CPU/runtime fixtures enter the guest. Logs, sample journals, configuration hashes,
+namespace/privilege records and resource measurements are under
+`results/firecracker`. The harness requires root on that disposable host; never
+run it on a shared developer machine. Routine checks only check its syntax.
+See [sandbox design and measurement limits](sandbox-design.md).
 
 Every new run records PCI graphics devices, exposed GPU nodes, optional Vulkan
 and NVIDIA tool results, and renderer overrides in

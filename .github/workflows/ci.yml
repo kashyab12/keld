@@ -45,5 +45,6 @@ jobs:
         run: bash scripts/check-initializers.sh
       - name: Check app oracle scripts and inventory graphics exposure
         run: |
-          python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py
+          python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py scripts/firecracker-bench.py
+          bash -n scripts/firecracker-workload.sh
           python3 scripts/graphics-inventory.py --output artifacts/graphics-inventory.json

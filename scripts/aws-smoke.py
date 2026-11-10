@@ -72,7 +72,8 @@ def cleanup(path):
     return receipt
 
 
-def run(output=None, extended=False, dynamic=False):
+def run(output=None, extended=False, dynamic=False, firecracker=False):
+    instance_type = "c8i.large" if firecracker else "c7i.large"
     token = str(uuid.uuid4())
     name = "keld-sable-" + token[:12]
     base = Path(os.environ.get("MAKO_THREAD_DATA_DIR", str(Path.home() / ".cache/keld-sable")))
@@ -105,7 +106,7 @@ def run(output=None, extended=False, dynamic=False):
         save(path, state)
         aws("ec2", "import-key-pair", "--key-name", name, "--public-key-material", "fileb://" + str(key) + ".pub")
         user_data = private / "user-data.sh"
-        user_data.write_text("""#!/bin/bash
+        bootstrap = """#!/bin/bash
 set -euxo pipefail
 shutdown -h +45
 export DEBIAN_FRONTEND=noninteractive
@@ -114,12 +115,17 @@ apt-get install -y -qq build-essential clang curl ca-certificates python3-venv q
 curl --proto '=https' --tlsv1.2 -fsS https://sh.rustup.rs -o /tmp/sable-rustup.sh
 sudo -iu ubuntu sh /tmp/sable-rustup.sh -y --profile minimal --default-toolchain 1.93.1 --component clippy,rustfmt
 touch /tmp/sable-ready
-""")
+"""
+        if firecracker:
+            bootstrap = bootstrap.replace("qemu-user time", "qemu-user time musl-tools busybox-static cpio iproute2")
+            bootstrap = bootstrap.replace("touch /tmp/sable-ready", "sudo -iu ubuntu /home/ubuntu/.cargo/bin/rustup target add x86_64-unknown-linux-musl\nmodprobe kvm_intel\ntouch /tmp/sable-ready")
+        user_data.write_text(bootstrap)
         tags = json.dumps([{"ResourceType": kind, "Tags": [{"Key": "Name", "Value": name}, {"Key": "KeldRun", "Value": token}]} for kind in ["instance", "volume"]])
-        instance = aws("ec2", "run-instances", "--client-token", token, "--image-id", image["ImageId"], "--instance-type", "c7i.large", "--count", "1", "--subnet-id", subnet, "--security-group-ids", group, "--key-name", name, "--instance-initiated-shutdown-behavior", "terminate", "--metadata-options", "HttpTokens=required", "--block-device-mappings", json.dumps([{"DeviceName": image["RootDeviceName"], "Ebs": {"VolumeSize": 12, "VolumeType": "gp3", "DeleteOnTermination": True}}]), "--tag-specifications", tags, "--user-data", "file://" + str(user_data))["Instances"][0]
+        cpu_options = ["--cpu-options", "NestedVirtualization=enabled"] if firecracker else []
+        instance = aws("ec2", "run-instances", *cpu_options, "--client-token", token, "--image-id", image["ImageId"], "--instance-type", instance_type, "--count", "1", "--subnet-id", subnet, "--security-group-ids", group, "--key-name", name, "--instance-initiated-shutdown-behavior", "terminate", "--metadata-options", "HttpTokens=required", "--block-device-mappings", json.dumps([{"DeviceName": image["RootDeviceName"], "Ebs": {"VolumeSize": 12, "VolumeType": "gp3", "DeleteOnTermination": True}}]), "--tag-specifications", tags, "--user-data", "file://" + str(user_data))["Instances"][0]
         state["instance"] = instance["InstanceId"]
         save(path, state)
-        print("Launched owned c7i.large; 45-minute terminate timer; SSH limited to caller /32.", flush=True)
+        print(f"Launched owned {instance_type}; 45-minute terminate timer; SSH limited to caller /32.", flush=True)
         ssh_base = ["ssh", "-i", str(key), "-o", "StrictHostKeyChecking=accept-new", "-o", "UserKnownHostsFile=" + str(private / "known_hosts"), "-o", "ConnectTimeout=5"]
         deadline = time.monotonic() + 720
         while True:
@@ -198,11 +204,25 @@ python3 -c 'from pathlib import Path; expected={8:0x38afd5bab,2000:0xefe1edd5865
 python3 scripts/summarize-dynamic.py results > results/dynamic-summary.json
 cat results/dynamic-summary.json
 """
+        if firecracker:
+            remote = """set -e
+export PATH="$HOME/.cargo/bin:$PATH"
+cd sable
+mkdir -p results
+python3 scripts/graphics-inventory.py --output results/graphics-inventory.json
+uname -sm
+lscpu | head -30
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test --release
+cargo build --release --target x86_64-unknown-linux-musl
+sudo python3 scripts/firecracker-bench.py --output results/firecracker --blocks 31
+"""
         started = time.monotonic()
         result = subprocess.run(ssh + ["bash -s"], input=remote.encode(), capture_output=True, timeout=720)
         (evidence / "stdout.txt").write_bytes(result.stdout)
         (evidence / "stderr.txt").write_bytes(result.stderr)
-        public = {"region": REGION, "instance_type": "c7i.large", "image_name": image["Name"], "started_at": state["started_at"], "remote_elapsed_seconds": time.monotonic() - started, "remote_exit": result.returncode}
+        public = {"region": REGION, "instance_type": instance_type, "cpu_options": current.get("CpuOptions", {}), "image_name": image["Name"], "started_at": state["started_at"], "remote_elapsed_seconds": time.monotonic() - started, "remote_exit": result.returncode}
         (evidence / "run.json").write_text(json.dumps(public, indent=2) + "\n")
         # Every mode records graphics exposure, even if a subsequent check fails.
         fetched = subprocess.run(ssh + ["tar -cz -C sable results"], capture_output=True)
@@ -230,9 +250,11 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path)
     parser.add_argument("--extended", action="store_true")
     parser.add_argument("--dynamic", action="store_true")
+    parser.add_argument("--firecracker", action="store_true", help="owned C8i nested-KVM Firecracker experiment")
     options = parser.parse_args()
     if options.operation == "run":
-        run(options.output, options.extended or options.dynamic, options.dynamic)
+        if options.firecracker and (options.extended or options.dynamic): parser.error("--firecracker is a separate experiment")
+        run(options.output, options.extended or options.dynamic, options.dynamic, options.firecracker)
     elif options.state:
         cleanup(options.state)
     else:

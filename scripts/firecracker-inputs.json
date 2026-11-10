@@ -1,0 +1,13 @@
+{
+  "firecracker": {
+    "version": "v1.18.0",
+    "url": "https://github.com/firecracker-microvm/firecracker/releases/download/v1.18.0/firecracker-v1.18.0-x86_64.tgz",
+    "sha256": "1ac8eec866dd5eea14efecf6323e22b23eea24054545338a5b34bc5bca6623cd"
+  },
+  "kernel": {
+    "url": "https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20261105-6ea6634994fa-0/x86_64/vmlinux-6.1.188",
+    "sha256": "31fe88d6c72b93d5c9c63cca599ccadec49fd35673bbfd04850d6c00ff27f032",
+    "config_url": "https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20261105-6ea6634994fa-0/x86_64/vmlinux-6.1.188.config",
+    "config_sha256": "4b573433ff9fbad2d0c944937404f357be6b3f64b1ed0aee7c8c4f2d979e2423"
+  }
+}
