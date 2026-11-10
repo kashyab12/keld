@@ -48,11 +48,10 @@ fn original_compute_checksum() {
 }
 
 #[test]
-fn architecture_rejects_unimplemented_flags_and_shifted_ops() {
+fn architecture_rejects_unimplemented_and_reserved_ops() {
     for word in [
-        0xf1000400,
-        0x8b010400,
-        0x8b410000,
+        0x8bc10400, // reserved arithmetic shift=3
+        0x0b018000, // reserved W shift amount=32
         0xd503233f,
         0x14000000u32.wrapping_sub(1),
         0xd4000001,

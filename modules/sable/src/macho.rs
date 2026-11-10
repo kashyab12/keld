@@ -1,7 +1,7 @@
 //! Restricted, checked loader. Guest addresses never become host pointers.
 use crate::Result;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Segment {
     pub address: u64,
     pub bytes: Vec<u8>,

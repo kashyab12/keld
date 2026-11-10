@@ -2,10 +2,10 @@ use crate::{
     Result,
     isa::{Op, decode},
     macho::Image,
+    memory::{Memory, STACK_BASE, STACK_SIZE},
 };
 use std::time::Instant;
 
-// Layout is consumed by the x86 backend. Keep offsets checked in its tests.
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Cpu {
@@ -13,8 +13,8 @@ pub struct Cpu {
     pub sp: u64,
     pub pc: u64,
     pub remaining: u64,
+    pub nzcv: u64,
 }
-
 impl Cpu {
     pub fn new(entry: u64, budget: u64) -> Self {
         Self {
@@ -22,6 +22,7 @@ impl Cpu {
             sp: 0,
             pc: entry,
             remaining: budget,
+            nzcv: 0,
         }
     }
     pub fn reg(&self, n: u8, sp: bool) -> u64 {
@@ -41,14 +42,114 @@ impl Cpu {
     }
 }
 
+pub fn condition_holds(nzcv: u64, condition: u8) -> bool {
+    let n = nzcv & (1 << 31) != 0;
+    let z = nzcv & (1 << 30) != 0;
+    let c = nzcv & (1 << 29) != 0;
+    let v = nzcv & (1 << 28) != 0;
+    let base = match condition >> 1 {
+        0 => z,
+        1 => c,
+        2 => n,
+        3 => v,
+        4 => c && !z,
+        5 => n == v,
+        6 => n == v && !z,
+        _ => true,
+    };
+    if condition & 1 != 0 && condition != 15 {
+        !base
+    } else {
+        base
+    }
+}
+
+pub fn shifted(value: u64, shift: u8, amount: u8, wide: bool) -> u64 {
+    let value = if wide { value } else { value as u32 as u64 };
+    match (shift, wide) {
+        (0, _) => value << amount,
+        (1, _) => value >> amount,
+        (2, true) => ((value as i64) >> amount) as u64,
+        (2, false) => ((value as i32) >> amount) as u32 as u64,
+        (_, true) => value.rotate_right(u32::from(amount)),
+        (_, false) => (value as u32).rotate_right(u32::from(amount)) as u64,
+    }
+}
+
+fn arithmetic(cpu: &mut Cpu, a: u64, b: u64, subtract: bool, wide: bool, flags: bool) -> u64 {
+    let mask = if wide { u64::MAX } else { u32::MAX as u64 };
+    let a = a & mask;
+    let b = b & mask;
+    let result = if subtract {
+        a.wrapping_sub(b)
+    } else {
+        a.wrapping_add(b)
+    } & mask;
+    if flags {
+        let sign = 1u64 << if wide { 63 } else { 31 };
+        let carry = if subtract {
+            a >= b
+        } else {
+            (a as u128 + b as u128) > mask as u128
+        };
+        let overflow = ((if subtract { a ^ b } else { !(a ^ b) }) & (a ^ result) & sign) != 0;
+        cpu.nzcv = ((result & sign != 0) as u64) << 31
+            | ((result == 0) as u64) << 30
+            | (carry as u64) << 29
+            | (overflow as u64) << 28;
+    }
+    result
+}
+
 pub fn step(cpu: &mut Cpu, image: &Image) -> Result<bool> {
+    transition(cpu, image, None)
+}
+pub fn step_memory(cpu: &mut Cpu, image: &Image, memory: &mut Memory) -> Result<bool> {
+    transition(cpu, image, Some(memory))
+}
+fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> Result<bool> {
     if cpu.remaining == 0 {
         return Err("instruction budget exhausted".into());
     }
     let op = decode(image.instruction(cpu.pc)?, cpu.pc)?;
-    cpu.remaining -= 1;
     let mut next = cpu.pc + 4;
+    let mut trapped = false;
     match op {
+        Op::MemoryReg {
+            reg,
+            base,
+            index,
+            option,
+            scaled,
+            bytes,
+            load,
+        } => {
+            let memory = memory
+                .as_mut()
+                .ok_or("memory operation requires per-run memory")?;
+            let raw = cpu.reg(index, false);
+            let offset = match option {
+                2 => raw as u32 as u64,
+                6 => raw as i32 as i64 as u64,
+                _ => raw,
+            };
+            let offset = offset.wrapping_shl(if scaled { bytes.trailing_zeros() } else { 0 });
+            let original = cpu.reg(base, true);
+            if base == 31 && !original.is_multiple_of(16) {
+                return Err("unaligned guest SP".into());
+            }
+            let address = original.wrapping_add(offset);
+            if load {
+                let mut value = [0; 8];
+                value[..bytes as usize].copy_from_slice(memory.read(address, bytes as usize)?);
+                cpu.set(reg, u64::from_le_bytes(value), true, false);
+            } else {
+                memory.write(
+                    address,
+                    &cpu.reg(reg, false).to_le_bytes()[..bytes as usize],
+                )?;
+            }
+        }
         Op::MovWide {
             dst,
             value,
@@ -69,18 +170,10 @@ pub fn step(cpu: &mut Cpu, image: &Image) -> Result<bool> {
             value,
             subtract,
             wide,
+            flags,
         } => {
-            let lhs = cpu.reg(src, true);
-            cpu.set(
-                dst,
-                if subtract {
-                    lhs.wrapping_sub(value)
-                } else {
-                    lhs.wrapping_add(value)
-                },
-                wide,
-                true,
-            );
+            let result = arithmetic(cpu, cpu.reg(src, true), value, subtract, wide, flags);
+            cpu.set(dst, result, wide, !flags);
         }
         Op::AddReg {
             dst,
@@ -88,19 +181,13 @@ pub fn step(cpu: &mut Cpu, image: &Image) -> Result<bool> {
             rhs,
             subtract,
             wide,
+            flags,
+            shift,
+            amount,
         } => {
-            let a = cpu.reg(lhs, false);
-            let b = cpu.reg(rhs, false);
-            cpu.set(
-                dst,
-                if subtract {
-                    a.wrapping_sub(b)
-                } else {
-                    a.wrapping_add(b)
-                },
-                wide,
-                false,
-            );
+            let b = shifted(cpu.reg(rhs, false), shift, amount, wide);
+            let result = arithmetic(cpu, cpu.reg(lhs, false), b, subtract, wide, flags);
+            cpu.set(dst, result, wide, false);
         }
         Op::OrReg {
             dst,
@@ -108,6 +195,105 @@ pub fn step(cpu: &mut Cpu, image: &Image) -> Result<bool> {
             rhs,
             wide,
         } => cpu.set(dst, cpu.reg(lhs, false) | cpu.reg(rhs, false), wide, false),
+        Op::Logical {
+            dst,
+            lhs,
+            rhs,
+            kind,
+            invert,
+            shift,
+            amount,
+            wide,
+        } => {
+            let a = cpu.reg(lhs, false);
+            let b = shifted(cpu.reg(rhs, false), shift, amount, wide);
+            let b = if invert { !b } else { b };
+            let result = match kind {
+                0 | 3 => a & b,
+                1 => a | b,
+                _ => a ^ b,
+            };
+            if kind == 3 {
+                let r = if wide { result } else { result as u32 as u64 };
+                cpu.nzcv = ((r >> if wide { 63 } else { 31 }) & 1) << 31 | ((r == 0) as u64) << 30;
+            }
+            cpu.set(dst, result, wide, false);
+        }
+        Op::CondBranch { target, condition } => {
+            if condition_holds(cpu.nzcv, condition) {
+                next = target;
+            }
+        }
+        Op::Memory {
+            reg,
+            base,
+            offset,
+            bytes,
+            load,
+            writeback,
+            post,
+        } => {
+            let memory = memory
+                .as_mut()
+                .ok_or("memory operation requires per-run memory")?;
+            let original = cpu.reg(base, true);
+            if base == 31 && !original.is_multiple_of(16) {
+                return Err("unaligned guest SP".into());
+            }
+            let adjusted = original.wrapping_add_signed(offset);
+            let address = if post { original } else { adjusted };
+            if load {
+                let mut value = [0; 8];
+                value[..bytes as usize].copy_from_slice(memory.read(address, bytes as usize)?);
+                cpu.set(reg, u64::from_le_bytes(value), true, false);
+            } else {
+                memory.write(
+                    address,
+                    &cpu.reg(reg, false).to_le_bytes()[..bytes as usize],
+                )?;
+            }
+            if writeback {
+                cpu.set(base, adjusted, true, true);
+            }
+        }
+        Op::Pair {
+            first,
+            second,
+            base,
+            offset,
+            bytes,
+            load,
+            writeback,
+            post,
+        } => {
+            let memory = memory
+                .as_mut()
+                .ok_or("memory operation requires per-run memory")?;
+            let original = cpu.reg(base, true);
+            if base == 31 && !original.is_multiple_of(16) {
+                return Err("unaligned guest SP".into());
+            }
+            let adjusted = original.wrapping_add_signed(offset);
+            let address = if post { original } else { adjusted };
+            let size = bytes as usize;
+            if load {
+                let data = memory.read(address, size * 2)?;
+                let mut a = [0; 8];
+                let mut b = [0; 8];
+                a[..size].copy_from_slice(&data[..size]);
+                b[..size].copy_from_slice(&data[size..]);
+                cpu.set(first, u64::from_le_bytes(a), true, false);
+                cpu.set(second, u64::from_le_bytes(b), true, false);
+            } else {
+                let mut data = [0; 16];
+                data[..size].copy_from_slice(&cpu.reg(first, false).to_le_bytes()[..size]);
+                data[size..size * 2].copy_from_slice(&cpu.reg(second, false).to_le_bytes()[..size]);
+                memory.write(address, &data[..size * 2])?;
+            }
+            if writeback {
+                cpu.set(base, adjusted, true, true);
+            }
+        }
         Op::Address { dst, value } => cpu.set(dst, value, true, false),
         Op::Branch { target, link } => {
             if link {
@@ -127,30 +313,27 @@ pub fn step(cpu: &mut Cpu, image: &Image) -> Result<bool> {
             }
         }
         Op::Return { reg } => next = cpu.reg(reg, false),
-        Op::Svc => {
-            cpu.pc = next;
-            return Ok(true);
-        }
+        Op::Svc => trapped = true,
         Op::Nop => {}
     }
+    cpu.remaining -= 1;
     cpu.pc = next;
-    Ok(false)
+    Ok(trapped)
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Outcome {
     pub cpu: Cpu,
     pub stdout: Vec<u8>,
     pub stderr: Vec<u8>,
     pub exit: u8,
     pub syscalls: u64,
+    pub memory: Memory,
 }
 
-/// Deliberately tiny Darwin contract, not arbitrary host syscall forwarding.
-/// Unknown calls fail explicitly: pretending ENOSYS success hides missing ABI work.
 fn syscall(
     cpu: &mut Cpu,
-    image: &Image,
+    memory: &Memory,
     out: &mut [Vec<u8>; 2],
     started: Instant,
 ) -> Result<Option<u8>> {
@@ -166,16 +349,16 @@ fn syscall(
             if len > 1024 * 1024 || out[channel].len().saturating_add(len) > 4 * 1024 * 1024 {
                 return Err("guest output limit exceeded".into());
             }
-            out[channel].extend_from_slice(image.read(cpu.x[1], len, 1)?);
+            out[channel].extend_from_slice(memory.read(cpu.x[1], len)?);
             cpu.x[0] = len as u64;
+            cpu.nzcv &= !(1 << 29);
             Ok(None)
         }
-        // A deterministic process identity for our single-process test environment.
         20 => {
             cpu.x[0] = 1;
+            cpu.nzcv &= !(1 << 29);
             Ok(None)
         }
-        // mach_absolute_time trap (-3), timebase numerator/denominator = 1 here.
         -3 => {
             cpu.x[0] = started.elapsed().as_nanos() as u64;
             Ok(None)
@@ -189,6 +372,8 @@ fn syscall(
 
 pub fn run(image: &Image, budget: u64, jit: bool) -> Result<Outcome> {
     let mut cpu = Cpu::new(image.entry, budget);
+    cpu.sp = STACK_BASE + STACK_SIZE as u64;
+    let mut memory = Memory::new(image)?;
     let mut out = [Vec::new(), Vec::new()];
     let mut syscalls = 0;
     let started = Instant::now();
@@ -205,16 +390,16 @@ pub fn run(image: &Image, budget: u64, jit: bool) -> Result<Outcome> {
     loop {
         #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
         let trapped = if let Some(code) = &compiled {
-            code.execute(&mut cpu)?;
+            code.execute_memory(&mut cpu, image, &mut memory)?;
             true
         } else {
-            step(&mut cpu, image)?
+            step_memory(&mut cpu, image, &mut memory)?
         };
         #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
-        let trapped = step(&mut cpu, image)?;
+        let trapped = step_memory(&mut cpu, image, &mut memory)?;
         if trapped {
             syscalls += 1;
-            if let Some(exit) = syscall(&mut cpu, image, &mut out, started)? {
+            if let Some(exit) = syscall(&mut cpu, &memory, &mut out, started)? {
                 let [stdout, stderr] = out;
                 return Ok(Outcome {
                     cpu,
@@ -222,6 +407,7 @@ pub fn run(image: &Image, budget: u64, jit: bool) -> Result<Outcome> {
                     stderr,
                     exit,
                     syscalls,
+                    memory,
                 });
             }
         }

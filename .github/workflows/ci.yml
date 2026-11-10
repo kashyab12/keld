@@ -25,3 +25,15 @@ jobs:
           bash scripts/build-fixtures.sh
           cmp artifacts/hello.macho modules/sable/fixtures/bin/hello.macho
           cmp artifacts/compute.macho modules/sable/fixtures/bin/compute.macho
+          cmp artifacts/checksum.macho modules/sable/fixtures/bin/checksum.macho
+          target/release/sable run artifacts/workload.macho jit > artifacts/rebuilt-checksum.bin
+          python3 -c 'from pathlib import Path; assert Path("artifacts/rebuilt-checksum.bin").read_bytes() == (0x8e65b49356b423fa).to_bytes(8,"little")'
+      - name: Independent ARM64 oracle
+        run: |
+          python3 -m venv artifacts/oracle-venv
+          artifacts/oracle-venv/bin/pip -q install unicorn==2.1.4
+          cargo build --release --example oracle_batch
+          artifacts/oracle-venv/bin/python scripts/oracle.py --output artifacts/oracle-interp.json
+          if [ "$RUNNER_OS" = Linux ]; then
+            artifacts/oracle-venv/bin/python scripts/oracle.py --engine jit --output artifacts/oracle-jit.json
+          fi

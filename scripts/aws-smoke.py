@@ -72,7 +72,7 @@ def cleanup(path):
     return receipt
 
 
-def run():
+def run(output=None, extended=False):
     token = str(uuid.uuid4())
     name = "keld-sable-" + token[:12]
     base = Path(os.environ.get("MAKO_THREAD_DATA_DIR", str(Path.home() / ".cache/keld-sable")))
@@ -81,7 +81,9 @@ def run():
     path = private / "state.json"
     state = {"token": token, "name": name, "region": REGION, "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
     save(path, state)
-    evidence = ROOT / "evidence/aws-smoke"
+    evidence = output or ROOT / "evidence/aws-smoke"
+    if output and evidence.exists():
+        raise RuntimeError("refusing to overwrite previous experiment: " + str(evidence))
     evidence.mkdir(parents=True, exist_ok=True)
     print("Private recovery state:", path, flush=True)
     try:
@@ -108,7 +110,7 @@ set -euxo pipefail
 shutdown -h +45
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq build-essential clang curl ca-certificates
+apt-get install -y -qq build-essential clang curl ca-certificates python3-venv qemu-user time
 curl --proto '=https' --tlsv1.2 -fsS https://sh.rustup.rs -o /tmp/sable-rustup.sh
 sudo -iu ubuntu sh /tmp/sable-rustup.sh -y --profile minimal --default-toolchain 1.93.1 --component clippy,rustfmt
 touch /tmp/sable-ready
@@ -155,12 +157,36 @@ cargo run --release -- run artifacts/hello.macho jit
 cargo run --release -- run artifacts/compute.macho jit
 cargo run --release -- bench artifacts/compute.macho 9
 """
+        if extended:
+            remote = remote[:remote.index('cargo run --release -- bench')] + """
+cargo build --release --example oracle_batch
+python3 -m venv oracle-venv
+oracle-venv/bin/pip -q install unicorn==2.1.4
+mkdir -p results
+for seed in 12648430 42 8675309; do
+  oracle-venv/bin/python scripts/oracle.py --engine interp --seed "$seed" --output "results/oracle-interp-$seed.json"
+  oracle-venv/bin/python scripts/oracle.py --engine jit --seed "$seed" --output "results/oracle-jit-$seed.json"
+done
+# Validate the version rebuilt with this Linux host's Clang, too.
+target/release/sable run artifacts/workload.macho jit > results/rebuilt-checksum.bin
+python3 -c 'from pathlib import Path; assert Path("results/rebuilt-checksum.bin").read_bytes() == (0x8e65b49356b423fa).to_bytes(8,"little")'
+python3 scripts/macho-to-elf.py modules/sable/fixtures/bin/checksum.macho artifacts/checksum.elf
+python3 scripts/macho-to-elf.py modules/sable/fixtures/bin/workload.macho artifacts/workload.elf
+taskset -c 0 python3 scripts/benchmark.py --pairs 31 --output results/benchmark.json
+"""
         started = time.monotonic()
         result = subprocess.run(ssh + ["bash -s"], input=remote.encode(), capture_output=True, timeout=720)
         (evidence / "stdout.txt").write_bytes(result.stdout)
         (evidence / "stderr.txt").write_bytes(result.stderr)
         public = {"region": REGION, "instance_type": "c7i.large", "image_name": image["Name"], "started_at": state["started_at"], "remote_elapsed_seconds": time.monotonic() - started, "remote_exit": result.returncode}
         (evidence / "run.json").write_text(json.dumps(public, indent=2) + "\n")
+        if extended:
+            # Read back even on failure. Missing results remain an explicit error.
+            fetched = subprocess.run(ssh + ["tar -cz -C sable results"], capture_output=True)
+            if fetched.returncode == 0:
+                # Entries come from our own directory; still reject links/path escapes.
+                with tarfile.open(fileobj=io.BytesIO(fetched.stdout), mode="r:gz") as archive:
+                    archive.extractall(evidence, filter="data")
         print(result.stdout.decode(), flush=True)
         if result.returncode:
             print(result.stderr.decode(), flush=True)
@@ -174,9 +200,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=["run", "cleanup"])
     parser.add_argument("state", nargs="?", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--extended", action="store_true")
     options = parser.parse_args()
     if options.operation == "run":
-        run()
+        run(options.output, options.extended)
     elif options.state:
         cleanup(options.state)
     else:
