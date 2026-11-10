@@ -1,0 +1,27 @@
+name: Sable
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.93.1 --profile minimal --component clippy,rustfmt
+          rustup override set 1.93.1
+      - name: Check
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test --release
+      - name: Rebuild original Mach-O fixtures on Linux
+        if: runner.os == 'Linux'
+        run: |
+          bash scripts/build-fixtures.sh
+          cmp artifacts/hello.macho modules/sable/fixtures/bin/hello.macho
+          cmp artifacts/compute.macho modules/sable/fixtures/bin/compute.macho

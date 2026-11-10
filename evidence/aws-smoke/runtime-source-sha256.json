@@ -1,0 +1,18 @@
+{
+  "Cargo.toml": "bd756589e2f511544290928fb622ce91c756fc77131e14476a6f3b29e410a632",
+  "Cargo.lock": "0ef530b849e8459148523c7a6a8107636264db7ff3d150dff1d81ef066c80d71",
+  "modules/sable/Cargo.toml": "58548bc7a458441245f1fd02f7d1a69782d5acf9a68a00d61c41591306cddcb7",
+  "modules/sable/README.md": "285761fdbcc79faa3966dceaf5b7257c7cb0704a1567f12a162dd3cfd94b3fff",
+  "modules/sable/fixtures/README.md": "c3147b377fcb5f2c63cf73bea2d45dfb8ebbb8772a38e2fa63b2a1c9d702a44a",
+  "modules/sable/fixtures/bin/compute.macho": "688d787599f324ab66040ea5a5c5934bd6dc2aa014d25e9a14194d6f6d631a24",
+  "modules/sable/fixtures/bin/hello.macho": "79a0c3beb8e3eb0c35400e379d5c7fd6b32cf0ffc1325d07b5a9dfa7b9c657dc",
+  "modules/sable/fixtures/compute.s": "483ba81dae05193c35a8aa23501d94802b0c9bea3adad85666566687ce3e5b69",
+  "modules/sable/fixtures/hello.s": "067ef24f6379632680295a83ea0ef6c90c5b065af80f87fb824d5de04d733cd5",
+  "modules/sable/src/engine.rs": "3cffca269694f47f573ac9622574486d814fdec6325dcbf3fbaa30f4256711cc",
+  "modules/sable/src/isa.rs": "b7c7b39dd1bd3f43538eac1848d1a655caf90cd3107974dbfb70df030b91ea5d",
+  "modules/sable/src/jit.rs": "a8d9a667d8de5db153ce112d1587e5aa92ba4dca31be56f7a58d14c611df7825",
+  "modules/sable/src/lib.rs": "45c6fdcb1a8e99e435b6a64d17d105bf2d498beae14069917bb61f1e63fdb020",
+  "modules/sable/src/macho.rs": "adccb12ba2a79ee7720ac3255719153de7adbd186de9c026b05b18cf39fd0a3f",
+  "modules/sable/src/main.rs": "e159804be57892a8bbcf0b439e7b3e8186efee80283b2e6a4769d5a500d51d58",
+  "modules/sable/tests/execution.rs": "f3db5dc9c593450808ec30ec16505317d089eaf9cd28a7538b0408cafddcea58"
+}

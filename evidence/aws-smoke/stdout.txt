@@ -1,0 +1,66 @@
+Linux x86_64
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  2
+On-line CPU(s) list:                     0,1
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Platinum 8488C
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      2
+Core(s) per socket:                      1
+Socket(s):                               1
+Stepping:                                8
+BogoMIPS:                                4800.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq monitor ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd ida arat avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq rdpid cldemote movdiri movdir64b md_clear serialize amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+L1d cache:                               48 KiB (1 instance)
+L1i cache:                               32 KiB (1 instance)
+L2 cache:                                2 MiB (1 instance)
+L3 cache:                                105 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0,1
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+rustc 1.93.1 (01f6ddf75 2026-02-11)
+
+running 1 test
+test jit::tests::cpu_layout_matches_emitter ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 11 tests
+test architecture_rejects_unimplemented_flags_and_shifted_ops ... ok
+test exhausted_budget_precedes_faults_in_both_engines ... ok
+test finite_budget_and_unknown_trap_fail ... ok
+test loader_rejects_unimplemented_optional_commands ... ok
+test loader_rejects_wrong_arch_platform_permissions_and_entry ... ok
+test malformed_inputs_do_not_panic ... ok
+test memory_permissions_and_bounds ... ok
+test differential_generated_programs_and_control_flow ... ok
+test original_linked_simulator_binary ... ok
+test wrapping_w_registers_sp_and_zero_register ... ok
+test original_compute_checksum ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+SABLE_ARM64_DARWIN_OK
+{"benchmark":"arm64_arithmetic_translation","pairs":9,"instructions":30000006,"checksum_x9":50000005000000,"equal_full_state":true,"translation_included":true,"interp_seconds":[0.379246361, 0.380030059, 0.377012138, 0.38014118, 0.37953402, 0.380189864, 0.379800845, 0.379014237, 0.380551839],"jit_seconds":[0.018046219, 0.01796059, 0.018041314, 0.01810925, 0.01809225, 0.018131132, 0.018011912, 0.018030935, 0.018092639],"median_speedup":21.04600664549178}

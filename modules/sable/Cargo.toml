@@ -1,0 +1,9 @@
+[package]
+name = "sable"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Experimental ARM64 Mach-O execution and Darwin compatibility research"
+repository = "https://github.com/kashyab12/keld"
+
+[dependencies]

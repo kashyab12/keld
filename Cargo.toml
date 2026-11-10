@@ -1,0 +1,7 @@
+[workspace]
+members = ["modules/sable"]
+resolver = "2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
