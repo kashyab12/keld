@@ -1,0 +1,49 @@
+{
+  "started_at": "2026-11-10T18:17:01.940669+00:00",
+  "kind": "native_apple_app_oracle",
+  "source_sha256": {
+    "InteractionTests.swift": "9dc2c60bf64e52f392ab29d0a28ea37a26c72a52457a825602feecdb53b16d5a",
+    "README.md": "307dbe356b6add59e3c90f642773072fadbb458169c47568b80c0bff3201f86a",
+    "main.m": "998d4a2218ea40e150920e52af55bd4aa33b9255f07a87fe6f37336bbafcff1b"
+  },
+  "driver_sha256": "2d063da622b45427d0a5ada6defe3a382e3db6e36d0ede214e663b9ca3bab51c",
+  "native_oracle_passed": true,
+  "sable_app_support_proven": false,
+  "simulator_window_requested": false,
+  "gpu_mode": "native host graphics; not a no-GPU test",
+  "devices_created": [
+    "86539532-978E-4377-B7BD-DBA6332DE0C7"
+  ],
+  "xcode": "Xcode 27.2\nBuild version 27B52",
+  "host_arch": "arm64",
+  "build_exit": 0,
+  "executable_sha256": "015823ecfe994f934597b5b0b6158b1f4a1dcca4bc869e35f86b78506c935ab1",
+  "arm64_executable_sha256": "18eab56d84ab30443fbe40567e8f1001fd2a43c86a19ec7ec2107cf8067ba194",
+  "sable_probe": {
+    "exit": 125,
+    "stderr": "sable: unsupported dynamic load command 0x80000034\n",
+    "stdout_hex": "",
+    "binary_sha256": "682634b1ccf7daaba37d641873c4181c4d016960d4eac1a8f51d82832438a3a8",
+    "completed_interactions": 0,
+    "app_workflow_status": "unsupported",
+    "scope": "actual app executable attempted; no UI driver in Sable"
+  },
+  "runtime": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+    "version": "27.2",
+    "buildversion": "24B8117"
+  },
+  "test_exit": 0,
+  "tests": {
+    "passedTests": 3,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 3,
+    "finishTime": 1794334737.321,
+    "startTime": 1794334650.77
+  },
+  "cleanup": {
+    "delete_exit": 0,
+    "owned_device_remaining": false
+  }
+}

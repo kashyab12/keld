@@ -13,6 +13,14 @@ No KVM, nested virtualization, GPU, macOS guest, Apple runtime or remote Mac is
 used. Rust 1.93.1 and Clang are installed, then our source and original fixtures
 are transferred over SSH.
 
+Every new run records PCI graphics devices, exposed GPU nodes, optional Vulkan
+and NVIDIA tool results, and renderer overrides in
+`results/graphics-inventory.json`. Missing graphics tools do not prove the
+absence of a GPU. This is a CPU execution check: no UIKit app, input automation,
+Metal renderer or software graphics fallback runs here. The native app oracle
+and the required future AWS app tests are described in
+[app and graphics gates](app-benchmarks.md).
+
 The remote run checks formatting, Clippy, the release test suite, recompiles the
 Mach-O fixtures with LLVM, compares rebuilt binaries, runs hello and compute
 through native x86 translation, and executes nine alternating benchmark pairs.

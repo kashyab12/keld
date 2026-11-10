@@ -1,0 +1,46 @@
+{
+  "started_at": "2026-11-10T18:14:32.458890+00:00",
+  "kind": "native_apple_app_oracle",
+  "source_sha256": {
+    "InteractionTests.swift": "9dc2c60bf64e52f392ab29d0a28ea37a26c72a52457a825602feecdb53b16d5a",
+    "main.m": "998d4a2218ea40e150920e52af55bd4aa33b9255f07a87fe6f37336bbafcff1b"
+  },
+  "native_oracle_passed": true,
+  "sable_app_support_proven": false,
+  "simulator_window_requested": false,
+  "gpu_mode": "native host graphics; not a no-GPU test",
+  "devices_created": [
+    "BA02FCA6-0F3A-43EA-881A-BDA7711EA0D1"
+  ],
+  "xcode": "Xcode 27.2\nBuild version 27B52",
+  "host_arch": "arm64",
+  "build_exit": 0,
+  "executable_sha256": "fb264b36bedce91927aa1cf1a7d8c8a5623cae2152f41972f1cdee0c1566294e",
+  "arm64_executable_sha256": "375062c29bb4dd483f2ad6cf753626111a5740d9920c5ae636da66ca46be5058",
+  "sable_probe": {
+    "exit": 125,
+    "stderr": "sable: unsupported dynamic load command 0x80000034\n",
+    "stdout_hex": "",
+    "completed_interactions": 0,
+    "app_workflow_status": "unsupported",
+    "scope": "actual app executable attempted; no UI driver in Sable"
+  },
+  "runtime": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+    "version": "27.2",
+    "buildversion": "24B8117"
+  },
+  "test_exit": 0,
+  "tests": {
+    "passedTests": 3,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 3,
+    "finishTime": 1794334585.586,
+    "startTime": 1794334505.601
+  },
+  "cleanup": {
+    "delete_exit": 0,
+    "owned_device_remaining": false
+  }
+}

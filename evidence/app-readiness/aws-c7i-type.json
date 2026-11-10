@@ -1,0 +1,9 @@
+{
+    "InstanceType": "c7i.large",
+    "VCpu": 2,
+    "MemoryMiB": 4096,
+    "Architectures": [
+        "x86_64"
+    ],
+    "GpuInfo": null
+}

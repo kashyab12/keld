@@ -39,3 +39,7 @@ jobs:
           fi
       - name: Rebuild and execute original dynamic libraries
         run: bash scripts/check-dynamic.sh
+      - name: Check app oracle scripts and inventory graphics exposure
+        run: |
+          python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py
+          python3 scripts/graphics-inventory.py --output artifacts/graphics-inventory.json

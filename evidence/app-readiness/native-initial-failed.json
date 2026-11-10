@@ -1,0 +1,42 @@
+{
+  "started_at": "2026-11-10T18:12:22.553743+00:00",
+  "kind": "native_apple_app_oracle",
+  "source_sha256": {
+    "InteractionTests.swift": "9dc2c60bf64e52f392ab29d0a28ea37a26c72a52457a825602feecdb53b16d5a",
+    "main.m": "f6cb935db7acd48ebb9c896517e156fc2b2108852e21d2a6b6ee4995e110d19b"
+  },
+  "native_oracle_passed": false,
+  "sable_app_support_proven": false,
+  "simulator_window_opened": false,
+  "gpu_mode": "host Apple GPU; not a no-GPU test",
+  "devices_created": [
+    "9552E379-92B8-486B-898B-B735BC2A1632"
+  ],
+  "xcode": "Xcode 27.2\nBuild version 27B52",
+  "host_arch": "arm64",
+  "build_exit": 0,
+  "executable_sha256": "dc9552b37bf9550f6cc7e93422c0eaa12633eb42f02ebc1c84a69c5221c1f96c",
+  "sable_probe": {
+    "exit": 125,
+    "stderr": "sable: expected thin little-endian ARM64 Mach-O\n",
+    "stdout_hex": "",
+    "completed_interactions": 0,
+    "app_workflow_status": "unsupported",
+    "scope": "actual app executable attempted; no UI driver in Sable"
+  },
+  "runtime": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+    "version": "27.2",
+    "buildversion": "24B8117"
+  },
+  "test_exit": 65,
+  "error": "Native fixture terminated in UIApplication scene lifecycle validation; see curated crash evidence. The universal app container also initially failed Sable thin Mach-O validation.",
+  "cleanup": {
+    "delete_exit": 0,
+    "owned_device_remaining": false
+  },
+  "crash_evidence": {
+    "exception": "EXC_BREAKPOINT",
+    "first_frame": "___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke"
+  }
+}

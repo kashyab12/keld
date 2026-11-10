@@ -24,12 +24,14 @@ cargo run --release -- bench modules/sable/fixtures/bin/compute.macho 9
 ```
 
 Requires Rust 1.93.1 or newer. The checked-in Mach-O files contain only our original
-assembly and linker metadata. Neither Apple SDKs nor runtime libraries are needed
+assembly/C and linker metadata. Neither Apple SDKs nor runtime libraries are needed
 to build Sable or run these probes. See [fixture provenance](modules/sable/fixtures/README.md).
 
 - [Technical premise and primary sources](docs/research.md)
 - [Loader, translation and Darwin design](docs/architecture.md)
 - [Milestones and benchmark gates](docs/roadmap.md)
+- [Real app interaction and GPU benchmark gates](docs/app-benchmarks.md)
+- [First native app tests and AWS graphics observations](evidence/app-readiness/RESULTS.md)
 - [Reproduce the AWS Linux check](docs/aws.md)
 - [Observed Linux and native Apple execution](evidence/README.md)
 - [Scalar CPU validation and QEMU benchmark](evidence/s1/RESULTS.md)

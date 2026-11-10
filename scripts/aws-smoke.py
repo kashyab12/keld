@@ -144,6 +144,8 @@ touch /tmp/sable-ready
         remote = """set -e
 export PATH="$HOME/.cargo/bin:$PATH"
 cd sable
+mkdir -p results
+python3 scripts/graphics-inventory.py --output results/graphics-inventory.json
 uname -sm
 lscpu | head -30
 rustc -V
@@ -192,13 +194,16 @@ cat results/dynamic-summary.json
         (evidence / "stderr.txt").write_bytes(result.stderr)
         public = {"region": REGION, "instance_type": "c7i.large", "image_name": image["Name"], "started_at": state["started_at"], "remote_elapsed_seconds": time.monotonic() - started, "remote_exit": result.returncode}
         (evidence / "run.json").write_text(json.dumps(public, indent=2) + "\n")
-        if extended:
-            # Read back even on failure. Missing results remain an explicit error.
-            fetched = subprocess.run(ssh + ["tar -cz -C sable results"], capture_output=True)
-            if fetched.returncode == 0:
-                # Entries come from our own directory; still reject links/path escapes.
-                with tarfile.open(fileobj=io.BytesIO(fetched.stdout), mode="r:gz") as archive:
-                    archive.extractall(evidence, filter="data")
+        # Every mode records graphics exposure, even if a subsequent check fails.
+        fetched = subprocess.run(ssh + ["tar -cz -C sable results"], capture_output=True)
+        if fetched.returncode != 0:
+            (evidence / "results-fetch.stderr.txt").write_bytes(fetched.stderr)
+            raise RuntimeError("could not retrieve remote results; do not count this run as verified")
+        # Entries come from our own directory; still reject links/path escapes.
+        with tarfile.open(fileobj=io.BytesIO(fetched.stdout), mode="r:gz") as archive:
+            archive.extractall(evidence, filter="data")
+        if not (evidence / "results/graphics-inventory.json").is_file():
+            raise RuntimeError("remote graphics inventory missing; do not count this run as verified")
         print(result.stdout.decode(), flush=True)
         if result.returncode:
             print(result.stderr.decode(), flush=True)
