@@ -18,8 +18,9 @@ versions are checked against supplied libraries' current versions.
 
 Regular and absolute exports are supported. Re-exports, weak definitions/imports,
 flat lookup, threaded bind opcodes and resolver exports fail
-explicitly. Constructors, terminators, TLS sections and initializer-offset
-sections are rejected until their startup behavior is implemented. Lazy streams
+explicitly. Bounded C constructors now use a checked dependency plan and shared
+run budget; see [image initialization](initializers.md). Terminators and TLS
+sections remain rejected. Lazy streams
 are resolved before execution; Sable does not implement Apple's lazy binder or
 general dlopen/dlsym behavior. The original fixtures deliberately use non-lazy
 function-pointer imports and need no lazy-binding helper.

@@ -27,6 +27,7 @@ def main():
     parser.add_argument("--output",type=Path,default=ROOT / "evidence/apple-oracle.json")
     parser.add_argument("--dynamic",action="store_true")
     parser.add_argument("--chained",action="store_true")
+    parser.add_argument("--initializers",action="store_true")
     options=parser.parse_args()
     runtimes = json.loads(sim("list", "runtimes", "--json").stdout)["runtimes"]
     runtime = next(r for r in runtimes if r["isAvailable"] and r.get("platform") == "iOS" and any(t["identifier"] == "com.apple.CoreSimulator.SimDeviceType.iPhone-17" for t in r["supportedDeviceTypes"]))
@@ -42,6 +43,7 @@ def main():
         expected={"hello":b"SABLE_ARM64_DARWIN_OK\n", "compute":b"", "workload":(0x8e65b49356b423fa).to_bytes(8,"little"), "checksum":(50_000_005_000_000).to_bytes(8,"little")}
         if options.dynamic:expected.update({"dynamic/dynamic-8":(0x38afd5bab).to_bytes(8,"little"),"dynamic/dynamic-2000":(0xefe1edd5865163fb).to_bytes(8,"little"),"dynamic/dynamic-200000":(0xa7151818301809c9).to_bytes(8,"little")})
         if options.chained:expected.update({"chained/dynamic-8":(0x38afd5bab).to_bytes(8,"little"),"chained/dynamic-2000":(0xefe1edd5865163fb).to_bytes(8,"little"),"chained/dynamic-200000":(0xa7151818301809c9).to_bytes(8,"little"),"chained/chained-addend":(51).to_bytes(8,"little")})
+        if options.initializers:expected.update({f"initializers/{mode}/initialize":b"INIT leaf 1\nINIT leaf 2\nINIT parent\nINIT sibling\nINIT executable\nARGS\nMAIN\n" for mode in ["offsets","pointers"]})
         for name in expected:
             result = sim("spawn", device, str(ROOT / "modules/sable/fixtures/bin" / (name + ".macho")), owned_set=owned_set, check=False, text=False)
             receipt["runs"].append({"fixture": name, "exit": result.returncode, "stdout_hex": result.stdout.hex(), "stderr": result.stderr.decode(errors="replace")})

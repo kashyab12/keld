@@ -821,11 +821,24 @@ impl Compiled {
     }
 
     pub fn execute_memory(&self, cpu: &mut Cpu, image: &Image, memory: &mut Memory) -> Result<()> {
+        self.execute_until(cpu, image, memory, None).map(|_| ())
+    }
+
+    pub(crate) fn execute_until(
+        &self,
+        cpu: &mut Cpu,
+        image: &Image,
+        memory: &mut Memory,
+        return_pc: Option<u64>,
+    ) -> Result<bool> {
         if memory.layout() != self.layout {
             return Err("native memory layout mismatch".into());
         }
         let pointers = memory.pointers()?;
         loop {
+            if return_pc == Some(cpu.pc) {
+                return Ok(false);
+            }
             if cpu.remaining == 0 {
                 return Err("instruction budget exhausted".into());
             }
@@ -843,14 +856,20 @@ impl Compiled {
                     std::mem::transmute(self.memory.as_ptr().cast::<u8>().add(offset));
                 entry(cpu, pointers.as_ptr())
             };
+            // A checked guest callback may return at the exact end of its budget.
+            // This sentinel is never an RX entry or a host pointer. Ordinary
+            // execution still faults here because it passes return_pc=None.
+            if return_pc == Some(cpu.pc) && [1, 2, 3].contains(&reason) {
+                return Ok(false);
+            }
             match reason {
-                0 => return Ok(()),
+                0 => return Ok(true),
                 2 => return Err("instruction budget exhausted".into()),
                 3 => continue,
                 5 => return Err(format!("guest memory/SP fault at PC {:#x}", cpu.pc)),
                 4 => {
                     if step_memory(cpu, image, memory)? {
-                        return Ok(());
+                        return Ok(true);
                     }
                     continue;
                 }

@@ -507,7 +507,68 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
             object.image.segments[*segment].protection &= !2;
         }
     }
+    let mut initialization = Vec::new();
+    if order.iter().any(|&i| !objects[i].init_sections.is_empty()) {
+        fn visit(
+            index: usize,
+            objects: &[Object],
+            ids: &HashMap<String, usize>,
+            state: &mut [u8],
+            out: &mut Vec<usize>,
+        ) -> Result<()> {
+            if state[index] == 1 {
+                return Err("cyclic initializer dependencies unsupported".into());
+            }
+            if state[index] == 2 {
+                return Ok(());
+            }
+            state[index] = 1;
+            for (name, _) in &objects[index].dependencies {
+                visit(ids[name], objects, ids, state, out)?;
+            }
+            state[index] = 2;
+            out.push(index);
+            Ok(())
+        }
+        let mut sorted = Vec::new();
+        visit(0, &objects, &ids, &mut vec![0; objects.len()], &mut sorted)?;
+        for index in sorted {
+            let object = &objects[index];
+            let base = object
+                .header_base
+                .checked_add(slides[index])
+                .ok_or("initializer base overflow")?;
+            for section in &object.init_sections {
+                let address = section
+                    .address
+                    .checked_add(slides[index])
+                    .ok_or("initializer array overflow")?;
+                let bytes = object.image.read(address, section.size, 1)?;
+                for at in (0..section.size).step_by(if section.offsets { 4 } else { 8 }) {
+                    let target = if section.offsets {
+                        base.checked_add(u64::from(crate::macho::u32_at(bytes, at)?))
+                            .ok_or("initializer target overflow")?
+                    } else {
+                        crate::macho::u64_at(bytes, at)?
+                    };
+                    if !object.image.contains_pc(target) {
+                        return Err("initializer target outside owning image code".into());
+                    }
+                    if initialization.len() == 1024 {
+                        return Err("at most 1024 initializers".into());
+                    }
+                    initialization.push(target);
+                }
+            }
+        }
+    }
     let mut image = objects[0].image.clone();
+    if !initialization.is_empty() {
+        image.startup = Some(crate::macho::Startup {
+            header: objects[0].header_base,
+            initializers: initialization,
+        });
+    }
     for index in order.into_iter().skip(1) {
         image.extra_text.extend(objects[index].image.code_ranges());
         image.segments.append(&mut objects[index].image.segments);

@@ -36,13 +36,17 @@ compare all general registers, SP, PC, flags, instruction counts and tested memo
 [Validation and process-level QEMU benchmark](../../evidence/s1/RESULTS.md).
 
 This is **not a complete iOS Simulator**. The restricted eager linker does not
-execute Apple's dyld or implement shared caches, constructors,
+execute Apple's dyld or implement shared caches,
 TLS, weak/re-export lookup or general dynamic-loader APIs. There is no
 Objective-C runtime, Foundation, UIKit, Swift runtime, Mach message transport,
 thread scheduler, atomics, NEON, PAC, graphics or app-bundle support. Ordinary
 compiler-generated programs will encounter unsupported instructions. ARM64e is
 rejected. Run only the trusted research fixtures; Sable has not been audited as a
 security boundary for hostile binaries.
+
+Supported C initializer arrays execute before main in dependency order, once per
+image per fresh run, with checked targets and a shared instruction budget.
+[Startup ABI, evidence and limits](../../docs/initializers.md).
 
 ```sh
 # From the repository root. Works on Linux/macOS for the interpreter.

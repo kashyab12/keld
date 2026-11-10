@@ -1,0 +1,98 @@
+{
+  "runs": [
+    {
+      "platform": "macosx",
+      "program": "minimal",
+      "exit": 0,
+      "stdout": "SABLE FOUNDATION\n",
+      "stderr_lines": 404
+    },
+    {
+      "platform": "macosx",
+      "program": "contracts",
+      "exit": 0,
+      "stdout": "INIT leaf\nINIT parent\nINIT executable\nMAIN\nTLS ctor=23 worker_initial=17 worker_zero=0 main_after=23 main_zero_after=7 distinct=1 stable=1\nVM page=16384 zero_fill=1 protect_restore=1 unaligned_return=-1 errno=22\nFOUNDATION CONTRACTS OK\n",
+      "stderr_lines": 407
+    },
+    {
+      "platform": "iphonesimulator",
+      "program": "minimal",
+      "exit": 0,
+      "stdout": "SABLE FOUNDATION\n",
+      "stderr_lines": 377
+    },
+    {
+      "platform": "iphonesimulator",
+      "program": "contracts",
+      "exit": 0,
+      "stdout": "INIT leaf\nINIT parent\nINIT executable\nMAIN\nTLS ctor=23 worker_initial=17 worker_zero=0 main_after=23 main_zero_after=7 distinct=1 stable=1\nVM page=16384 zero_fill=1 protect_restore=1 unaligned_return=-1 errno=22\nFOUNDATION CONTRACTS OK\n",
+      "stderr_lines": 380
+    }
+  ],
+  "builds": [
+    {
+      "platform": "macosx",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "platform": "macosx",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "platform": "macosx",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "platform": "macosx",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "platform": "iphonesimulator",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "platform": "iphonesimulator",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "platform": "iphonesimulator",
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "platform": "iphonesimulator",
+      "exit": 0,
+      "stderr": ""
+    }
+  ],
+  "cleanup": {
+    "shutdown_exit": 0,
+    "delete_exit": 0,
+    "remaining_devices": 0,
+    "owned_uuid_present": false
+  },
+  "xcode": "Xcode 27.2\nBuild version 27B52",
+  "macos": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+  "runtime": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+    "version": "27.2",
+    "buildversion": "24B8117"
+  },
+  "owned_set": "/Users/kashyab/keld/artifacts/foundation-integration/foundation-private-set-t191wacm",
+  "owned_uuid": "4AC31C7E-DED9-4725-A03C-A9BC329F0893",
+  "passed": true,
+  "driver_sha256": "abf43a4e61a5c9c3ed4ab17ee8beab45c12a8672652fe49d3382d28185f42bad",
+  "source_sha256": {
+    "contracts.m": "2a82b7f5025b73fdaa4cfdebcd6e628fcaba44e92664736f3a5ea5872dde158d",
+    "parent.c": "52bedd6b592b6608433c47e76ddb5fc28754f5fc604e3bce6d30c9286ae0a76b",
+    "minimal.m": "93842ae2e34d37bda096a0ae278ae7be135b967b069fb51b283db434f861d5c9",
+    "README.md": "b758f1da6bb7bd54cd83bd3b7a6c33ab81489c1f0aadd11807b40e9b41ce2c1d",
+    "leaf.c": "d4e801b7aaf1cb8f7e9994a78327121bcb386a15ff4f731bc60e1eb6e37ea3e7"
+  }
+}

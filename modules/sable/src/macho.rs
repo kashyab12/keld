@@ -15,6 +15,20 @@ pub struct Image {
     pub text: (u64, u64),
     pub extra_text: Vec<(u64, u64)>,
     pub platform: u32,
+    pub startup: Option<Startup>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Startup {
+    pub header: u64,
+    pub initializers: Vec<u64>,
+}
+
+#[derive(Debug)]
+pub(crate) struct InitSection {
+    pub address: u64,
+    pub size: usize,
+    pub offsets: bool,
 }
 
 pub(crate) fn range(data: &[u8], offset: usize, size: usize) -> Result<&[u8]> {
@@ -53,6 +67,7 @@ pub(crate) struct Object {
     pub streams: [Vec<u8>; 5],
     pub header_base: u64,
     pub chained: Option<Vec<u8>>,
+    pub init_sections: Vec<InitSection>,
 }
 
 fn command_string(command: &[u8], offset: usize) -> Result<String> {
@@ -102,6 +117,7 @@ impl Object {
         let mut chained = None;
         let mut exports_seen = false;
         let mut extra_text = Vec::new();
+        let mut init_sections = Vec::new();
         let mut cursor = 32;
         let mut segments: Vec<Segment> = Vec::new();
         let mut entry_offset = None;
@@ -182,9 +198,37 @@ impl Object {
                             return Err("section relocations unsupported".into());
                         }
                         let section_type = u32_at(s, 64)? & 0xff;
-                        if (section_type == 9
-                            || section_type == 10
-                            || (0x11..=0x16).contains(&section_type))
+                        if (section_type == 9 || section_type == 0x16) && u64_at(s, 40)? != 0 {
+                            if !dynamic {
+                                return Err("initializers require explicit dynamic linking".into());
+                            }
+                            let start = u64_at(s, 32)?;
+                            let length = u64_at(s, 40)?;
+                            let alignment = if section_type == 0x16 { 4 } else { 8 };
+                            if start % alignment != 0
+                                || length % alignment != 0
+                                || length > 8192
+                                || start < address
+                                || start
+                                    .checked_add(length)
+                                    .ok_or("initializer range overflow")?
+                                    > address
+                                        .checked_add(file_size)
+                                        .ok_or("initializer file range overflow")?
+                                || protection & 1 == 0
+                                || (section_type == 0x16 && protection & 2 != 0)
+                            {
+                                return Err(
+                                    "invalid initializer array bounds/alignment/protection".into(),
+                                );
+                            }
+                            init_sections.push(InitSection {
+                                address: start,
+                                size: length as usize,
+                                offsets: section_type == 0x16,
+                            });
+                        }
+                        if (section_type == 10 || (0x11..=0x15).contains(&section_type))
                             && u64_at(s, 40)? != 0
                         {
                             return Err("initializers/terminators/TLS sections unsupported".into());
@@ -372,6 +416,7 @@ impl Object {
                 text,
                 extra_text,
                 platform,
+                startup: None,
             },
             kind,
             id,
@@ -383,6 +428,7 @@ impl Object {
             streams,
             header_base: header_base.ok_or("missing mapped Mach-O header")?,
             chained,
+            init_sections,
         })
     }
 }

@@ -27,6 +27,7 @@ fn program(words: &[u32]) -> Image {
         text: (0x1000, words.len() as u64 * 4),
         extra_text: Vec::new(),
         platform: 7,
+        startup: None,
     }
 }
 

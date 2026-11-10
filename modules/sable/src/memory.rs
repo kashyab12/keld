@@ -120,6 +120,7 @@ mod tests {
             text: (0x1000, 16),
             extra_text: Vec::new(),
             platform: 7,
+            startup: None,
         };
         let mut a = Memory::new(&image).unwrap();
         let b = Memory::new(&image).unwrap();

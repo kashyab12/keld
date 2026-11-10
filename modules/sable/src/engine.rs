@@ -390,6 +390,97 @@ fn syscall(
 }
 
 /// Immutable translated code may be reused across independent, freshly reset runs.
+const CALL_RETURN: u64 = u64::MAX - 3;
+
+fn validate_startup(image: &Image) -> Result<()> {
+    if let Some(startup) = &image.startup {
+        image.read(startup.header, 32, 1)?;
+        if image.contains_pc(CALL_RETURN)
+            || startup.initializers.len() > 1024
+            || startup
+                .initializers
+                .iter()
+                .any(|&pc| !image.contains_pc(pc))
+        {
+            return Err("invalid prepared initializer plan".into());
+        }
+    }
+    Ok(())
+}
+
+struct Process {
+    cpu: Cpu,
+    memory: Memory,
+    out: [Vec<u8>; 2],
+    syscalls: u64,
+    started: Instant,
+}
+
+struct Arguments {
+    sp: u64,
+    argv: u64,
+    envp: u64,
+    apple: u64,
+    vars: u64,
+}
+impl Process {
+    fn arguments(&mut self, header: u64) -> Result<Arguments> {
+        let base = STACK_BASE + STACK_SIZE as u64 - 4096;
+        let args = Arguments {
+            sp: base,
+            argv: base + 0x100,
+            envp: base + 0x120,
+            apple: base + 0x130,
+            vars: base + 0x140,
+        };
+        self.memory.write(base + 0x200, b"sable\0")?;
+        self.memory
+            .write(base + 0x220, b"executable_path=sable\0")?;
+        self.memory.write(base + 0x180, &1u32.to_le_bytes())?;
+        for (address, values) in [
+            (args.argv, vec![base + 0x200, 0]),
+            (args.envp, vec![0]),
+            (args.apple, vec![base + 0x220, 0]),
+            (base + 0x188, vec![args.argv]),
+            (base + 0x190, vec![args.envp]),
+            (base + 0x198, vec![base + 0x200]),
+            (
+                args.vars,
+                vec![
+                    header,
+                    base + 0x180,
+                    base + 0x188,
+                    base + 0x190,
+                    base + 0x198,
+                ],
+            ),
+        ] {
+            for (index, value) in values.into_iter().enumerate() {
+                self.memory
+                    .write(address + index as u64 * 8, &value.to_le_bytes())?;
+            }
+        }
+        Ok(args)
+    }
+    fn call(&mut self, pc: u64, args: &Arguments) {
+        self.cpu = Cpu::new(pc, self.cpu.remaining);
+        self.cpu.sp = args.sp;
+        self.cpu.x[..5].copy_from_slice(&[1, args.argv, args.envp, args.apple, args.vars]);
+        self.cpu.x[30] = CALL_RETURN;
+    }
+    fn finish(self, exit: u8) -> Outcome {
+        let [stdout, stderr] = self.out;
+        Outcome {
+            cpu: self.cpu,
+            memory: self.memory,
+            stdout,
+            stderr,
+            exit,
+            syscalls: self.syscalls,
+        }
+    }
+}
+
 pub struct Prepared<'a> {
     image: &'a Image,
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
@@ -397,6 +488,7 @@ pub struct Prepared<'a> {
 }
 impl<'a> Prepared<'a> {
     pub fn new(image: &'a Image, jit: bool) -> Result<Self> {
+        validate_startup(image)?;
         #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
         let compiled = if jit {
             Some(crate::jit::Compiled::new(image)?)
@@ -415,6 +507,7 @@ impl<'a> Prepared<'a> {
     }
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     pub fn new_with_dispatch(image: &'a Image, native_indirect: bool) -> Result<Self> {
+        validate_startup(image)?;
         Ok(Self {
             image,
             compiled: Some(crate::jit::Compiled::new_with_dispatch(
@@ -426,34 +519,68 @@ impl<'a> Prepared<'a> {
     pub fn run(&self, budget: u64) -> Result<Outcome> {
         let mut cpu = Cpu::new(self.image.entry, budget);
         cpu.sp = STACK_BASE + STACK_SIZE as u64;
-        let mut memory = Memory::new(self.image)?;
-        let mut out = [Vec::new(), Vec::new()];
-        let mut syscalls = 0;
-        let started = Instant::now();
+        let mut process = Process {
+            cpu,
+            memory: Memory::new(self.image)?,
+            out: [Vec::new(), Vec::new()],
+            syscalls: 0,
+            started: Instant::now(),
+        };
+        if let Some(startup) = &self.image.startup {
+            let args = process.arguments(startup.header)?;
+            for &target in &startup.initializers {
+                process.call(target, &args);
+                if let Some(exit) = self
+                    .drive(&mut process, Some(CALL_RETURN))
+                    .map_err(|e| format!("initializer {target:#x}: {e}"))?
+                {
+                    return Ok(process.finish(exit));
+                }
+                if process.cpu.sp != args.sp {
+                    return Err("initializer returned with unbalanced SP".into());
+                }
+            }
+            process.call(self.image.entry, &args);
+            let exit = self
+                .drive(&mut process, Some(CALL_RETURN))?
+                .unwrap_or(process.cpu.x[0] as u8);
+            if process.cpu.pc == CALL_RETURN && process.cpu.sp != args.sp {
+                return Err("main returned with unbalanced SP".into());
+            }
+            return Ok(process.finish(exit));
+        }
+        let exit = self
+            .drive(&mut process, None)?
+            .ok_or("unexpected freestanding return")?;
+        Ok(process.finish(exit))
+    }
+
+    fn drive(&self, process: &mut Process, return_pc: Option<u64>) -> Result<Option<u8>> {
+        let Process {
+            cpu,
+            memory,
+            out,
+            syscalls,
+            started,
+        } = process;
         #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
         let compiled = &self.compiled;
         loop {
+            if return_pc == Some(cpu.pc) {
+                return Ok(None);
+            }
             #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
             let trapped = if let Some(code) = &compiled {
-                code.execute_memory(&mut cpu, self.image, &mut memory)?;
-                true
+                code.execute_until(cpu, self.image, memory, return_pc)?
             } else {
-                step_memory(&mut cpu, self.image, &mut memory)?
+                step_memory(cpu, self.image, memory)?
             };
             #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
-            let trapped = step_memory(&mut cpu, self.image, &mut memory)?;
+            let trapped = step_memory(cpu, self.image, memory)?;
             if trapped {
-                syscalls += 1;
-                if let Some(exit) = syscall(&mut cpu, &memory, &mut out, started)? {
-                    let [stdout, stderr] = out;
-                    return Ok(Outcome {
-                        cpu,
-                        stdout,
-                        stderr,
-                        exit,
-                        syscalls,
-                        memory,
-                    });
+                *syscalls += 1;
+                if let Some(exit) = syscall(cpu, memory, out, *started)? {
+                    return Ok(Some(exit));
                 }
             }
         }

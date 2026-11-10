@@ -10,7 +10,7 @@ measurement. We do not infer product economics from it.
 | --- | --- | --- |
 | S0: first ARM64 execution on Linux | Original simulator-targeted Mach-O, checked loading, output/exit, instruction budget, x86 translation and raw cloud evidence | Implemented; see AWS evidence |
 | S1: independently validated CPU semantics | Native ARM64 or independent emulator comparison, flags, loads/stores, calls/stack, precise faults, atomics/NEON test corpus | Scalar subset implemented and independently tested; atomics, NEON, full fault/ISA coverage remain open |
-| S2: first dynamic Darwin process | A small first-party C/Objective-C program with dynamic symbols, TLS, memory mapping and required trap behavior | First-party dynamic C, eager bindings/rebases and minimal LibSystem ABI implemented; TLS, initialization, VM calls and broader startup remain open |
+| S2: first dynamic Darwin process | A small first-party C/Objective-C program with dynamic symbols, TLS, memory mapping and required trap behavior | First-party dynamic C, eager/chained fixups and checked C initialization implemented; TLS, VM calls and broader runtime startup remain open |
 | S3: first framework path | Original Foundation program with real Mach port allocation/message semantics, multiple threads and teardown | Not implemented |
 | S4: first visible app | Original UIKit app, deterministic screenshot, tap/text flow, redraw and reset, no fake successful services | Original native reference app/tests pass; Sable execution and general screenshot equivalence not implemented |
 | S5: simulator service scope | Process/service inventory, framework/runtime availability, multiple concurrent app sessions and isolation checks | Not implemented |
@@ -20,6 +20,12 @@ The next work is the remaining S1 coverage plus an instrumented trace of a minim
 native Foundation probe to identify S2/S3's first missing contracts. Do not add
 orchestration APIs while framework execution is absent. Do not expand the ISA randomly: use independently
 checked semantics and actual traces to prioritize required operations.
+
+The [native Foundation investigation](foundation-contracts.md) now identifies
+checked image initialization and plain C TLV storage as bounded next contracts.
+[Initialization](initializers.md) is implemented and independently exercised;
+TLV resolution/storage and full guest pthread behavior remain open. The actual
+Foundation program still stops at its unsupplied framework dependency.
 
 The [Notes app reference](../modules/sable/fixtures/apps/Notes) now exercises
 external taps/typing, scroll/navigation, persisted state/reset and real Metal

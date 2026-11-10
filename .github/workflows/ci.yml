@@ -41,6 +41,8 @@ jobs:
         run: bash scripts/check-dynamic.sh
       - name: Rebuild and execute original chained fixups
         run: bash scripts/check-chained.sh
+      - name: Rebuild and execute image initializers
+        run: bash scripts/check-initializers.sh
       - name: Check app oracle scripts and inventory graphics exposure
         run: |
           python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py

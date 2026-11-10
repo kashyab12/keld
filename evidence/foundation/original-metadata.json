@@ -1,0 +1,107 @@
+{
+  "libprobe_leaf.dylib": {
+    "sha256": "38d2faf4a893a7ea82486436c9a0c8c283a09074d3631e2bc8fa5c546d53b2e8",
+    "direct_dependencies": [
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "startup_sections": [
+      {
+        "segment": "__TEXT",
+        "section": "__init_offsets",
+        "type": 22,
+        "size": 4,
+        "alignment_exponent": 2,
+        "initializer_offsets": [
+          1536
+        ]
+      },
+      {
+        "segment": "__DATA",
+        "section": "__thread_vars",
+        "type": 19,
+        "size": 48,
+        "alignment_exponent": 3,
+        "descriptor_key_offsets": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            4
+          ]
+        ]
+      },
+      {
+        "segment": "__DATA",
+        "section": "__thread_data",
+        "type": 17,
+        "size": 4,
+        "alignment_exponent": 2
+      },
+      {
+        "segment": "__DATA",
+        "section": "__thread_bss",
+        "type": 18,
+        "size": 4,
+        "alignment_exponent": 2
+      }
+    ],
+    "chained_fixups": true
+  },
+  "libprobe_parent.dylib": {
+    "sha256": "ef77ca4ff72bb78c39a1c4bb2344bdf6d659749b05a384d72f8ad7c5664e7e93",
+    "direct_dependencies": [
+      "@rpath/libprobe_leaf.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "startup_sections": [
+      {
+        "segment": "__TEXT",
+        "section": "__init_offsets",
+        "type": 22,
+        "size": 4,
+        "alignment_exponent": 2,
+        "initializer_offsets": [
+          1384
+        ]
+      }
+    ],
+    "chained_fixups": true
+  },
+  "contracts": {
+    "sha256": "8ccb4265f6a7dc7234c6aed8e5078daf689005a85aae58ff4a0b22b861a299a3",
+    "direct_dependencies": [
+      "@rpath/libprobe_parent.dylib",
+      "@rpath/libprobe_leaf.dylib",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib",
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"
+    ],
+    "startup_sections": [
+      {
+        "segment": "__TEXT",
+        "section": "__init_offsets",
+        "type": 22,
+        "size": 4,
+        "alignment_exponent": 2,
+        "initializer_offsets": [
+          2160
+        ]
+      }
+    ],
+    "chained_fixups": true
+  },
+  "minimal": {
+    "sha256": "63f9e94544e4b24c5341a1bdbd953b97de16f417f6cefe7012b733b55467d0ba",
+    "direct_dependencies": [
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib",
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"
+    ],
+    "startup_sections": [],
+    "chained_fixups": true
+  }
+}

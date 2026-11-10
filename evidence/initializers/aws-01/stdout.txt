@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-10T23:03:36.573874+00:00",
+  "host": {
+    "os": "Linux",
+    "kernel": "7.0.0-1014-aws",
+    "arch": "x86_64"
+  },
+  "pci_inventory_available": true,
+  "pci_graphics": [
+    {
+      "pci_address": "0000:00:03.0",
+      "pci_class": "0x030000",
+      "vendor": "0x1d0f",
+      "device": "0x1111",
+      "driver": null
+    }
+  ],
+  "pci_errors": [],
+  "exposed_gpu_nodes": [],
+  "graphics_commands": {
+    "vulkaninfo": {
+      "status": "not_installed"
+    },
+    "nvidia-smi": {
+      "status": "not_installed"
+    }
+  },
+  "software_renderer_overrides": {},
+  "display_environment_present": {
+    "DISPLAY": false,
+    "WAYLAND_DISPLAY": false
+  },
+  "interpretation": "Exposure inventory only. Headless does not mean GPU-free. A software Vulkan device is not a hardware GPU. App rendering is a separate correctness gate."
+}
+Linux x86_64
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  2
+On-line CPU(s) list:                     0,1
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Platinum 8488C
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      2
+Core(s) per socket:                      1
+Socket(s):                               1
+Stepping:                                8
+BogoMIPS:                                4800.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq monitor ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd ida arat avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq rdpid cldemote movdiri movdir64b md_clear serialize amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+L1d cache:                               48 KiB (1 instance)
+L1i cache:                               32 KiB (1 instance)
+L2 cache:                                2 MiB (1 instance)
+L3 cache:                                105 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0,1
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+rustc 1.93.1 (01f6ddf75 2026-02-11)
+
+running 7 tests
+test chained::tests::both_pointer_formats_import_addends_tags_and_slide ... ok
+test chained::tests::rejects_malformed_metadata_and_pointer_slots_without_mutating ... ok
+test jit::tests::cpu_layout_matches_emitter ... ok
+test linker::tests::bounded_integer_and_trie_parsing ... ok
+test linker::tests::malformed_binding_streams_never_patch_executable_storage ... ok
+test memory::tests::immutable_bytes_are_shared_and_writable_bytes_are_private ... ok
+test chained::tests::malformed_chains_are_bounded_and_never_panic ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test llvm_chains_execute_with_rebases_transitive_imports_and_addends ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+
+running 5 tests
+test malformed_initializer_and_unsupported_tls_sections_are_rejected ... ok
+test corrupted_import_and_version_are_not_silently_accepted ... ok
+test missing_duplicate_and_wrong_kind_dependencies_fail_closed ... ok
+test supplied_order_does_not_change_two_level_resolution ... ok
+test transitive_binding_rebasing_and_private_state ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 11 tests
+test architecture_rejects_unimplemented_and_reserved_ops ... ok
+test exhausted_budget_precedes_faults_in_both_engines ... ok
+test finite_budget_and_unknown_trap_fail ... ok
+test loader_rejects_unimplemented_optional_commands ... ok
+test loader_rejects_wrong_arch_platform_permissions_and_entry ... ok
+test malformed_inputs_do_not_panic ... ok
+test memory_permissions_and_bounds ... ok
+test original_compute_checksum ... ok
+test original_linked_simulator_binary ... ok
+test wrapping_w_registers_sp_and_zero_register ... ok
+test differential_generated_programs_and_control_flow ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+
+running 4 tests
+test callback_exit_nonreturn_and_unbalanced_stack_stop_startup ... ok
+test constructor_return_at_exact_budget_and_main_return_status ... ok
+test malformed_arrays_and_targets_reject_before_execution ... ok
+test dependency_array_order_diamond_once_arguments_and_private_reset ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 10 tests
+test compiled_c_checksums_and_private_memory ... ok
+test discontiguous_images_do_not_allow_fallthrough_across_gaps ... ok
+test faults_preserve_cpu_and_memory_before_writeback ... ok
+test flags_have_arm_carry_and_signed_overflow_semantics ... ok
+test indirect_dispatch_checks_ranges_alignment_and_budget_before_jump ... ok
+test native_block_budgets_preserve_partial_state_and_mid_block_entries ... ok
+test pair_fault_does_not_partially_store_or_update_base ... ok
+test reject_vector_signed_unprivileged_and_overlap_encodings ... ok
+test stack_alignment_and_region_collision ... ok
+test arithmetic_checksum_is_observable_by_external_runner ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+Both initializer formats match the native-checked order and startup arguments.
+All four rebuilt chained fixtures match in every available engine.
+SABLE_ARM64_DARWIN_OK
+{"benchmark":"arm64_arithmetic_translation","pairs":9,"instructions":30000006,"checksum_x9":50000005000000,"equal_full_state":true,"translation_included":true,"interp_seconds":[0.472276973, 0.473829542, 0.471421572, 0.474636235, 0.474550098, 0.474935704, 0.472961424, 0.473615991, 0.4732572],"jit_seconds":[0.00640854, 0.006719844, 0.006398503, 0.006483559, 0.006384075, 0.006479035, 0.006362505, 0.006476147, 0.006359827],"median_speedup":73.90388309973879}

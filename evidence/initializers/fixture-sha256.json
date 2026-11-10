@@ -1,0 +1,12 @@
+{
+  "modules/sable/fixtures/bin/initializers/offsets/initialize.macho": "59ed1ab10de060fdb9d023c4cc96ddbbc25a3e479f8dc7612286ad2da2a72e43",
+  "modules/sable/fixtures/bin/initializers/offsets/libsable_leaf.dylib": "683544cc864501aac01c675e73d80e9f8c3121917f60e5202e9d51da54d81f2d",
+  "modules/sable/fixtures/bin/initializers/offsets/libsable_parent.dylib": "087d5b74950235ec6d7c5e32135506f71d908111ecc1700d47d78610d312f91b",
+  "modules/sable/fixtures/bin/initializers/offsets/libsable_sibling.dylib": "136d8902254fa647b3a608440e3017b114170678fb6392e37f6b27aece744fe8",
+  "modules/sable/fixtures/bin/initializers/offsets/libsable_system.dylib": "a4397cd57f5bb3fa4154b8c8d5feda5efb062be71505f74d0ec41fef8580a234",
+  "modules/sable/fixtures/bin/initializers/pointers/initialize.macho": "24c72ff4d1113a62d54719063b03e28296341cb0897cb5e66d9dc58260d78dc5",
+  "modules/sable/fixtures/bin/initializers/pointers/libsable_leaf.dylib": "d90a6853abad5597fc3f623a0379bd5d334593a98553b9afe89e4a12f5b6947e",
+  "modules/sable/fixtures/bin/initializers/pointers/libsable_parent.dylib": "20dc11567b47943528e23a60f0b478d95143bd8459e8950a6484ac5e55c80003",
+  "modules/sable/fixtures/bin/initializers/pointers/libsable_sibling.dylib": "767087a5e66456ba24d1a93b33420d58a41e14e8073354599d7796b0f7622255",
+  "modules/sable/fixtures/bin/initializers/pointers/libsable_system.dylib": "03d0b0e7fad00a77fb655c33baad65fd02ce13887427d6dbe9dc657999f89bfe"
+}

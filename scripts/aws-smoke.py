@@ -152,6 +152,12 @@ rustc -V
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test --release
+bash scripts/check-initializers.sh
+mkdir -p results/initializers
+for mode in offsets pointers; do
+  cp "artifacts/initializers/$mode/interp.txt" "results/initializers/$mode-interp.txt"
+  cp "artifacts/initializers/$mode/jit.txt" "results/initializers/$mode-jit.txt"
+done
 bash scripts/check-chained.sh
 mkdir -p results/chained
 cp artifacts/chained/interp-*.bin artifacts/chained/jit-*.bin results/chained/

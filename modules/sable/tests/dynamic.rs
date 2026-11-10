@@ -110,7 +110,7 @@ fn corrupted_import_and_version_are_not_silently_accepted() {
 }
 
 #[test]
-fn all_initializer_and_tls_section_forms_are_rejected() {
+fn malformed_initializer_and_unsupported_tls_sections_are_rejected() {
     for kind in [9, 10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16] {
         let mut bytes = SHORT.to_vec();
         let mut at = 32;
@@ -141,7 +141,7 @@ fn all_initializer_and_tls_section_forms_are_rejected() {
         assert!(
             Image::link(&bytes, &[MATH, HELPER, SYSTEM])
                 .unwrap_err()
-                .contains("initializers")
+                .contains("initializer")
         );
     }
 }

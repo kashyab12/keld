@@ -66,3 +66,14 @@ all four programs with `bash scripts/check-chained.sh`. The Apple oracle's
 `--chained` option independently executes their checked-in binaries in a
 temporary private simulator set. Format coverage and results are in
 [the chained-fixup report](../../../evidence/chained/RESULTS.md).
+
+`bin/initializers/{offsets,pointers}` contains original C/assembly images for
+initializer scheduling. A shared leaf has two ordered callbacks; parent and
+sibling each depend on it. Main's two callbacks include assembly checks of
+argc/argv/envp/apple/ProgramVars, then main verifies all data mutations. Rebuild
+with `bash scripts/build-initializers.sh`; `bash scripts/check-initializers.sh`
+checks both formats against `init-expected.txt`. The pointer format uses legacy
+fixup streams and eager binding in Sable; `init-binder.s` traps if an unsupported
+lazy binder is actually invoked. Apple-native checks resolve real LibSystem.
+The four [Foundation research sources](foundation) are separate SDK-dependent
+native probes, not passing Linux fixtures.

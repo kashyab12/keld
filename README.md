@@ -12,6 +12,8 @@ compiled C executables, including writable arrays, stack frames, nested calls an
 explicitly supplied original dynamic libraries. A restricted eager linker handles
 pointer rebasing, export tries and two-level symbol binding, including supported
 [64-bit chained fixups](docs/chained-fixups.md).
+Supported C initializers run before main in a checked dependency order with a
+shared guest instruction budget; see [startup behavior](docs/initializers.md).
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 
