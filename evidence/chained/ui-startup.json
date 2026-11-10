@@ -1,0 +1,11 @@
+{
+  "app_reference": "evidence/app-readiness/native-03.json",
+  "app_arm64_sha256": "1785648548ff24fe13b37c0321dbf79744bb43c8e05c6e7bcbb29cbe652fe240",
+  "sable_binary_sha256": "80c315082d1e20e33cd71751c9f92c58ef6201ea8c2395a990567fd306e9d1b6",
+  "exit": 125,
+  "stderr": "sable: required dylib not supplied: /System/Library/Frameworks/UIKit.framework/UIKit\n",
+  "stdout_hex": "",
+  "completed_interactions": 0,
+  "app_passed": false,
+  "scope": "Actual ARM64 UIKit executable attempted. Dependency resolution stops before application startup or chained pointer application."
+}

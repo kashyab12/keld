@@ -10,7 +10,8 @@ or an existing emulator.
 **Current stage:** original freestanding iOS Simulator-targeted assembly and
 compiled C executables, including writable arrays, stack frames, nested calls and
 explicitly supplied original dynamic libraries. A restricted eager linker handles
-pointer rebasing, export tries and two-level symbol binding.
+pointer rebasing, export tries and two-level symbol binding, including supported
+[64-bit chained fixups](docs/chained-fixups.md).
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 

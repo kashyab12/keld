@@ -17,12 +17,17 @@ does not change dependency resolution or placement. Required compatibility
 versions are checked against supplied libraries' current versions.
 
 Regular and absolute exports are supported. Re-exports, weak definitions/imports,
-flat lookup, threaded bind opcodes, chained fixups and resolver exports fail
+flat lookup, threaded bind opcodes and resolver exports fail
 explicitly. Constructors, terminators, TLS sections and initializer-offset
 sections are rejected until their startup behavior is implemented. Lazy streams
 are resolved before execution; Sable does not implement Apple's lazy binder or
 general dlopen/dlsym behavior. The original fixtures deliberately use non-lazy
 function-pointer imports and need no lazy-binding helper.
+
+Unauthenticated 64-bit chained fixups and separate export tries are now supported
+by the same explicit-library path. Supported formats, validation limits and
+native evidence are documented in [chained fixups](chained-fixups.md). This does
+not add shared-cache or framework startup support.
 
 ULEB/SLEB readers check bounds and overflow. Export tries limit depth, visits,
 name lengths and cycles. Pointer fixup slots must lie fully within non-executable

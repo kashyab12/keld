@@ -11,6 +11,8 @@ Darwin `write`, `exit`, deterministic single-process `getpid`, and experimental
 `Image::link` now loads explicitly supplied original dylibs, resolves supported
 export tries and two-level imports, rebases data pointers, and eagerly applies
 supported regular/lazy bind streams. It never searches the host for a dependency.
+It also supports the bounded [64-bit chained format](../../docs/chained-fixups.md)
+and data-only dylibs, with independent native and AWS execution checks.
 The new original dynamic fixture uses math/helper libraries plus a minimal
 original LibSystem ABI library implementing `write`, `exit` and `getpid`.
 No Apple runtime libraries are distributed or loaded on Linux.
@@ -34,7 +36,7 @@ compare all general registers, SP, PC, flags, instruction counts and tested memo
 [Validation and process-level QEMU benchmark](../../evidence/s1/RESULTS.md).
 
 This is **not a complete iOS Simulator**. The restricted eager linker does not
-execute Apple's dyld or implement chained fixups, shared caches, constructors,
+execute Apple's dyld or implement shared caches, constructors,
 TLS, weak/re-export lookup or general dynamic-loader APIs. There is no
 Objective-C runtime, Foundation, UIKit, Swift runtime, Mach message transport,
 thread scheduler, atomics, NEON, PAC, graphics or app-bundle support. Ordinary

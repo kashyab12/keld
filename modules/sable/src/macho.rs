@@ -26,6 +26,11 @@ pub(crate) fn u32_at(data: &[u8], offset: usize) -> Result<u32> {
         range(data, offset, 4)?.try_into().unwrap(),
     ))
 }
+pub(crate) fn u16_at(data: &[u8], offset: usize) -> Result<u16> {
+    Ok(u16::from_le_bytes(
+        range(data, offset, 2)?.try_into().unwrap(),
+    ))
+}
 pub(crate) fn u64_at(data: &[u8], offset: usize) -> Result<u64> {
     Ok(u64::from_le_bytes(
         range(data, offset, 8)?.try_into().unwrap(),
@@ -43,9 +48,11 @@ pub(crate) struct Object {
     pub current_version: u32,
     pub dependencies: Vec<(String, u32)>,
     pub segment_indices: Vec<Option<usize>>,
+    pub segment_file_sizes: Vec<u64>,
     pub readonly: Vec<usize>,
     pub streams: [Vec<u8>; 5],
     pub header_base: u64,
+    pub chained: Option<Vec<u8>>,
 }
 
 fn command_string(command: &[u8], offset: usize) -> Result<String> {
@@ -87,10 +94,13 @@ impl Object {
         let mut current_version = 0;
         let mut dependencies = Vec::new();
         let mut segment_indices = Vec::new();
+        let mut segment_file_sizes = Vec::new();
         let mut readonly = Vec::new();
         let mut header_base = None;
         let mut streams: [Vec<u8>; 5] = std::array::from_fn(|_| Vec::new());
         let mut dyld_info_seen = false;
+        let mut chained = None;
+        let mut exports_seen = false;
         let mut extra_text = Vec::new();
         let mut cursor = 32;
         let mut segments: Vec<Segment> = Vec::new();
@@ -119,6 +129,7 @@ impl Object {
                     let memory_size = u64_at(c, 32)?;
                     let file_offset = u64_at(c, 40)?;
                     let file_size = u64_at(c, 48)?;
+                    segment_file_sizes.push(file_size);
                     let protection = u32_at(c, 60)?;
                     let sections = u32_at(c, 64)? as usize;
                     range(c, 72, sections.checked_mul(80).ok_or("sections overflow")?)?;
@@ -183,6 +194,9 @@ impl Object {
                         {
                             let start = u64_at(s, 32)?;
                             let len = u64_at(s, 40)?;
+                            if kind == 6 && len == 0 {
+                                continue;
+                            }
                             if protection & 4 == 0
                                 || start < address
                                 || start.checked_add(len).ok_or("text overflow")? > end
@@ -231,7 +245,13 @@ impl Object {
                         if stream_bytes > 8 * 1024 * 1024 {
                             return Err("dyld streams exceed 8 MiB".into());
                         }
-                        streams[index] = range(data, at, length)?.to_vec();
+                        let payload = range(data, at, length)?;
+                        if index == 4 && exports_seen && length != 0 {
+                            return Err("duplicate export trie".into());
+                        }
+                        if index != 4 || length != 0 {
+                            streams[index] = payload.to_vec();
+                        }
                     }
                     for offset in [12, 20, 28, 36] {
                         if !dynamic && u32_at(c, offset)? != 0 {
@@ -246,6 +266,28 @@ impl Object {
                         || u32_at(c, 76)? != 0
                     {
                         return Err("undefined symbols or dynamic relocations unsupported".into());
+                    }
+                }
+                0x80000034 | 0x80000033 if dynamic => {
+                    if length != 16 {
+                        return Err("invalid chained fixups/exports command length".into());
+                    }
+                    let offset = u32_at(c, 8)? as usize;
+                    let size = u32_at(c, 12)? as usize;
+                    if size > 8 * 1024 * 1024 {
+                        return Err("chained fixups/exports exceed 8 MiB".into());
+                    }
+                    let payload = range(data, offset, size)?.to_vec();
+                    if cmd == 0x80000034 {
+                        if chained.replace(payload).is_some() {
+                            return Err("duplicate chained fixups".into());
+                        }
+                    } else {
+                        if exports_seen || !streams[4].is_empty() {
+                            return Err("duplicate export trie".into());
+                        }
+                        exports_seen = true;
+                        streams[4] = payload;
                     }
                 }
                 0xc if dynamic => {
@@ -283,6 +325,9 @@ impl Object {
         if cursor != command_end {
             return Err("load commands disagree with sizeofcmds".into());
         }
+        if chained.is_some() && streams[..4].iter().any(|s| !s.is_empty()) {
+            return Err("mixed legacy and chained fixups unsupported".into());
+        }
         if kind == 6 && entry_offset.is_some() {
             return Err("dylib cannot declare LC_MAIN".into());
         }
@@ -302,7 +347,9 @@ impl Object {
                 })
                 .ok_or("entry is outside executable file data")?
         };
-        let text = text.ok_or("__text section required")?;
+        let text = text
+            .or_else(|| (kind == 6).then_some((0, 0)))
+            .ok_or("__text section required")?;
         if kind == 2 && (entry < text.0 || entry >= text.0 + text.1 || entry % 4 != 0) {
             return Err("entry outside __text".into());
         }
@@ -331,9 +378,11 @@ impl Object {
             current_version,
             dependencies,
             segment_indices,
+            segment_file_sizes,
             readonly,
             streams,
             header_base: header_base.ok_or("missing mapped Mach-O header")?,
+            chained,
         })
     }
 }
@@ -350,7 +399,9 @@ impl Image {
         crate::linker::link(main, libraries)
     }
     pub fn code_ranges(&self) -> impl Iterator<Item = (u64, u64)> + '_ {
-        std::iter::once(self.text).chain(self.extra_text.iter().copied())
+        std::iter::once(self.text)
+            .chain(self.extra_text.iter().copied())
+            .filter(|(_, len)| *len != 0)
     }
     pub fn contains_pc(&self, pc: u64) -> bool {
         pc.is_multiple_of(4)

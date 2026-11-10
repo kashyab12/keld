@@ -4,6 +4,10 @@ Observed 2026-11-10. **Sable does not run this UIKit app.** The successful app
 tests below ran on Apple's native Simulator and define behavior Sable must
 eventually match. The AWS check exercised Sable CPU execution, not an app UI.
 
+Follow-up: [restricted chained fixups now execute](../chained/RESULTS.md). The
+UIKit startup diagnostic reaches an unsupplied framework dependency. The
+receipts below preserve the earlier failure; Sable still completes no app UI.
+
 | Path | Observed result | What it establishes |
 | --- | --- | --- |
 | Native Apple Simulator, Xcode 27.2 / iOS 27.2 build 24B8117, ARM64 | All 3 external UI tests passed, 0 skips | Reference app behavior including actual input, persistence/reset, scrolling and Metal pixels |

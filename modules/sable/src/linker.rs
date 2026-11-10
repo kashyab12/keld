@@ -243,6 +243,33 @@ fn rebase(object: &mut Object, slide: u64) -> Result<()> {
     Err("rebase stream missing DONE".into())
 }
 
+fn resolve_symbol(
+    object: &Object,
+    object_index: usize,
+    ordinal: i64,
+    name: &str,
+    all_exports: &[BTreeMap<String, u64>],
+    ids: &HashMap<String, usize>,
+) -> Result<u64> {
+    let source = match ordinal {
+        0 => object_index,
+        -1 => 0,
+        n if n > 0 => {
+            let dependency = object
+                .dependencies
+                .get((n - 1) as usize)
+                .ok_or("bind ordinal outside dependency list")?;
+            *ids.get(&dependency.0)
+                .ok_or("bind dependency not supplied")?
+        }
+        _ => return Err("flat/weak namespace binding unsupported".into()),
+    };
+    all_exports[source]
+        .get(name)
+        .copied()
+        .ok_or_else(|| format!("unresolved import {name} (ordinal {ordinal})"))
+}
+
 fn bind(
     object: &mut Object,
     stream: usize,
@@ -337,23 +364,8 @@ fn bind(
             ),
             _ => return Err("unsupported/threaded bind opcode".into()),
         };
-        let source = match ordinal {
-            0 => object_index,
-            -1 => 0,
-            n if n > 0 => {
-                let dependency = object
-                    .dependencies
-                    .get((n - 1) as usize)
-                    .ok_or("bind ordinal outside dependency list")?;
-                *ids.get(&dependency.0)
-                    .ok_or("bind dependency not supplied")?
-            }
-            _ => return Err("flat/weak namespace binding unsupported".into()),
-        };
         let name = symbol.as_ref().ok_or("bind symbol not selected")?;
-        let value = all_exports[source]
-            .get(name)
-            .ok_or_else(|| format!("unresolved import {name} (ordinal {ordinal})"))?
+        let value = resolve_symbol(object, object_index, ordinal, name, all_exports, ids)?
             .checked_add_signed(addend)
             .ok_or("bind addend overflow")?;
         operations += count;
@@ -432,6 +444,7 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
         cursor += 1;
     }
     let mut all_exports = vec![BTreeMap::new(); objects.len()];
+    let mut slides = vec![0; objects.len()];
     for (placement, index) in order.iter().copied().enumerate() {
         let object = &mut objects[index];
         let slide = if index == 0 {
@@ -441,6 +454,7 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
                 .checked_sub(object.header_base)
                 .ok_or("unsupported dylib preferred address")?
         };
+        slides[index] = slide;
         for segment in &mut object.image.segments {
             segment.address = segment
                 .address
@@ -480,7 +494,15 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
     for index in order.iter().copied() {
         bind(&mut objects[index], 1, index, &all_exports, &ids)?;
         bind(&mut objects[index], 3, index, &all_exports, &ids)?;
+        let object = &objects[index];
+        let patches = crate::chained::patches(object, slides[index], |ordinal, name| {
+            resolve_symbol(object, index, ordinal, name, &all_exports, &ids)
+        })?;
         let object = &mut objects[index];
+        for (segment, offset, value) in patches {
+            std::sync::Arc::make_mut(&mut object.image.segments[segment].bytes)[offset..offset + 8]
+                .copy_from_slice(&value.to_le_bytes());
+        }
         for segment in &object.readonly {
             object.image.segments[*segment].protection &= !2;
         }

@@ -24,6 +24,8 @@ and the required future AWS app tests are described in
 The remote run checks formatting, Clippy, the release test suite, recompiles the
 Mach-O fixtures with LLVM, compares rebuilt binaries, runs hello and compute
 through native x86 translation, and executes nine alternating benchmark pairs.
+It also rebuilds and checks four original chained-fixup programs in both engines;
+the eight outputs and rebuilt binary hashes are retained under `results/chained`.
 Logs are saved under `evidence/aws-smoke/`. The internal translator/reference ratio
 is only an arithmetic dispatch comparison. It is not an iOS UI or Macbox result.
 The observed runs and their limitations are recorded in [the evidence report](../evidence/README.md).

@@ -1,3 +1,4 @@
+mod chained;
 pub mod engine;
 pub mod isa;
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]

@@ -152,6 +152,10 @@ rustc -V
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test --release
+bash scripts/check-chained.sh
+mkdir -p results/chained
+cp artifacts/chained/interp-*.bin artifacts/chained/jit-*.bin results/chained/
+python3 -c 'import hashlib,json; from pathlib import Path; print(json.dumps({p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(Path("artifacts/chained").iterdir()) if p.suffix in [".macho",".dylib"]},indent=2))' > results/chained/rebuilt-sha256.json
 bash scripts/build-fixtures.sh
 cmp artifacts/hello.macho modules/sable/fixtures/bin/hello.macho
 cmp artifacts/compute.macho modules/sable/fixtures/bin/compute.macho

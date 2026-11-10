@@ -24,7 +24,10 @@ checked semantics and actual traces to prioritize required operations.
 The [Notes app reference](../modules/sable/fixtures/apps/Notes) now exercises
 external taps/typing, scroll/navigation, persisted state/reset and real Metal
 readback plus presented pixels on native Simulator. Sable rejects its ARM64
-executable at chained fixups and completes zero app interactions. A new AWS
+executable at an unsupplied UIKit dependency and completes zero app interactions.
+Restricted chained pointer linking now works on original LLVM fixtures, with
+matching Apple-native outputs; [format coverage](chained-fixups.md) and
+[execution evidence](../evidence/chained/RESULTS.md) describe the limits. A new AWS
 CPU-only run records actual graphics exposure; it is not a GPU-free app pass.
 See [observations](../evidence/app-readiness/RESULTS.md) and the
 [required app/GPU benchmark protocol](app-benchmarks.md).

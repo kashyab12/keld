@@ -56,3 +56,13 @@ Rebuild with `bash scripts/build-dynamic.sh`; verify all rebuilt checksums with
 also run in Apple's iOS 27.2 Simulator. Native Apple execution uses its installed
 LibSystem; Linux execution uses the original explicitly supplied minimal system
 dylib. None of the checked-in dylibs is copied from Apple software.
+
+`bin/chained/` contains the same original dynamic C workloads encoded with LLVM's
+`-fixup_chains` option. `chained-addend.s` adds positive and negative imported
+data-pointer addends and a local rebase. `chained-numbers.s` is its original
+data-only dylib. Their expected output is the eight-byte integer 51. Rebuild
+with `SABLE_FIXUPS=chained bash scripts/build-dynamic.sh`, or rebuild and check
+all four programs with `bash scripts/check-chained.sh`. The Apple oracle's
+`--chained` option independently executes their checked-in binaries in a
+temporary private simulator set. Format coverage and results are in
+[the chained-fixup report](../../../evidence/chained/RESULTS.md).
