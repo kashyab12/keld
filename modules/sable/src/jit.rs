@@ -7,7 +7,11 @@ use crate::{
     macho::Image,
     memory::{Memory, STACK_BASE, STACK_SIZE},
 };
-use std::{collections::HashMap, ffi::c_void, ptr::NonNull};
+use std::{
+    collections::{BTreeSet, HashMap},
+    ffi::c_void,
+    ptr::NonNull,
+};
 
 unsafe extern "C" {
     fn mmap(addr: *mut c_void, len: usize, prot: i32, flags: i32, fd: i32, off: i64)
@@ -27,6 +31,9 @@ struct Assembler {
     branches: Vec<(usize, u64)>,
     budgets: Vec<usize>,
     layout: Vec<(u64, usize, u32)>,
+    hot: [u8; 2],
+    exits: Vec<usize>,
+    short_budgets: Vec<usize>,
 }
 
 impl Assembler {
@@ -37,7 +44,25 @@ impl Assembler {
         self.emit(if rhs { &[0x48, 0xba] } else { &[0x48, 0xb8] });
         self.emit(&value.to_le_bytes());
     }
+    fn cached(&self, reg: u8) -> Option<u8> {
+        if reg == 31 {
+            None
+        } else {
+            self.hot
+                .iter()
+                .position(|r| *r == reg)
+                .map(|i| 12 + i as u8)
+        }
+    }
     fn load(&mut self, reg: u8, sp: bool, rhs: bool) {
+        if let Some(host) = self.cached(reg) {
+            self.emit(&[
+                0x4c,
+                0x89,
+                0xc0 | ((host & 7) << 3) | if rhs { 2 } else { 0 },
+            ]);
+            return;
+        }
         if reg == 31 && !sp {
             self.emit(if rhs { &[0x31, 0xd2] } else { &[0x31, 0xc0] });
         } else {
@@ -50,6 +75,10 @@ impl Assembler {
         }
     }
     fn store_at(&mut self, offset: u32) {
+        if offset == PC {
+            self.emit(&[0x49, 0x89, 0xc7]);
+            return;
+        }
         self.emit(&[0x48, 0x89, 0x87]);
         self.emit(&offset.to_le_bytes());
     }
@@ -60,16 +89,21 @@ impl Assembler {
         if !wide {
             self.emit(&[0x89, 0xc0]);
         }
-        self.store_at(u32::from(reg) * 8);
+        if let Some(host) = self.cached(reg) {
+            self.emit(&[0x49, 0x89, 0xc0 | (host & 7)]);
+        } else {
+            self.store_at(u32::from(reg) * 8);
+        }
     }
     fn pc(&mut self, pc: u64) {
-        self.imm64(pc, false);
-        self.store_at(PC);
+        self.emit(&[0x49, 0xbf]);
+        self.emit(&pc.to_le_bytes());
     }
     fn exit(&mut self, reason: u32) {
         self.emit(&[0xb8]);
         self.emit(&reason.to_le_bytes());
-        self.emit(&[0xc3]);
+        let at = self.local_jump(None);
+        self.exits.push(at);
     }
     fn branch(&mut self, target: u64, condition: Option<bool>) {
         if let Some(nonzero) = condition {
@@ -82,18 +116,41 @@ impl Assembler {
     }
     fn guard(&mut self, pc: u64) {
         self.pc(pc);
-        self.emit(&[0x48, 0x83, 0xbf]);
-        self.emit(&REMAINING.to_le_bytes());
-        self.emit(&[0]);
+        self.emit(&[0x49, 0x83, 0xfe, 0]);
         self.emit(&[0x0f, 0x84]);
         self.budgets.push(self.bytes.len());
         self.emit(&[0; 4]);
     }
-    fn budget(&mut self, pc: u64) {
-        self.guard(pc);
-        self.emit(&[0x48, 0x83, 0xaf]);
+    fn block_budget(&mut self, pc: u64, count: u32) {
+        self.pc(pc);
+        self.emit(&[0x49, 0x81, 0xfe]);
+        self.emit(&count.to_le_bytes());
+        let at = self.local_jump(Some(0x82));
+        self.short_budgets.push(at);
+        self.emit(&[0x49, 0x81, 0xee]);
+        self.emit(&count.to_le_bytes());
+    }
+    fn prologue(&mut self) {
+        self.emit(&[0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57]);
+        self.emit(&[0x4c, 0x8b, 0xb7]);
         self.emit(&REMAINING.to_le_bytes());
-        self.emit(&[1]);
+        self.emit(&[0x4c, 0x8b, 0xbf]);
+        self.emit(&PC.to_le_bytes());
+        for (i, reg) in self.hot.into_iter().enumerate() {
+            self.emit(&[0x4c, 0x8b, 0xa7 | ((i as u8) << 3)]);
+            self.emit(&(u32::from(reg) * 8).to_le_bytes());
+        }
+    }
+    fn epilogue(&mut self) {
+        for (i, reg) in self.hot.into_iter().enumerate() {
+            self.emit(&[0x4c, 0x89, 0xa7 | ((i as u8) << 3)]);
+            self.emit(&(u32::from(reg) * 8).to_le_bytes());
+        }
+        self.emit(&[0x4c, 0x89, 0xb7]);
+        self.emit(&REMAINING.to_le_bytes());
+        self.emit(&[0x4c, 0x89, 0xbf]);
+        self.emit(&PC.to_le_bytes());
+        self.emit(&[0x41, 0x5f, 0x41, 0x5e, 0x41, 0x5d, 0x41, 0x5c, 0xc3]);
     }
     fn shift_rhs(&mut self, shift: u8, amount: u8, wide: bool) {
         if amount == 0 {
@@ -249,9 +306,7 @@ impl Assembler {
                 self.emit(&[0x48, 0x01, 0xd0]);
                 self.store(base, true, true);
             }
-            self.emit(&[0x48, 0x83, 0xaf]);
-            self.emit(&REMAINING.to_le_bytes());
-            self.emit(&[1]);
+            self.emit(&[0x49, 0x83, 0xee, 1]);
             completed.push(self.local_jump(None));
             let next = self.bytes.len();
             self.patch(low, next)?;
@@ -296,6 +351,24 @@ impl Assembler {
                 wide,
                 flags,
             } => {
+                if dst == src
+                    && let Some(host) = self.cached(dst)
+                {
+                    self.emit(&[
+                        if wide { 0x49 } else { 0x41 },
+                        if value <= 127 { 0x83 } else { 0x81 },
+                        0xc0 | if subtract { 0x28 } else { 0 } | (host & 7),
+                    ]);
+                    if value <= 127 {
+                        self.emit(&[value as u8]);
+                    } else {
+                        self.emit(&(value as u32).to_le_bytes());
+                    }
+                    if flags {
+                        self.flags(subtract);
+                    }
+                    return;
+                }
                 self.load(src, true, false);
                 self.imm64(value, true);
                 if wide {
@@ -317,6 +390,20 @@ impl Assembler {
                 shift,
                 amount,
             } => {
+                if dst == lhs
+                    && amount == 0
+                    && let (Some(a), Some(b)) = (self.cached(dst), self.cached(rhs))
+                {
+                    self.emit(&[
+                        if wide { 0x4d } else { 0x45 },
+                        if subtract { 0x29 } else { 0x01 },
+                        0xc0 | ((b & 7) << 3) | (a & 7),
+                    ]);
+                    if flags {
+                        self.flags(subtract);
+                    }
+                    return;
+                }
                 self.load(lhs, false, false);
                 self.load(rhs, false, true);
                 self.shift_rhs(shift, amount, wide);
@@ -445,28 +532,111 @@ impl Compiled {
             .map(|s| (s.address, s.bytes.len(), s.protection))
             .collect();
         layout.push((STACK_BASE, STACK_SIZE, 3));
+        let mut decoded = Vec::new();
+        let mut boundaries = BTreeSet::from([image.text.0, image.text.0 + image.text.1]);
+        let mut frequency = [0u32; 31];
+        for pc in (image.text.0..image.text.0 + image.text.1).step_by(4) {
+            let op = decode(image.instruction(pc)?, pc);
+            if let Ok(op) = op {
+                let mut count = |reg: u8| {
+                    if reg < 31 {
+                        frequency[reg as usize] += 1;
+                    }
+                };
+                match op {
+                    Op::MovWide { dst, .. } | Op::Address { dst, .. } => count(dst),
+                    Op::AddImm { dst, src, .. } => {
+                        count(dst);
+                        count(src);
+                    }
+                    Op::AddReg { dst, lhs, rhs, .. }
+                    | Op::OrReg { dst, lhs, rhs, .. }
+                    | Op::Logical { dst, lhs, rhs, .. } => {
+                        count(dst);
+                        count(lhs);
+                        count(rhs);
+                    }
+                    Op::Memory { reg, base, .. } => {
+                        count(reg);
+                        count(base);
+                    }
+                    Op::MemoryReg {
+                        reg, base, index, ..
+                    } => {
+                        count(reg);
+                        count(base);
+                        count(index);
+                    }
+                    Op::Pair {
+                        first,
+                        second,
+                        base,
+                        ..
+                    } => {
+                        count(first);
+                        count(second);
+                        count(base);
+                    }
+                    Op::Return { reg } => count(reg),
+                    Op::CompareBranch { reg, .. } => count(reg),
+                    _ => {}
+                }
+                match op {
+                    Op::Branch { target, .. }
+                    | Op::CompareBranch { target, .. }
+                    | Op::CondBranch { target, .. } => {
+                        if target >= image.text.0 && target < image.text.0 + image.text.1 {
+                            boundaries.insert(target);
+                        }
+                        boundaries.insert(pc + 4);
+                    }
+                    Op::Svc | Op::Return { .. } => {
+                        boundaries.insert(pc + 4);
+                    }
+                    Op::Memory { .. } | Op::MemoryReg { .. } | Op::Pair { .. } => {
+                        boundaries.insert(pc);
+                        boundaries.insert(pc + 4);
+                    }
+                    _ => {}
+                }
+            } else {
+                boundaries.insert(pc);
+                boundaries.insert(pc + 4);
+            }
+            decoded.push((pc, op));
+        }
+        let mut ranked: Vec<u8> = (0..31).collect();
+        ranked.sort_by_key(|r| (std::cmp::Reverse(frequency[*r as usize]), *r));
         let mut a = Assembler {
             layout: layout.clone(),
+            hot: [ranked[0], ranked[1]],
             ..Assembler::default()
         };
-        for pc in (image.text.0..image.text.0 + image.text.1).step_by(4) {
-            a.labels.insert(pc, a.bytes.len());
-            // Invalid instructions fault only if reached, matching the interpreter.
-            match decode(image.instruction(pc)?, pc) {
+        let mut bodies = HashMap::new();
+        for (pc, op) in &decoded {
+            a.labels.insert(*pc, a.bytes.len());
+            match op {
                 Ok(op @ (Op::Memory { .. } | Op::MemoryReg { .. })) => {
-                    a.guard(pc);
-                    a.memory(op)?;
+                    a.guard(*pc);
+                    bodies.insert(*pc, a.bytes.len());
+                    a.memory(*op)?;
                 }
                 Ok(Op::Pair { .. }) => {
-                    a.guard(pc);
+                    a.guard(*pc);
+                    bodies.insert(*pc, a.bytes.len());
                     a.exit(4);
                 }
                 Ok(op) => {
-                    a.budget(pc);
-                    a.instruction(op, pc);
+                    if boundaries.contains(pc) {
+                        let end = *boundaries.range(pc + 1..).next().unwrap();
+                        a.block_budget(*pc, ((end - pc) / 4) as u32);
+                    }
+                    bodies.insert(*pc, a.bytes.len());
+                    a.instruction(*op, *pc);
                 }
                 Err(_) => {
-                    a.guard(pc);
+                    a.guard(*pc);
+                    bodies.insert(*pc, a.bytes.len());
                     a.exit(1);
                 }
             }
@@ -479,7 +649,6 @@ impl Compiled {
             let destination = if let Some(offset) = a.labels.get(&target) {
                 *offset
             } else {
-                // Record the actual faulting guest PC, even for a branch out of text.
                 let destination = a.bytes.len();
                 a.guard(target);
                 a.exit(1);
@@ -487,8 +656,36 @@ impl Compiled {
             };
             a.patch(at, destination)?;
         }
+        let mut entries = HashMap::new();
+        for (pc, _) in &decoded {
+            entries.insert(*pc, a.bytes.len());
+            a.prologue();
+            if !boundaries.contains(pc) {
+                let end = *boundaries.range(pc + 1..).next().unwrap();
+                a.block_budget(*pc, ((end - pc) / 4) as u32);
+            }
+            let at = a.local_jump(None);
+            a.patch(
+                at,
+                if boundaries.contains(pc) {
+                    a.labels[pc]
+                } else {
+                    bodies[pc]
+                },
+            )?;
+        }
+        let short = a.bytes.len();
+        a.exit(4);
+        let epilogue = a.bytes.len();
+        a.epilogue();
+        for at in a.exits.clone() {
+            a.patch(at, epilogue)?;
+        }
         for at in a.budgets.clone() {
             a.patch(at, exhausted)?;
+        }
+        for at in a.short_budgets.clone() {
+            a.patch(at, short)?;
         }
         let length = a.bytes.len();
         // SAFETY: anonymous, private RW mapping owned by this object. No guest pointer
@@ -513,7 +710,7 @@ impl Compiled {
         Ok(Self {
             memory,
             length,
-            entries: a.labels,
+            entries,
             layout,
         })
     }
@@ -551,7 +748,9 @@ impl Compiled {
                 3 => continue,
                 5 => return Err(format!("guest memory/SP fault at PC {:#x}", cpu.pc)),
                 4 => {
-                    step_memory(cpu, image, memory)?;
+                    if step_memory(cpu, image, memory)? {
+                        return Ok(());
+                    }
                     continue;
                 }
                 _ => return Err(format!("unsupported instruction or PC at {:#x}", cpu.pc)),

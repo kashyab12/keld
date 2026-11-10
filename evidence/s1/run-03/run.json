@@ -1,0 +1,8 @@
+{
+  "region": "us-east-1",
+  "instance_type": "c7i.large",
+  "image_name": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20261108",
+  "started_at": "2026-11-10T14:16:09.962735+00:00",
+  "remote_elapsed_seconds": 107.58488937467337,
+  "remote_exit": 0
+}

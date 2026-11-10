@@ -9,16 +9,16 @@ measurement. We do not infer product economics from it.
 | Gate | Required evidence | Current status |
 | --- | --- | --- |
 | S0: first ARM64 execution on Linux | Original simulator-targeted Mach-O, checked loading, output/exit, instruction budget, x86 translation and raw cloud evidence | Implemented; see AWS evidence |
-| S1: independently validated CPU semantics | Native ARM64 or independent emulator comparison, flags, loads/stores, calls/stack, precise faults, atomics/NEON test corpus | Not implemented |
+| S1: independently validated CPU semantics | Native ARM64 or independent emulator comparison, flags, loads/stores, calls/stack, precise faults, atomics/NEON test corpus | Scalar subset implemented and independently tested; atomics, NEON, full fault/ISA coverage remain open |
 | S2: first dynamic Darwin process | A small first-party C/Objective-C program with dynamic symbols, TLS, memory mapping and required trap behavior | Not implemented |
 | S3: first framework path | Original Foundation program with real Mach port allocation/message semantics, multiple threads and teardown | Not implemented |
 | S4: first visible app | Original UIKit app, deterministic screenshot, tap/text flow, redraw and reset, no fake successful services | Not implemented |
 | S5: simulator service scope | Process/service inventory, framework/runtime availability, multiple concurrent app sessions and isolation checks | Not implemented |
 | S6: competitive benchmark | Same app/task/version and correctness checks on Sable, native Mac and pinned Macbox; matched cost and host accounting | Not implemented |
 
-The next work is S1 plus an instrumented trace of a minimal native Foundation
-probe to identify S2/S3's first missing contracts. Do not add orchestration APIs
-while execution remains at S0. Do not expand the ISA randomly: use independently
+The next work is the remaining S1 coverage plus an instrumented trace of a minimal
+native Foundation probe to identify S2/S3's first missing contracts. Do not add
+orchestration APIs while framework execution is absent. Do not expand the ISA randomly: use independently
 checked semantics and actual traces to prioritize required operations.
 
 ## The 2–4× test

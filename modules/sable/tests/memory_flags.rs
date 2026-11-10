@@ -137,3 +137,41 @@ fn stack_alignment_and_region_collision() {
     });
     assert!(Memory::new(&collision).is_err());
 }
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+#[test]
+fn native_block_budgets_preserve_partial_state_and_mid_block_entries() {
+    for words in [
+        vec![0x91000400, 0x91000821, 0xeb010002, 0xd4001001],
+        vec![0x91000400, 0x91000821, 0x17fffffe],
+        vec![0x91000400, 0xd65f03c0],
+    ] {
+        let image = program(&words);
+        let code = sable::jit::Compiled::new(&image).unwrap();
+        for entry in (image.text.0..image.text.0 + image.text.1).step_by(4) {
+            for budget in 0..=12 {
+                let mut reference = Cpu::new(entry, budget);
+                reference.x[30] = image.text.0 + 4;
+                reference.x[0] = u64::MAX;
+                reference.x[1] = 1;
+                let mut translated = reference.clone();
+                let mut a = Memory::new(&image).unwrap();
+                let mut b = Memory::new(&image).unwrap();
+                let expected = loop {
+                    match step_memory(&mut reference, &image, &mut a) {
+                        Ok(false) => {}
+                        Ok(true) => break Ok(()),
+                        Err(e) => break Err(e),
+                    }
+                };
+                let observed = code.execute_memory(&mut translated, &image, &mut b);
+                assert_eq!(expected.is_ok(), observed.is_ok());
+                assert_eq!(
+                    reference, translated,
+                    "entry={entry:x},budget={budget},words={words:x?}"
+                );
+                assert_eq!(a, b);
+            }
+        }
+    }
+}

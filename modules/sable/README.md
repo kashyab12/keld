@@ -12,6 +12,20 @@ The x86 backend translates instructions into native code, links direct branches,
 and uses an RW-to-RX transition. Translation happens inside this crate. Guest
 memory remains in checked segment buffers. There is no external emulation engine.
 
+The supported scalar subset now includes NZCV flags, conditional branches,
+shifted arithmetic/logical operations, byte/halfword/word/doubleword memory access,
+register-offset addressing, pre/post-index writeback and paired stack operations.
+Each run owns its writable data and a 1 MiB stack. The native backend checks memory
+bounds and permissions before loads/stores. Pair operations currently use the Rust
+transition. Two frequently used guest registers stay in host registers; block
+budgeting retains exact exhaustion behavior through a partial-block fallback.
+
+An original Clang-compiled C fixture mutates an array through nested function calls,
+spills registers to its stack and emits a 64-bit checksum. The same binary was
+checked with Sable and Apple's installed Simulator. Independent Unicorn tests
+compare all general registers, SP, PC, flags, instruction counts and tested memory.
+[Validation and process-level QEMU benchmark](../../evidence/s1/RESULTS.md).
+
 This is **not a complete iOS Simulator**. There is no dyld loading/binding,
 Objective-C runtime, Foundation, UIKit, Swift runtime, Mach message transport,
 thread scheduler, atomics, NEON, PAC, graphics or app-bundle support. Ordinary
@@ -36,5 +50,8 @@ exit status, syscall count and remaining instruction budget. The compute fixture
 executes 30,000,006 instructions and sums integers 1 through 10,000,000 in `x9`.
 The expected checksum is `50,000,005,000,000`. It measures arithmetic dispatch;
 it cannot establish application compatibility, UI performance or cloud savings.
+For externally validated arithmetic, use `fixtures/bin/checksum.macho`; it emits
+the checksum as eight little-endian bytes. `compute.macho` is retained unchanged
+for the initial evidence and internal state checks.
 
 MIT licensed. [Design](../../docs/architecture.md), [next gates](../../docs/roadmap.md).

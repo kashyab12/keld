@@ -1,0 +1,17 @@
+    Checking sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.56s
+   Compiling sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `release` profile [optimized] target(s) in 29.10s
+     Running unittests src/lib.rs (target/release/deps/sable-9c10c40c90400f90)
+     Running unittests src/main.rs (target/release/deps/sable-1f3c31c5b2d26a07)
+     Running tests/execution.rs (target/release/deps/execution-bd0edd34097ab69e)
+     Running tests/memory_flags.rs (target/release/deps/memory_flags-75bf359028419102)
+   Doc-tests sable
+    Finished `release` profile [optimized] target(s) in 0.00s
+     Running `target/release/sable run artifacts/hello.macho jit`
+instructions=9 syscalls=2 exit=0 x9=0
+    Finished `release` profile [optimized] target(s) in 0.00s
+     Running `target/release/sable run artifacts/compute.macho jit`
+instructions=30000006 syscalls=1 exit=0 x9=50000005000000
+    Finished `release` profile [optimized] target(s) in 0.00s
+instructions=1170344 syscalls=2 exit=0 x9=4294983680

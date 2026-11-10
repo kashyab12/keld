@@ -23,3 +23,22 @@ fixture, not compatibility with an Apple iOS runtime. Sable runs no Apple runtim
 
 These binaries are deliberately small and freestanding. Loading one is a CPU,
 loader and call-dispatch milestone, not proof that SpringBoard or UIKit boots.
+
+`workload.c` and `workload-start.s` add a Clang-compiled, freestanding C workload:
+64-element writable array, 2,000 mixing rounds, nested calls, condition flags and
+stack spills. Its eight output bytes encode `0x8e65b49356b423fa` little-endian.
+`checksum.s` executes the original arithmetic loop and emits `50,000,005,000,000`
+as eight little-endian bytes. Both outputs were checked in Apple's iOS 27.2
+Simulator and Sable. Binary output should be captured to a file, not displayed
+as terminal text.
+
+The original `compute.s` stays unchanged for historical evidence; its empty output
+cannot independently verify a QEMU checksum. Current external benchmarks use
+`checksum.macho` instead. `scripts/macho-to-elf.py` repackages original segment
+bytes at the same guest addresses and adapts only fixed syscall-protocol
+instructions for QEMU's Linux userspace ABI. It is deliberately fixture-specific.
+
+The checked-in C fixture was built with Apple Clang 21.0.0 and LLVM lld 21.1.8.
+Rebuilds with a different Clang can produce different machine code. CI/AWS rebuild
+the C fixture with Linux Clang and verify its emitted checksum; byte identity is
+required for the assembly fixtures only.

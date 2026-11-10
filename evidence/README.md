@@ -4,6 +4,10 @@ These are raw receipts from bounded experiments, not a complete simulator or
 competitive benchmark. No Apple runtime, SDK, credentials, cloud account ID,
 instance IP or SSH key is distributed here.
 
+The newer [S1 report](s1/RESULTS.md) covers scalar memory/flags, independent CPU
+validation, compiled C and a QEMU comparison. The S0 measurements below describe
+the initial implementation and are preserved as historical evidence.
+
 ## Corrected Linux run
 
 [`aws-smoke/run.json`](aws-smoke/run.json) identifies Ubuntu 24.04 on an AWS
