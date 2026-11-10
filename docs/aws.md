@@ -3,6 +3,8 @@
 ```sh
 # Uses your configured AWS CLI identity and default VPC in us-east-1.
 python3 scripts/aws-smoke.py run
+# Dynamic libraries, prepared execution, dispatch controls and journals:
+python3 scripts/aws-smoke.py run --dynamic --output evidence/s2/new-run
 ```
 
 The script launches one Ubuntu 24.04 x86-64 `c7i.large` with a 12 GiB gp3 root

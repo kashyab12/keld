@@ -1,0 +1,54 @@
+{
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+  "version": "27.2",
+  "build": "24B8117",
+  "runs": [
+    {
+      "fixture": "hello",
+      "exit": 0,
+      "stdout_hex": "5341424c455f41524d36345f44415257494e5f4f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "compute",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": ""
+    },
+    {
+      "fixture": "workload",
+      "exit": 0,
+      "stdout_hex": "fa23b45693b4658e",
+      "stderr": ""
+    },
+    {
+      "fixture": "checksum",
+      "exit": 0,
+      "stdout_hex": "406b8988792d0000",
+      "stderr": ""
+    },
+    {
+      "fixture": "dynamic/dynamic-8",
+      "exit": 0,
+      "stdout_hex": "ab5bfd8a03000000",
+      "stderr": ""
+    },
+    {
+      "fixture": "dynamic/dynamic-2000",
+      "exit": 0,
+      "stdout_hex": "fb635186d5ede1ef",
+      "stderr": ""
+    },
+    {
+      "fixture": "dynamic/dynamic-200000",
+      "exit": 0,
+      "stdout_hex": "c9091830181815a7",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  }
+}

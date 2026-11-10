@@ -22,14 +22,15 @@ is reserved conceptually rather than allocating 4 GiB. Accessible segments total
 at most 64 MiB; the instruction section is at most 1 MiB. All integer arithmetic
 at file/range boundaries is checked. Guest executable storage is immutable.
 
-The loader rejects dynamic library dependencies, chained fixups, dyld rebasing or
+The strict freestanding path rejects dynamic library dependencies, chained fixups, dyld rebasing or
 binding, undefined dynamic symbols, section/dynamic relocations, encryption,
 arm64e and unknown required commands. Symbols, signatures, export metadata and
 the dylinker path are not executed. The `__text` section defines the instruction
 range; entry must lie inside it. Data reads require readable segment permissions.
 
-This is a loader for a restricted freestanding format, not Apple's dyld
-implementation. It does not construct a real Darwin process startup stack.
+`Image::parse` remains the strict freestanding path. `Image::link` supports a
+restricted eager dynamic path described in [the dynamic-loader design](dynamic-linking.md).
+Neither executes Apple's dyld or constructs a complete Darwin process startup stack.
 
 ## Execution
 
@@ -48,7 +49,8 @@ offsets. Integer pairs support 4/8-byte elements and stack frame addressing.
 Constrained-unpredictable overlaps are rejected rather than assigned arbitrary
 semantics. Signed loads, SIMD, unprivileged access forms and atomics remain unsupported.
 
-`memory.rs` clones image buffers into each run and adds a reserved 1 MiB stack.
+`memory.rs` forks writable image buffers into each run, shares immutable image
+bytes through `Arc<Vec<u8>>`, and adds a reserved 1 MiB stack.
 The process starts with aligned SP at the stack top; no argc/argv/TLS startup
 contract exists yet. Loads zero-extend, stores truncate to the access width, and
 an access must fit wholly in one region with the required permission. SP-based
@@ -67,14 +69,17 @@ RDX, RCX and R8–R11 are scratch registers. Static use counts select two guest
 registers to cache in R12/R13; R14 holds the instruction budget and R15 the guest
 PC. Entry trampolines save R12–R15 and load cached state. Every exit flushes state
 and restores those host registers. Generated code makes no host function calls.
-Direct guest branches become patched native relative branches. Dynamic RET
-returns to the dispatcher, which validates the destination before entering code.
+Direct guest branches become patched native relative branches. Indirect calls
+and returns validate target range and alignment, then use a host-only immutable
+relative-offset table to enter the corresponding guarded block. Invalid targets
+exit with preserved guest state. Rust dispatch remains a diagnostic comparison mode.
 Straight arithmetic blocks charge their instruction count at entry. If the
 remaining budget cannot cover a block, Rust executes one instruction and retries,
 preserving exact partial-block state. Every memory operation is its own block so
 a fault cannot consume future instructions. Dynamic entry into a block's middle
 has its own budget trampoline. Tests compare these states with the interpreter.
-SVC saves the next PC and returns to Rust.
+SVC saves the next PC and returns to Rust. `Prepared` retains this RX mapping
+across runs while each run receives independent writable memory and CPU state.
 
 Single loads/stores check guest address bounds and permissions, then translate
 through the host-only buffer-pointer table. The runtime holds exclusive mutable

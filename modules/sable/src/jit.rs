@@ -34,6 +34,8 @@ struct Assembler {
     hot: [u8; 2],
     exits: Vec<usize>,
     short_budgets: Vec<usize>,
+    native_indirect: bool,
+    dispatch_jumps: Vec<usize>,
 }
 
 impl Assembler {
@@ -211,7 +213,13 @@ impl Assembler {
         at
     }
     fn memory(&mut self, op: Op) -> Result<()> {
+        let literal = if let Op::Literal { address, .. } = op {
+            Some(address)
+        } else {
+            None
+        };
         let (reg, base, bytes, load, offset, post, writeback, index) = match op {
+            Op::Literal { reg, bytes, .. } => (reg, 0, bytes, true, 0, false, false, None),
             Op::Memory {
                 reg,
                 base,
@@ -241,8 +249,12 @@ impl Assembler {
             ),
             _ => unreachable!(),
         };
-        self.load(base, true, false);
-        let alignment = if base == 31 {
+        if let Some(address) = literal {
+            self.imm64(address, false);
+        } else {
+            self.load(base, true, false);
+        }
+        let alignment = if literal.is_none() && base == 31 {
             self.emit(&[0xa8, 15]);
             Some(self.local_jump(Some(0x85)))
         } else {
@@ -323,8 +335,26 @@ impl Assembler {
         }
         Ok(())
     }
+    fn indirect_exit(&mut self) {
+        if self.native_indirect {
+            let at = self.local_jump(None);
+            self.dispatch_jumps.push(at);
+        } else {
+            self.exit(3);
+        }
+    }
     fn instruction(&mut self, op: Op, pc: u64) {
         match op {
+            Op::Indirect { reg, link } => {
+                self.load(reg, false, true);
+                if link {
+                    self.imm64(pc + 4, false);
+                    self.store(30, false, true);
+                }
+                self.emit(&[0x48, 0x89, 0xd0]);
+                self.store_at(PC);
+                self.indirect_exit();
+            }
             Op::MovWide {
                 dst,
                 value,
@@ -470,7 +500,7 @@ impl Assembler {
                 self.emit(&[0xd3, 0xe8, 0xa8, 1]);
                 self.branch(target, Some(true));
             }
-            Op::Memory { .. } | Op::MemoryReg { .. } | Op::Pair { .. } => {
+            Op::Memory { .. } | Op::MemoryReg { .. } | Op::Literal { .. } | Op::Pair { .. } => {
                 unreachable!("memory operations use checked Rust transition")
             }
             Op::Address { dst, value } => {
@@ -500,7 +530,7 @@ impl Assembler {
             Op::Return { reg } => {
                 self.load(reg, false, false);
                 self.store_at(PC);
-                self.exit(3);
+                self.indirect_exit();
             }
             Op::Svc => {
                 self.pc(pc + 4);
@@ -526,6 +556,10 @@ pub struct Compiled {
 
 impl Compiled {
     pub fn new(image: &Image) -> Result<Self> {
+        Self::new_with_dispatch(image, true)
+    }
+    /// Diagnostic control for paired comparison against checked Rust dispatch.
+    pub fn new_with_dispatch(image: &Image, native_indirect: bool) -> Result<Self> {
         let mut layout: Vec<_> = image
             .segments
             .iter()
@@ -533,9 +567,18 @@ impl Compiled {
             .collect();
         layout.push((STACK_BASE, STACK_SIZE, 3));
         let mut decoded = Vec::new();
-        let mut boundaries = BTreeSet::from([image.text.0, image.text.0 + image.text.1]);
+        let mut ranges: Vec<_> = image.code_ranges().collect();
+        ranges.sort_unstable();
+        let mut boundaries = BTreeSet::new();
+        for (start, len) in &ranges {
+            boundaries.insert(*start);
+            boundaries.insert(start + len);
+        }
         let mut frequency = [0u32; 31];
-        for pc in (image.text.0..image.text.0 + image.text.1).step_by(4) {
+        for pc in ranges
+            .iter()
+            .flat_map(|(start, len)| (*start..start + len).step_by(4))
+        {
             let op = decode(image.instruction(pc)?, pc);
             if let Ok(op) = op {
                 let mut count = |reg: u8| {
@@ -577,7 +620,9 @@ impl Compiled {
                         count(second);
                         count(base);
                     }
-                    Op::Return { reg } => count(reg),
+                    Op::Return { reg } | Op::Indirect { reg, .. } | Op::Literal { reg, .. } => {
+                        count(reg)
+                    }
                     Op::CompareBranch { reg, .. } => count(reg),
                     _ => {}
                 }
@@ -585,15 +630,18 @@ impl Compiled {
                     Op::Branch { target, .. }
                     | Op::CompareBranch { target, .. }
                     | Op::CondBranch { target, .. } => {
-                        if target >= image.text.0 && target < image.text.0 + image.text.1 {
+                        if image.contains_pc(target) {
                             boundaries.insert(target);
                         }
                         boundaries.insert(pc + 4);
                     }
-                    Op::Svc | Op::Return { .. } => {
+                    Op::Svc | Op::Return { .. } | Op::Indirect { .. } => {
                         boundaries.insert(pc + 4);
                     }
-                    Op::Memory { .. } | Op::MemoryReg { .. } | Op::Pair { .. } => {
+                    Op::Memory { .. }
+                    | Op::MemoryReg { .. }
+                    | Op::Literal { .. }
+                    | Op::Pair { .. } => {
                         boundaries.insert(pc);
                         boundaries.insert(pc + 4);
                     }
@@ -610,13 +658,22 @@ impl Compiled {
         let mut a = Assembler {
             layout: layout.clone(),
             hot: [ranked[0], ranked[1]],
+            native_indirect,
             ..Assembler::default()
         };
         let mut bodies = HashMap::new();
+        let mut previous = None;
         for (pc, op) in &decoded {
+            if let Some(end) = previous
+                && end != *pc
+            {
+                a.guard(end);
+                a.exit(1);
+            }
+            previous = Some(pc + 4);
             a.labels.insert(*pc, a.bytes.len());
             match op {
-                Ok(op @ (Op::Memory { .. } | Op::MemoryReg { .. })) => {
+                Ok(op @ (Op::Memory { .. } | Op::MemoryReg { .. } | Op::Literal { .. })) => {
                     a.guard(*pc);
                     bodies.insert(*pc, a.bytes.len());
                     a.memory(*op)?;
@@ -641,7 +698,7 @@ impl Compiled {
                 }
             }
         }
-        a.guard(image.text.0 + image.text.1);
+        a.guard(previous.ok_or("no instructions to translate")?);
         a.exit(1);
         let exhausted = a.bytes.len();
         a.exit(2);
@@ -656,23 +713,71 @@ impl Compiled {
             };
             a.patch(at, destination)?;
         }
+        let mut internal = HashMap::new();
+        for (pc, _) in &decoded {
+            if boundaries.contains(pc) {
+                internal.insert(*pc, a.labels[pc]);
+            } else {
+                internal.insert(*pc, a.bytes.len());
+                let end = *boundaries.range(pc + 1..).next().unwrap();
+                a.block_budget(*pc, ((end - pc) / 4) as u32);
+                let at = a.local_jump(None);
+                a.patch(at, bodies[pc])?;
+            }
+        }
         let mut entries = HashMap::new();
         for (pc, _) in &decoded {
             entries.insert(*pc, a.bytes.len());
             a.prologue();
-            if !boundaries.contains(pc) {
-                let end = *boundaries.range(pc + 1..).next().unwrap();
-                a.block_budget(*pc, ((end - pc) / 4) as u32);
-            }
             let at = a.local_jump(None);
-            a.patch(
-                at,
-                if boundaries.contains(pc) {
-                    a.labels[pc]
-                } else {
-                    bodies[pc]
-                },
-            )?;
+            a.patch(at, internal[pc])?;
+        }
+        if native_indirect {
+            let dispatcher = a.bytes.len();
+            // Preserve error precedence and guest PC (R15 was set before this jump).
+            a.emit(&[0x49, 0x83, 0xfe, 0, 0x0f, 0x84]);
+            a.budgets.push(a.bytes.len());
+            a.emit(&[0; 4]);
+            let mut tables = Vec::new();
+            let mut unaligned = Vec::new();
+            for (start, len) in &ranges {
+                a.imm64(*start, true);
+                a.emit(&[0x48, 0x39, 0xd0]);
+                let low = a.local_jump(Some(0x82));
+                a.imm64(start + len, true);
+                a.emit(&[0x48, 0x39, 0xd0]);
+                let high = a.local_jump(Some(0x83));
+                a.emit(&[0xa8, 3]);
+                unaligned.push(a.local_jump(Some(0x85)));
+                a.imm64(*start, true);
+                a.emit(&[0x48, 0x29, 0xd0, 0x48, 0xc1, 0xe8, 2]);
+                a.emit(&[0x4c, 0x8d, 0x1d]);
+                let rip = a.bytes.len();
+                a.emit(&[0; 4]);
+                // Table entries are signed offsets from the table base to trusted code.
+                a.emit(&[0x49, 0x63, 0x14, 0x83, 0x49, 0x01, 0xd3, 0x41, 0xff, 0xe3]);
+                tables.push((rip, *start, *len));
+                let next = a.bytes.len();
+                a.patch(low, next)?;
+                a.patch(high, next)?;
+            }
+            let fault = a.bytes.len();
+            a.exit(1);
+            for at in unaligned {
+                a.patch(at, fault)?;
+            }
+            for (rip, start, len) in tables {
+                let table = a.bytes.len();
+                a.patch(rip, table)?;
+                for pc in (start..start + len).step_by(4) {
+                    let offset = i32::try_from(internal[&pc] as i64 - table as i64)
+                        .map_err(|_| "native dispatch table offset exceeds rel32")?;
+                    a.emit(&offset.to_le_bytes());
+                }
+            }
+            for at in a.dispatch_jumps.clone() {
+                a.patch(at, dispatcher)?;
+            }
         }
         let short = a.bytes.len();
         a.exit(4);
@@ -719,11 +824,7 @@ impl Compiled {
         if memory.layout() != self.layout {
             return Err("native memory layout mismatch".into());
         }
-        let pointers: Vec<*mut u8> = memory
-            .regions
-            .iter_mut()
-            .map(|s| s.bytes.as_mut_ptr())
-            .collect();
+        let pointers = memory.pointers()?;
         loop {
             if cpu.remaining == 0 {
                 return Err("instruction budget exhausted".into());

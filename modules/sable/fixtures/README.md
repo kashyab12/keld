@@ -42,3 +42,17 @@ The checked-in C fixture was built with Apple Clang 21.0.0 and LLVM lld 21.1.8.
 Rebuilds with a different Clang can produce different machine code. CI/AWS rebuild
 the C fixture with Linux Clang and verify its emitted checksum; byte identity is
 required for the assembly fixtures only.
+
+The `bin/dynamic/` fixtures are built from `dynamic-main.c`, `dynamic-math.c`,
+`dynamic-helper.c`, `dynamic-start.s` and `dynamic-system.s`:
+
+- Main imports a function pointer from the math dylib.
+- Math imports a helper function and rebases a private counter pointer.
+- The original minimal system dylib implements three Darwin ABI functions.
+- Every run emits a known 64-bit checksum after 8, 2,000 or 200,000 mixing rounds.
+
+Rebuild with `bash scripts/build-dynamic.sh`; verify all rebuilt checksums with
+`bash scripts/check-dynamic.sh`. The checked-in executables and math/helper dylibs
+also run in Apple's iOS 27.2 Simulator. Native Apple execution uses its installed
+LibSystem; Linux execution uses the original explicitly supplied minimal system
+dylib. None of the checked-in dylibs is copied from Apple software.

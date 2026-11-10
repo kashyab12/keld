@@ -12,11 +12,25 @@ fn main() {
 }
 
 fn execute() -> Result<u8> {
-    let args: Vec<String> = std::env::args().collect();
+    let mut args: Vec<String> = Vec::new();
+    let mut libraries = Vec::new();
+    let mut raw = std::env::args();
+    while let Some(arg) = raw.next() {
+        if arg == "--lib" {
+            let path = raw.next().ok_or("--lib requires a dylib path")?;
+            libraries.push(std::fs::read(path).map_err(|e| e.to_string())?);
+        } else {
+            args.push(arg);
+        }
+    }
     if args.len() < 3 {
         return Err("usage: sable inspect FILE | sable run FILE [interp|jit] [BUDGET] | sable bench FILE [PAIRS]".into());
     }
-    let image = Image::parse(&std::fs::read(&args[2]).map_err(|e| e.to_string())?)?;
+    let main = std::fs::read(&args[2]).map_err(|e| e.to_string())?;
+    let image = Image::link(
+        &main,
+        &libraries.iter().map(Vec::as_slice).collect::<Vec<_>>(),
+    )?;
     match args[1].as_str() {
         "inspect" => {
             println!(

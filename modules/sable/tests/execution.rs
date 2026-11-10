@@ -8,11 +8,16 @@ fn image(words: &[u32]) -> Image {
     Image {
         segments: vec![Segment {
             address: 0x1000,
-            bytes: words.iter().flat_map(|w| w.to_le_bytes()).collect(),
+            bytes: words
+                .iter()
+                .flat_map(|w| w.to_le_bytes())
+                .collect::<Vec<_>>()
+                .into(),
             protection: 5,
         }],
         entry: 0x1000,
         text: (0x1000, words.len() as u64 * 4),
+        extra_text: Vec::new(),
         platform: 7,
     }
 }

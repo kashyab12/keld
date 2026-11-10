@@ -8,7 +8,9 @@ dispatcher. The implementation lives here; it does not shell out to QEMU, a Mac,
 or an existing emulator.
 
 **Current stage:** original freestanding iOS Simulator-targeted assembly and
-compiled C executables, including writable arrays, stack frames and nested calls.
+compiled C executables, including writable arrays, stack frames, nested calls and
+explicitly supplied original dynamic libraries. A restricted eager linker handles
+pointer rebasing, export tries and two-level symbol binding.
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 
@@ -31,6 +33,7 @@ to build Sable or run these probes. See [fixture provenance](modules/sable/fixtu
 - [Reproduce the AWS Linux check](docs/aws.md)
 - [Observed Linux and native Apple execution](evidence/README.md)
 - [Scalar CPU validation and QEMU benchmark](evidence/s1/RESULTS.md)
+- [Dynamic linking, reusable execution and the latest hill climb](evidence/s2/RESULTS.md)
 - [Licensing](LICENSING.md)
 
 The goal is 2–4× better completed app workflows per dollar at matched correctness

@@ -115,6 +115,25 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
     let mut next = cpu.pc + 4;
     let mut trapped = false;
     match op {
+        Op::Indirect { reg, link } => {
+            let target = cpu.reg(reg, false);
+            if link {
+                cpu.x[30] = next;
+            }
+            next = target;
+        }
+        Op::Literal {
+            reg,
+            address,
+            bytes,
+        } => {
+            let memory = memory
+                .as_mut()
+                .ok_or("literal load requires per-run memory")?;
+            let mut value = [0; 8];
+            value[..bytes as usize].copy_from_slice(memory.read(address, bytes as usize)?);
+            cpu.set(reg, u64::from_le_bytes(value), true, false);
+        }
         Op::MemoryReg {
             reg,
             base,
@@ -370,46 +389,77 @@ fn syscall(
     }
 }
 
-pub fn run(image: &Image, budget: u64, jit: bool) -> Result<Outcome> {
-    let mut cpu = Cpu::new(image.entry, budget);
-    cpu.sp = STACK_BASE + STACK_SIZE as u64;
-    let mut memory = Memory::new(image)?;
-    let mut out = [Vec::new(), Vec::new()];
-    let mut syscalls = 0;
-    let started = Instant::now();
+/// Immutable translated code may be reused across independent, freshly reset runs.
+pub struct Prepared<'a> {
+    image: &'a Image,
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-    let compiled = if jit {
-        Some(crate::jit::Compiled::new(image)?)
-    } else {
-        None
-    };
-    #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
-    if jit {
-        return Err("native translation currently requires x86_64 Linux".into());
-    }
-    loop {
+    compiled: Option<crate::jit::Compiled>,
+}
+impl<'a> Prepared<'a> {
+    pub fn new(image: &'a Image, jit: bool) -> Result<Self> {
         #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-        let trapped = if let Some(code) = &compiled {
-            code.execute_memory(&mut cpu, image, &mut memory)?;
-            true
+        let compiled = if jit {
+            Some(crate::jit::Compiled::new(image)?)
         } else {
-            step_memory(&mut cpu, image, &mut memory)?
+            None
         };
         #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
-        let trapped = step_memory(&mut cpu, image, &mut memory)?;
-        if trapped {
-            syscalls += 1;
-            if let Some(exit) = syscall(&mut cpu, &memory, &mut out, started)? {
-                let [stdout, stderr] = out;
-                return Ok(Outcome {
-                    cpu,
-                    stdout,
-                    stderr,
-                    exit,
-                    syscalls,
-                    memory,
-                });
+        if jit {
+            return Err("native translation currently requires x86_64 Linux".into());
+        }
+        Ok(Self {
+            image,
+            #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+            compiled,
+        })
+    }
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    pub fn new_with_dispatch(image: &'a Image, native_indirect: bool) -> Result<Self> {
+        Ok(Self {
+            image,
+            compiled: Some(crate::jit::Compiled::new_with_dispatch(
+                image,
+                native_indirect,
+            )?),
+        })
+    }
+    pub fn run(&self, budget: u64) -> Result<Outcome> {
+        let mut cpu = Cpu::new(self.image.entry, budget);
+        cpu.sp = STACK_BASE + STACK_SIZE as u64;
+        let mut memory = Memory::new(self.image)?;
+        let mut out = [Vec::new(), Vec::new()];
+        let mut syscalls = 0;
+        let started = Instant::now();
+        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+        let compiled = &self.compiled;
+        loop {
+            #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+            let trapped = if let Some(code) = &compiled {
+                code.execute_memory(&mut cpu, self.image, &mut memory)?;
+                true
+            } else {
+                step_memory(&mut cpu, self.image, &mut memory)?
+            };
+            #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
+            let trapped = step_memory(&mut cpu, self.image, &mut memory)?;
+            if trapped {
+                syscalls += 1;
+                if let Some(exit) = syscall(&mut cpu, &memory, &mut out, started)? {
+                    let [stdout, stderr] = out;
+                    return Ok(Outcome {
+                        cpu,
+                        stdout,
+                        stderr,
+                        exit,
+                        syscalls,
+                        memory,
+                    });
+                }
             }
         }
     }
+}
+
+pub fn run(image: &Image, budget: u64, jit: bool) -> Result<Outcome> {
+    Prepared::new(image, jit)?.run(budget)
 }

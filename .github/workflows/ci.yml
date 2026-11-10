@@ -37,3 +37,5 @@ jobs:
           if [ "$RUNNER_OS" = Linux ]; then
             artifacts/oracle-venv/bin/python scripts/oracle.py --engine jit --output artifacts/oracle-jit.json
           fi
+      - name: Rebuild and execute original dynamic libraries
+        run: bash scripts/check-dynamic.sh

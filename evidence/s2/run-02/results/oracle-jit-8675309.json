@@ -1,0 +1,23 @@
+{
+  "oracle": "Unicorn",
+  "version": "2.1.4",
+  "engine": "jit",
+  "seed": 8675309,
+  "cases": 2479,
+  "kinds": {
+    "arithmetic_flags_conditions": 2000,
+    "condition_truth_table": 256,
+    "memory_unscaled_pre_post": 120,
+    "memory_unsigned": 8,
+    "memory_register_offset": 64,
+    "memory_pair": 24,
+    "call_return": 1,
+    "literal_data_load": 2,
+    "literal_code_load_backward": 2,
+    "indirect_call_x30_alias": 1,
+    "indirect_branch": 1
+  },
+  "input_sha256": "b4a6ef3e8d5f1548f53b88ed56985bf411bfd049306ef7a4ce9f95f8544760b3",
+  "elapsed_seconds": 3.183654837000006,
+  "full_registers_flags_memory_equal": true
+}

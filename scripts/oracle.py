@@ -76,6 +76,13 @@ def corpus(seed, count):
                     cases[-1]["x"][20]=DATA+128
     # BL/RET, including a nonzero return address, without overwriting random X30.
     case([0x94000003,0x14000004,0xd503201f,0x91000400,0xd65f03c0],"call_return")
+    for size,baseword in [(4,0x18000000),(8,0x58000000)]:
+        case([baseword|(((DATA-BASE)//4)<<5)|8],"literal_data_load")
+        case([0xd503201f,baseword|(((-1)&0x7ffff)<<5)|8],"literal_code_load_backward")
+    case([0xd63f03c0,0x14000004,0xd503201f,0x91000400,0xd65f03c0],"indirect_call_x30_alias")
+    cases[-1]["x"][30]=BASE+12
+    case([0xd61f0120,0xd503201f,0x91000400],"indirect_branch")
+    cases[-1]["x"][9]=BASE+8
     return cases
 
 

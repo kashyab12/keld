@@ -72,7 +72,7 @@ def cleanup(path):
     return receipt
 
 
-def run(output=None, extended=False):
+def run(output=None, extended=False, dynamic=False):
     token = str(uuid.uuid4())
     name = "keld-sable-" + token[:12]
     base = Path(os.environ.get("MAKO_THREAD_DATA_DIR", str(Path.home() / ".cache/keld-sable")))
@@ -174,6 +174,18 @@ python3 scripts/macho-to-elf.py modules/sable/fixtures/bin/checksum.macho artifa
 python3 scripts/macho-to-elf.py modules/sable/fixtures/bin/workload.macho artifacts/workload.elf
 taskset -c 0 python3 scripts/benchmark.py --pairs 31 --output results/benchmark.json
 """
+        if dynamic:
+            remote += """
+cargo build --release --example dynamic_bench
+bash scripts/build-dynamic.sh
+for rounds in 8 2000 200000; do
+  target/release/sable run "artifacts/dynamic/dynamic-$rounds.macho" jit --lib artifacts/dynamic/libsable_math.dylib --lib artifacts/dynamic/libsable_helper.dylib --lib artifacts/dynamic/libsable_system.dylib > "results/rebuilt-dynamic-$rounds.bin"
+  taskset -c 0 target/release/examples/dynamic_bench "$rounds" 31 "results/dynamic-$rounds.jsonl" > "results/dynamic-$rounds.json"
+done
+python3 -c 'from pathlib import Path; expected={8:0x38afd5bab,2000:0xefe1edd5865163fb,200000:0xa7151818301809c9}; assert all(Path(f"results/rebuilt-dynamic-{n}.bin").read_bytes()==v.to_bytes(8,"little") for n,v in expected.items())'
+python3 scripts/summarize-dynamic.py results > results/dynamic-summary.json
+cat results/dynamic-summary.json
+"""
         started = time.monotonic()
         result = subprocess.run(ssh + ["bash -s"], input=remote.encode(), capture_output=True, timeout=720)
         (evidence / "stdout.txt").write_bytes(result.stdout)
@@ -202,9 +214,10 @@ if __name__ == "__main__":
     parser.add_argument("state", nargs="?", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--extended", action="store_true")
+    parser.add_argument("--dynamic", action="store_true")
     options = parser.parse_args()
     if options.operation == "run":
-        run(options.output, options.extended)
+        run(options.output, options.extended or options.dynamic, options.dynamic)
     elif options.state:
         cleanup(options.state)
     else:

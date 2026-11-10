@@ -55,17 +55,18 @@ fn main() {
             segments: vec![
                 Segment {
                     address: 0x1000,
-                    bytes: code,
+                    bytes: code.into(),
                     protection: 5,
                 },
                 Segment {
                     address: 0x20000,
-                    bytes: data,
+                    bytes: data.into(),
                     protection: 3,
                 },
             ],
             entry: 0x1000,
             text: (0x1000, (count * 4) as u64),
+            extra_text: Vec::new(),
             platform: 7,
         };
         let mut memory = Memory::new(&image).unwrap();

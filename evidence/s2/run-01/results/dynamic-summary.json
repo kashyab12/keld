@@ -1,0 +1,178 @@
+{
+  "protocol": "in_process_worker_link_compile_reset_execute",
+  "workloads": {
+    "8": {
+      "cold_rust_dispatch": {
+        "median_seconds": 6.1754e-05,
+        "p95_seconds": 8.5023e-05
+      },
+      "cold_native_dispatch": {
+        "median_seconds": 6.3651e-05,
+        "p95_seconds": 8.3596e-05
+      },
+      "prepared_rust_dispatch": {
+        "median_seconds": 2.3132e-05,
+        "p95_seconds": 2.534e-05
+      },
+      "prepared_native_dispatch": {
+        "median_seconds": 2.2901e-05,
+        "p95_seconds": 2.5952e-05
+      },
+      "cold_dispatch_speedup": {
+        "ratio_of_medians": 0.9701968547234137,
+        "paired_bootstrap_95_percent": [
+          0.9313907610114068,
+          0.999048510612176
+        ]
+      },
+      "prepared_dispatch_speedup": {
+        "ratio_of_medians": 1.0100868957687439,
+        "paired_bootstrap_95_percent": [
+          1.0019618956271525,
+          1.0281714862433629
+        ]
+      },
+      "preparation_reuse_speedup": {
+        "ratio_of_medians": 2.7793982795511116,
+        "paired_bootstrap_95_percent": [
+          2.722735191637631,
+          2.905184411969381
+        ]
+      },
+      "combined_speedup": {
+        "ratio_of_medians": 2.6965634688441553,
+        "paired_bootstrap_95_percent": [
+          2.6478750327253686,
+          2.8314077691066832
+        ]
+      },
+      "one_observed_native_setup_seconds": 0.00010940599999999999,
+      "amortized_prepared_native_seconds_per_run": 2.735551612903226e-05,
+      "checksum_hex": "000000038afd5bab",
+      "shared_image_bytes_per_run": 84192,
+      "instructions": 172,
+      "samples": 124
+    },
+    "2000": {
+      "cold_rust_dispatch": {
+        "median_seconds": 0.000182643,
+        "p95_seconds": 0.000195772
+      },
+      "cold_native_dispatch": {
+        "median_seconds": 0.000124459,
+        "p95_seconds": 0.000140833
+      },
+      "prepared_rust_dispatch": {
+        "median_seconds": 0.000133648,
+        "p95_seconds": 0.000164065
+      },
+      "prepared_native_dispatch": {
+        "median_seconds": 7.9056e-05,
+        "p95_seconds": 9.9392e-05
+      },
+      "cold_dispatch_speedup": {
+        "ratio_of_medians": 1.4674953197438514,
+        "paired_bootstrap_95_percent": [
+          1.3915698202287998,
+          1.5258066444104812
+        ]
+      },
+      "prepared_dispatch_speedup": {
+        "ratio_of_medians": 1.690548471969237,
+        "paired_bootstrap_95_percent": [
+          1.6062572766231515,
+          1.7719949612146126
+        ]
+      },
+      "preparation_reuse_speedup": {
+        "ratio_of_medians": 1.5743144100384538,
+        "paired_bootstrap_95_percent": [
+          1.4828821756855994,
+          1.6453386815035258
+        ]
+      },
+      "combined_speedup": {
+        "ratio_of_medians": 2.3102990285367335,
+        "paired_bootstrap_95_percent": [
+          2.200265054868835,
+          2.368918365256581
+        ]
+      },
+      "one_observed_native_setup_seconds": 0.000101982,
+      "amortized_prepared_native_seconds_per_run": 8.341929032258064e-05,
+      "checksum_hex": "efe1edd5865163fb",
+      "shared_image_bytes_per_run": 84208,
+      "instructions": 36028,
+      "samples": 124
+    },
+    "200000": {
+      "cold_rust_dispatch": {
+        "median_seconds": 0.010149911,
+        "p95_seconds": 0.010568698
+      },
+      "cold_native_dispatch": {
+        "median_seconds": 0.00471004,
+        "p95_seconds": 0.004901169
+      },
+      "prepared_rust_dispatch": {
+        "median_seconds": 0.010453876,
+        "p95_seconds": 0.010563738
+      },
+      "prepared_native_dispatch": {
+        "median_seconds": 0.004644172,
+        "p95_seconds": 0.004851117
+      },
+      "cold_dispatch_speedup": {
+        "ratio_of_medians": 2.154952187242571,
+        "paired_bootstrap_95_percent": [
+          2.127924472388054,
+          2.1848785851974664
+        ]
+      },
+      "prepared_dispatch_speedup": {
+        "ratio_of_medians": 2.2509665878007965,
+        "paired_bootstrap_95_percent": [
+          2.2120365644660147,
+          2.273145399369085
+        ]
+      },
+      "preparation_reuse_speedup": {
+        "ratio_of_medians": 1.014182937238328,
+        "paired_bootstrap_95_percent": [
+          0.9965201781454698,
+          1.025076689631838
+        ]
+      },
+      "combined_speedup": {
+        "ratio_of_medians": 2.18551573886583,
+        "paired_bootstrap_95_percent": [
+          2.1453664570575244,
+          2.21314067424746
+        ]
+      },
+      "one_observed_native_setup_seconds": 0.000101822,
+      "amortized_prepared_native_seconds_per_run": 0.004655480612903226,
+      "checksum_hex": "a7151818301809c9",
+      "shared_image_bytes_per_run": 84208,
+      "instructions": 3600029,
+      "samples": 124
+    }
+  },
+  "limitations": [
+    "original programs and minimal LibSystem subset; no UIKit/Foundation/TLS",
+    "object bytes are already in host memory; no process or file-read startup included",
+    "prepared variants exclude one-time linking/translation; setup and amortization are reported",
+    "all variants allocate/reset private writable memory and stack",
+    "intervals are paired within one instance, not fleet-wide uncertainty"
+  ],
+  "fingerprints": {
+    "target/release/sable": "0ade2a835ef8d22ca186bc41e5f70d410ce3f3dfc9cc17ae0a0f59be29ddf1c0",
+    "target/release/examples/dynamic_bench": "3b6037effed4fe4f05782384adff2e6e397bdbdb017e4fbd05bc5cf613304763",
+    "modules/sable/fixtures/bin/dynamic/dynamic-2000.macho": "2086452fbe26a6bded0e8940e5a54e071319c2a57da3b0db3e35df299c0ccdaf",
+    "modules/sable/fixtures/bin/dynamic/dynamic-200000.macho": "05b0e4ebec1ab8c9f56384d6a439aeafc96ea88a3c8d41b2b85a8ed3efd0354e",
+    "modules/sable/fixtures/bin/dynamic/dynamic-8.macho": "0d721c5314b53b9c962295b5787a5ef0017b4502602f7bae57d58291e7a3ddc4",
+    "modules/sable/fixtures/bin/dynamic/libsable_helper.dylib": "adcd939b03531d0acf61f0c8efcb7e978e35d3ddd9fb845d0702f4c20b9904f5",
+    "modules/sable/fixtures/bin/dynamic/libsable_math.dylib": "c0d0dd6579d672175dc809a8fb3a486be06456ddf5cd514c7faf9a2faae068c7",
+    "modules/sable/fixtures/bin/dynamic/libsable_system.dylib": "1761f48c36667fd3bca449575fa6ec3d92a681d6f4f92b370fe311234dccce62"
+  }
+}

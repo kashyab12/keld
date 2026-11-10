@@ -2,6 +2,15 @@ use crate::Result;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Op {
+    Indirect {
+        reg: u8,
+        link: bool,
+    },
+    Literal {
+        reg: u8,
+        address: u64,
+        bytes: u8,
+    },
     MemoryReg {
         reg: u8,
         base: u8,
@@ -105,6 +114,23 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
     let dst = (word & 31) as u8;
     let src = ((word >> 5) & 31) as u8;
     let rhs = ((word >> 16) & 31) as u8;
+    if word & 0xfffffc1f == 0xd61f0000 || word & 0xfffffc1f == 0xd63f0000 {
+        return Ok(Op::Indirect {
+            reg: src,
+            link: word & (1 << 21) != 0,
+        });
+    }
+    if word & 0x3b000000 == 0x18000000 && word & (1 << 26) == 0 {
+        let opc = word >> 30;
+        if opc > 1 {
+            return Err("signed/prefetch literal load unsupported".into());
+        }
+        return Ok(Op::Literal {
+            reg: dst,
+            address: pc.wrapping_add_signed(signed((word >> 5) & 0x7ffff, 19) << 2),
+            bytes: if opc == 0 { 4 } else { 8 },
+        });
+    }
     if word == 0xd503201f {
         return Ok(Op::Nop);
     }

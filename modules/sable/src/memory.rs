@@ -15,6 +15,11 @@ pub struct Memory {
 impl Memory {
     pub fn new(image: &Image) -> Result<Self> {
         let mut regions = image.segments.clone();
+        for region in &mut regions {
+            if region.protection & 2 != 0 {
+                region.bytes = region.bytes.as_ref().clone().into();
+            }
+        }
         if regions.iter().any(|s| {
             s.address < STACK_BASE + STACK_SIZE as u64
                 && STACK_BASE < s.address + s.bytes.len() as u64
@@ -23,7 +28,7 @@ impl Memory {
         }
         regions.push(Segment {
             address: STACK_BASE,
-            bytes: vec![0; STACK_SIZE],
+            bytes: vec![0; STACK_SIZE].into(),
             protection: 3,
         });
         Ok(Self { regions })
@@ -55,8 +60,34 @@ impl Memory {
 
     pub fn write(&mut self, address: u64, bytes: &[u8]) -> Result<()> {
         let (index, offset) = self.locate(address, bytes.len(), 2)?;
-        self.regions[index].bytes[offset..offset + bytes.len()].copy_from_slice(bytes);
+        let target = std::sync::Arc::get_mut(&mut self.regions[index].bytes)
+            .ok_or("writable guest region unexpectedly aliased")?;
+        target[offset..offset + bytes.len()].copy_from_slice(bytes);
         Ok(())
+    }
+
+    /// Immutable image bytes are shared; writable bytes and stack are always private.
+    pub fn shared_image_bytes(&self) -> usize {
+        self.regions
+            .iter()
+            .filter(|r| r.protection & 2 == 0)
+            .map(|r| r.bytes.len())
+            .sum()
+    }
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    pub(crate) fn pointers(&mut self) -> Result<Vec<*mut u8>> {
+        self.regions
+            .iter_mut()
+            .map(|r| {
+                if r.protection & 2 != 0 {
+                    Ok(std::sync::Arc::get_mut(&mut r.bytes)
+                        .ok_or("writable guest region unexpectedly aliased")?
+                        .as_mut_ptr())
+                } else {
+                    Ok(r.bytes.as_ptr().cast_mut())
+                }
+            })
+            .collect()
     }
 
     pub fn layout(&self) -> Vec<(u64, usize, u32)> {
@@ -64,5 +95,46 @@ impl Memory {
             .iter()
             .map(|s| (s.address, s.bytes.len(), s.protection))
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn immutable_bytes_are_shared_and_writable_bytes_are_private() {
+        let image = Image {
+            segments: vec![
+                Segment {
+                    address: 0x1000,
+                    bytes: vec![1; 16].into(),
+                    protection: 5,
+                },
+                Segment {
+                    address: 0x2000,
+                    bytes: vec![2; 16].into(),
+                    protection: 3,
+                },
+            ],
+            entry: 0x1000,
+            text: (0x1000, 16),
+            extra_text: Vec::new(),
+            platform: 7,
+        };
+        let mut a = Memory::new(&image).unwrap();
+        let b = Memory::new(&image).unwrap();
+        assert!(std::sync::Arc::ptr_eq(
+            &a.regions[0].bytes,
+            &image.segments[0].bytes
+        ));
+        assert!(!std::sync::Arc::ptr_eq(
+            &a.regions[1].bytes,
+            &b.regions[1].bytes
+        ));
+        a.write(0x2000, &[9]).unwrap();
+        assert_eq!(b.read(0x2000, 1).unwrap(), [2]);
+        assert_eq!(image.read(0x2000, 1, 1).unwrap(), [2]);
+        assert!(a.write(0x1000, &[9]).is_err());
+        assert_eq!(a.shared_image_bytes(), 16);
     }
 }
