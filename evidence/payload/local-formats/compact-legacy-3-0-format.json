@@ -1,0 +1,422 @@
+[
+  {
+    "file": "payload-0.macho",
+    "sha256": "b41df3285799c61969ed669b51e94edcb53627fc43f9bc0663649bb14672c5c0",
+    "classes": {
+      "PayloadBase": {
+        "address": 4295000112,
+        "meta": 4295000152,
+        "superclass": 0,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000112
+      },
+      "PayloadChild": {
+        "address": 4295000192,
+        "meta": 4295000232,
+        "superclass": 4295000112,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000152
+      }
+    },
+    "superref_targets": [
+      4295000192
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "payload-0.macho",
+      "sha256": "b41df3285799c61969ed669b51e94edcb53627fc43f9bc0663649bb14672c5c0",
+      "format": "compact",
+      "lists": [
+        {
+          "address": 4294971472,
+          "header": 2147483660,
+          "count": 3,
+          "entries": [
+            {
+              "entry": 4294971480,
+              "offsets": [
+                29416,
+                -35,
+                -1736
+              ],
+              "selector_slot": 4295000896,
+              "types": 4294971449,
+              "imp": 4294969752
+            },
+            {
+              "entry": 4294971492,
+              "offsets": [
+                29388,
+                -36,
+                -1740
+              ],
+              "selector_slot": 4295000880,
+              "types": 4294971460,
+              "imp": 4294969760
+            },
+            {
+              "entry": 4294971504,
+              "offsets": [
+                29408,
+                -48,
+                -1744
+              ],
+              "selector_slot": 4295000912,
+              "types": 4294971460,
+              "imp": 4294969768
+            }
+          ]
+        },
+        {
+          "address": 4294971516,
+          "header": 2147483660,
+          "count": 3,
+          "entries": [
+            {
+              "entry": 4294971524,
+              "offsets": [
+                29380,
+                -79,
+                -1756
+              ],
+              "selector_slot": 4295000904,
+              "types": 4294971449,
+              "imp": 4294969776
+            },
+            {
+              "entry": 4294971536,
+              "offsets": [
+                29352,
+                -80,
+                -1732
+              ],
+              "selector_slot": 4295000888,
+              "types": 4294971460,
+              "imp": 4294969812
+            },
+            {
+              "entry": 4294971548,
+              "offsets": [
+                29364,
+                -92,
+                -1736
+              ],
+              "selector_slot": 4295000912,
+              "types": 4294971460,
+              "imp": 4294969820
+            }
+          ]
+        }
+      ],
+      "section": {
+        "address": 4294971472,
+        "length": 88,
+        "offset": 4176,
+        "protection": 5,
+        "flags": 268435456
+      }
+    },
+    "payload_layouts": {
+      "PayloadBase": {
+        "start": 0,
+        "size": 16,
+        "fields": [
+          [
+            "isa",
+            "#",
+            0
+          ],
+          [
+            "baseValue",
+            "Q",
+            8
+          ]
+        ]
+      },
+      "PayloadChild": {
+        "start": 16,
+        "size": 64,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            16
+          ],
+          [
+            "child2",
+            "Q",
+            24
+          ],
+          [
+            "child3",
+            "Q",
+            32
+          ],
+          [
+            "child4",
+            "Q",
+            40
+          ],
+          [
+            "child5",
+            "Q",
+            48
+          ],
+          [
+            "child6",
+            "Q",
+            56
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "setBase:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "base",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  },
+  {
+    "file": "payload-1.macho",
+    "sha256": "b61bfdd151cec25f7c434314ffd0fe4f992dd80b00471af59a0d4c61b9994a70",
+    "classes": {
+      "PayloadBase": {
+        "address": 4295000112,
+        "meta": 4295000152,
+        "superclass": 0,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000112
+      },
+      "PayloadChild": {
+        "address": 4295000192,
+        "meta": 4295000232,
+        "superclass": 4295000112,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000152
+      }
+    },
+    "superref_targets": [
+      4295000192
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "payload-1.macho",
+      "sha256": "b61bfdd151cec25f7c434314ffd0fe4f992dd80b00471af59a0d4c61b9994a70",
+      "format": "compact",
+      "lists": [
+        {
+          "address": 4294971952,
+          "header": 2147483660,
+          "count": 3,
+          "entries": [
+            {
+              "entry": 4294971960,
+              "offsets": [
+                28936,
+                -35,
+                -2056
+              ],
+              "selector_slot": 4295000896,
+              "types": 4294971929,
+              "imp": 4294969912
+            },
+            {
+              "entry": 4294971972,
+              "offsets": [
+                28908,
+                -36,
+                -2060
+              ],
+              "selector_slot": 4295000880,
+              "types": 4294971940,
+              "imp": 4294969920
+            },
+            {
+              "entry": 4294971984,
+              "offsets": [
+                28928,
+                -48,
+                -2064
+              ],
+              "selector_slot": 4295000912,
+              "types": 4294971940,
+              "imp": 4294969928
+            }
+          ]
+        },
+        {
+          "address": 4294971996,
+          "header": 2147483660,
+          "count": 3,
+          "entries": [
+            {
+              "entry": 4294972004,
+              "offsets": [
+                28900,
+                -79,
+                -2076
+              ],
+              "selector_slot": 4295000904,
+              "types": 4294971929,
+              "imp": 4294969936
+            },
+            {
+              "entry": 4294972016,
+              "offsets": [
+                28872,
+                -80,
+                -2052
+              ],
+              "selector_slot": 4295000888,
+              "types": 4294971940,
+              "imp": 4294969972
+            },
+            {
+              "entry": 4294972028,
+              "offsets": [
+                28884,
+                -92,
+                -2056
+              ],
+              "selector_slot": 4295000912,
+              "types": 4294971940,
+              "imp": 4294969980
+            }
+          ]
+        }
+      ],
+      "section": {
+        "address": 4294971952,
+        "length": 88,
+        "offset": 4656,
+        "protection": 5,
+        "flags": 268435456
+      }
+    },
+    "payload_layouts": {
+      "PayloadBase": {
+        "start": 0,
+        "size": 16,
+        "fields": [
+          [
+            "isa",
+            "#",
+            0
+          ],
+          [
+            "baseValue",
+            "Q",
+            8
+          ]
+        ]
+      },
+      "PayloadChild": {
+        "start": 16,
+        "size": 64,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            16
+          ],
+          [
+            "child2",
+            "Q",
+            24
+          ],
+          [
+            "child3",
+            "Q",
+            32
+          ],
+          [
+            "child4",
+            "Q",
+            40
+          ],
+          [
+            "child5",
+            "Q",
+            48
+          ],
+          [
+            "child6",
+            "Q",
+            56
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "setBase:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "base",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  }
+]

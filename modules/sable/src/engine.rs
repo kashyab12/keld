@@ -126,13 +126,24 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
             reg,
             address,
             bytes,
+            signed,
         } => {
             let memory = memory
                 .as_mut()
                 .ok_or("literal load requires per-run memory")?;
             let mut value = [0; 8];
             value[..bytes as usize].copy_from_slice(memory.read(address, bytes as usize)?);
-            cpu.set(reg, u64::from_le_bytes(value), true, false);
+            let value = u64::from_le_bytes(value);
+            cpu.set(
+                reg,
+                if signed {
+                    value as i32 as i64 as u64
+                } else {
+                    value
+                },
+                true,
+                false,
+            );
         }
         Op::MemoryReg {
             reg,

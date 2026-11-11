@@ -1,0 +1,174 @@
+[
+  {
+    "file": "payload-0.macho",
+    "sha256": "7a10741dc1cab34fa478de3cef5af17ce08639f120c48b4d3f91d29b7b2fe6fd",
+    "classes": {
+      "PayloadBase": {
+        "address": 4295000112,
+        "meta": 4295000152,
+        "superclass": 0,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000112
+      },
+      "PayloadChild": {
+        "address": 4295000192,
+        "meta": 4295000232,
+        "superclass": 4295000112,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000152
+      }
+    },
+    "superref_targets": [
+      4295000192
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "payload-0.macho",
+      "sha256": "7a10741dc1cab34fa478de3cef5af17ce08639f120c48b4d3f91d29b7b2fe6fd",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadBase": {
+        "start": 0,
+        "size": 8,
+        "fields": [
+          [
+            "isa",
+            "#",
+            0
+          ]
+        ]
+      },
+      "PayloadChild": {
+        "start": 8,
+        "size": 16,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            8
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "base",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  },
+  {
+    "file": "payload-1.macho",
+    "sha256": "22f4924ca3c06d06f529259bce0cb2ce0706d0dc6f9b7cefe62b995bf29f1221",
+    "classes": {
+      "PayloadBase": {
+        "address": 4295000112,
+        "meta": 4295000152,
+        "superclass": 0,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000112
+      },
+      "PayloadChild": {
+        "address": 4295000192,
+        "meta": 4295000232,
+        "superclass": 4295000112,
+        "meta_isa": 4295000152,
+        "meta_superclass": 4295000152
+      }
+    },
+    "superref_targets": [
+      4295000192
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "payload-1.macho",
+      "sha256": "22f4924ca3c06d06f529259bce0cb2ce0706d0dc6f9b7cefe62b995bf29f1221",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadBase": {
+        "start": 0,
+        "size": 8,
+        "fields": [
+          [
+            "isa",
+            "#",
+            0
+          ]
+        ]
+      },
+      "PayloadChild": {
+        "start": 8,
+        "size": 16,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            8
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "base",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  }
+]

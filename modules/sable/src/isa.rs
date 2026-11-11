@@ -10,6 +10,7 @@ pub enum Op {
         reg: u8,
         address: u64,
         bytes: u8,
+        signed: bool,
     },
     MemoryReg {
         reg: u8,
@@ -201,13 +202,14 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
     }
     if word & 0x3b000000 == 0x18000000 && word & (1 << 26) == 0 {
         let opc = word >> 30;
-        if opc > 1 {
-            return Err("signed/prefetch literal load unsupported".into());
+        if opc > 2 {
+            return Err("prefetch literal load unsupported".into());
         }
         return Ok(Op::Literal {
             reg: dst,
             address: pc.wrapping_add_signed(signed((word >> 5) & 0x7ffff, 19) << 2),
-            bytes: if opc == 0 { 4 } else { 8 },
+            bytes: if opc == 1 { 8 } else { 4 },
+            signed: opc == 2,
         });
     }
     if word == 0xd503201f {

@@ -1,5 +1,12 @@
 # Original fixtures
 
+`payload-main.m` is an original Q-field/void-setter probe. `build-payload.sh`
+emits root/child sizes 16/24, 8/16, 64/64 and 16/64 with both method/fixup forms,
+same-image/dylib parents and constructors. Sixty-four positive programs check
+real field access, superclass sums, exact extra-byte boundaries, disposal/reset
+and TLV coexistence. `check-payload-format.py` independently inspects final
+ivar cells/layouts/signatures. Only original LLVM files are in `bin/payload`.
+
 `instance-main.m` and `instance-runtime.s` are original headerless creation and
 disposal probes. `build-instances.sh` uses the original TLS/System and scalar ABI
 helpers, both method/fixup formats and same-image/dylib parents. The sixteen

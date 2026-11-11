@@ -241,3 +241,92 @@ fn discontiguous_images_do_not_allow_fallthrough_across_gaps() {
     assert_eq!(cpu.pc, 0x1004);
     assert_eq!(cpu.remaining, 9);
 }
+
+#[test]
+fn signed_literal_word_values_zr_displacements_and_precise_faults() {
+    use sable::isa::Op;
+    for displacement in [-262144i64, -1, 0, 1, 262143] {
+        for reg in [0u32, 8, 31] {
+            let word = 0x98000000 | (((displacement as u32) & 0x7ffff) << 5) | reg;
+            assert_eq!(
+                decode(word, 0x1000).unwrap(),
+                Op::Literal {
+                    reg: reg as u8,
+                    address: 0x1000u64.wrapping_add_signed(displacement * 4),
+                    bytes: 4,
+                    signed: true
+                }
+            );
+        }
+    }
+    for value in [0u32, 1, 0x7fffffff, 0x80000000, u32::MAX] {
+        for reg in [8u32, 31] {
+            let word = 0x98000000 | (((0x20000 - 0x1000) / 4) << 5) | reg;
+            let image = program(&[word, 0xd4001001]);
+            let mut memory = Memory::new(&image).unwrap();
+            memory.write(0x20000, &value.to_le_bytes()).unwrap();
+            let mut cpu = Cpu::new(0x1000, 2);
+            cpu.x[8] = 77;
+            cpu.sp = STACK_BASE;
+            cpu.nzcv = 0xa0000000;
+            #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+            let start = cpu.clone();
+            assert!(!step_memory(&mut cpu, &image, &mut memory).unwrap());
+            assert_eq!(
+                cpu.x[8],
+                if reg == 31 {
+                    77
+                } else {
+                    value as i32 as i64 as u64
+                }
+            );
+            assert_eq!(cpu.sp, STACK_BASE);
+            assert_eq!(cpu.nzcv, 0xa0000000);
+            assert!(step_memory(&mut cpu, &image, &mut memory).unwrap());
+            #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+            for dispatch in [false, true] {
+                let mut other = start.clone();
+                let mut mem = Memory::new(&image).unwrap();
+                mem.write(0x20000, &value.to_le_bytes()).unwrap();
+                sable::jit::Compiled::new_with_dispatch(&image, dispatch)
+                    .unwrap()
+                    .execute_memory(&mut other, &image, &mut mem)
+                    .unwrap();
+                assert_eq!(other, cpu);
+                assert_eq!(mem, memory);
+            }
+        }
+    }
+    for address in [0x20040u32, 0x90000] {
+        for budget in [0, 1] {
+            let word = 0x9800001f | (((address - 0x1000) / 4) << 5);
+            let image = program(&[word]);
+            let mut cpu = Cpu::new(0x1000, budget);
+            cpu.x[0] = 42;
+            let before = cpu.clone();
+            let mut mem = Memory::new(&image).unwrap();
+            let error = step_memory(&mut cpu, &image, &mut mem).unwrap_err();
+            assert_eq!(cpu, before);
+            assert_eq!(mem.read(0x20000, 64).unwrap(), [0; 64]);
+            if budget == 0 {
+                assert!(error.contains("budget"));
+            }
+            #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+            for dispatch in [false, true] {
+                let mut other = before.clone();
+                let mut m = Memory::new(&image).unwrap();
+                assert!(
+                    sable::jit::Compiled::new_with_dispatch(&image, dispatch)
+                        .unwrap()
+                        .execute_memory(&mut other, &image, &mut m)
+                        .is_err()
+                );
+                assert_eq!(other, before);
+                assert_eq!(m, mem);
+            }
+        }
+    }
+    for word in [0xd8000000, 0x9c000000, 0xb9800000, 0xb8a00800] {
+        assert!(decode(word, 0x1000).is_err());
+    }
+}

@@ -1,0 +1,60 @@
+{
+  "verified_at": "2026-11-11T05:35:36.506296+00:00",
+  "native_reference_programs": 68,
+  "native_payload_programs": 64,
+  "native_cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  },
+  "local_rust_tests": 82,
+  "local_checks": "Recipe17 quick/full passed and published after manual hello verification",
+  "local_oracle_cases": 14117,
+  "ec2_rust_tests": 88,
+  "ec2_payload_cli_passes": 128,
+  "ec2_format_reports": 32,
+  "ec2_inspected_format_inputs": 80,
+  "ec2_previous_positive_cli": {
+    "instances": 32,
+    "super": 40,
+    "protocols": 16,
+    "objc": 16
+  },
+  "ec2_previous_depth_rejections": 16,
+  "ec2_previous_unknown_selector_rejections": 8,
+  "ec2_oracle_cases": 84702,
+  "ec2_oracle_engines": [
+    "interp",
+    "jit"
+  ],
+  "ec2_oracle_seeds": [
+    12648430,
+    42,
+    8675309
+  ],
+  "ec2_runtime_snapshot_files": 386,
+  "ec2_runtime_hashes_matched": 385,
+  "post_capture_document_only_changes": [
+    "modules/sable/README.md"
+  ],
+  "source_fixture_hashes_matched": 161,
+  "cpu_only_benchmark_samples": 186,
+  "cpu_only_benchmark_failures": 0,
+  "cloud_cleanup": {
+    "active_instances": 0,
+    "volumes": 0,
+    "security_groups": 0,
+    "key_pairs": 0
+  },
+  "actual_app": {
+    "kind": "Actual original UIKit executable in local Sable; no Apple binary transferred",
+    "exit": 125,
+    "stdout": "",
+    "stderr": "sable: required dylib not supplied: /System/Library/Frameworks/UIKit.framework/UIKit\n",
+    "sable_interactions_completed": 0
+  },
+  "limits": [
+    "Q-only class size8..64, max64 extras,256 total allocations before reset",
+    "No general layout/allocator, ARC, auto init/dealloc or lifecycle",
+    "No UIKit/Foundation instructions, rendering, UI, microVM, concurrency or competitor test"
+  ]
+}

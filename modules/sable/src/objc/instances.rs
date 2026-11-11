@@ -102,7 +102,10 @@ impl Memory {
         }
         Ok(Some(record.class))
     }
-    pub(crate) fn create_instance(&mut self, class: u64, extra: u64) -> Result<u64> {
+    pub(crate) fn create_instance(&mut self, class: u64, size: usize, extra: u64) -> Result<u64> {
+        if !(8..=64).contains(&size) || !size.is_multiple_of(8) {
+            return Err("unsupported instance class size".into());
+        }
         if extra > MAX_EXTRA {
             return Err("instance extra bytes exceed supported cap".into());
         }
@@ -115,9 +118,10 @@ impl Memory {
         if count == SLOTS {
             return Ok(0);
         }
-        let extent = 8usize
+        let extent = size
             .checked_add(extra as usize)
-            .ok_or("instance size overflow")?;
+            .filter(|&span| span <= SLOT_SIZE)
+            .ok_or("instance size overflow or slot cap")?;
         let address = BASE + (count * SLOT_SIZE) as u64;
         self.write(address, &[0; SLOT_SIZE])?;
         self.write(address, &class.to_le_bytes())?;
@@ -155,13 +159,13 @@ mod tests {
             ("identity", "@16@0:8"),
             ("matches:", "Q24@0:8@16"),
             ("choose:", "@24@0:8@16"),
+            ("setValue:", "v24@0:8Q16"),
         ] {
             assert!(super::super::scalar_signature(name, ty, true).is_ok());
             assert!(super::super::scalar_signature(name, ty, false).is_err());
         }
         assert!(super::super::scalar_signature("value:", "Q24@0:8Q16", false).is_ok());
         for ty in [
-            "v24@0:8Q16",
             "#24@0:8Q16",
             ":24@0:8Q16",
             "^@24@0:8Q16",
@@ -209,7 +213,7 @@ mod tests {
             .as_ptr();
         let ledger = m.objects.as_ref().unwrap().rows.as_ptr();
         m.write(BASE, &[0xa5; SLOT_SIZE]).unwrap();
-        let a = m.create_instance(class, 64).unwrap();
+        let a = m.create_instance(class, 8, 64).unwrap();
         assert_eq!(a, BASE);
         assert_eq!(m.instance_class(a).unwrap(), Some(class));
         assert!(
@@ -230,7 +234,7 @@ mod tests {
         assert!(m.dispose_instance(a).is_err());
         assert!(m.dispose_instance(class).is_err());
         for n in 1..SLOTS {
-            let p = m.create_instance(class, (n % 65) as u64).unwrap();
+            let p = m.create_instance(class, 8, (n % 65) as u64).unwrap();
             assert_eq!(p, BASE + (n * SLOT_SIZE) as u64);
             assert!(p.is_multiple_of(16));
             assert!(
@@ -241,9 +245,9 @@ mod tests {
             );
         }
         let before = m.read(BASE, LENGTH).unwrap().to_vec();
-        assert_eq!(m.create_instance(class, 0).unwrap(), 0);
+        assert_eq!(m.create_instance(class, 8, 0).unwrap(), 0);
         for extra in [65, u64::MAX] {
-            assert!(m.create_instance(class, extra).is_err());
+            assert!(m.create_instance(class, 8, extra).is_err());
         }
         assert_eq!(m.read(BASE, LENGTH).unwrap(), before);
         assert_eq!(m.objects.as_ref().unwrap().rows.len(), SLOTS);
@@ -263,13 +267,13 @@ mod tests {
         assert!(m.instance_class(last).is_err());
         assert!(m.dispose_instance(last).is_err());
         let mut fresh = Memory::new(&image).unwrap();
-        assert_eq!(fresh.create_instance(class, 64).unwrap(), BASE);
+        assert_eq!(fresh.create_instance(class, 8, 64).unwrap(), BASE);
         assert!(fresh.read(BASE + 8, 64).unwrap().iter().all(|&v| v == 0));
         #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
         {
             assert_eq!(Memory::prepared_layout(&image).unwrap(), fresh.layout());
             let before = fresh.pointers().unwrap();
-            let b = fresh.create_instance(class, 16).unwrap();
+            let b = fresh.create_instance(class, 8, 16).unwrap();
             fresh.dispose_instance(b).unwrap();
             assert_eq!(before, fresh.pointers().unwrap());
         }

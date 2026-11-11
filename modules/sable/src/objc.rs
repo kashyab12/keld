@@ -8,6 +8,7 @@ use crate::{
 #[cfg(test)]
 mod hierarchy_tests;
 pub(crate) mod instances;
+mod payload;
 pub(crate) mod protocol;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -225,6 +226,7 @@ struct Class {
     address: u64,
     meta: u64,
     superclass: Option<u64>,
+    size: u32,
     name: String,
     instance: Vec<Method>,
     class: Vec<Method>,
@@ -320,11 +322,15 @@ fn relative(field: u64, encoded: u32) -> Result<u64> {
         .checked_add_signed(i64::from(encoded as i32))
         .ok_or("ObjC relative target overflow".into())
 }
-fn scalar_signature(name: &str, encoding: &str, objects: bool) -> Result<()> {
+fn scalar_signature(name: &str, encoding: &str, ordinary_method: bool) -> Result<()> {
     let args = name.bytes().filter(|&b| b == b':').count();
-    let supported = |b| b == b'Q' || (objects && b == b'@');
+    let supported = |b| b == b'Q' || (ordinary_method && b == b'@');
     if args > 6
-        || !encoding.as_bytes().first().copied().is_some_and(supported)
+        || !encoding
+            .as_bytes()
+            .first()
+            .copied()
+            .is_some_and(|b| supported(b) || (ordinary_method && b == b'v'))
         || matches!(name, "load" | "initialize")
     {
         return Err("unsupported/duplicate ObjC scalar method".into());
@@ -438,6 +444,7 @@ struct Pending {
     superclass: u64,
     meta_isa: u64,
     meta_super: u64,
+    layout: payload::Layout,
     name: String,
     instance: Vec<(String, u64)>,
     class: Vec<(String, u64)>,
@@ -464,6 +471,7 @@ pub(crate) fn register(
     let mut pending = Vec::new();
     let mut names = BTreeSet::new();
     let mut addresses = BTreeSet::new();
+    let mut used_cells = BTreeSet::new();
     let mut total: usize = active
         .iter()
         .map(|&i| {
@@ -524,6 +532,7 @@ pub(crate) fn register(
                     return Err("subclasses require explicit Super2 runtime".into());
                 }
                 let mut tables = Vec::new();
+                let mut instance_layout = None;
                 let mut adoption = None;
                 let mut class_name = None;
                 for (words, is_meta) in [(class, false), (metaclass, true)] {
@@ -532,15 +541,7 @@ pub(crate) fn register(
                     }
                     let ro = record(object, slide, "__objc_const", u64_at(words, 32)?, 72)?;
                     if u32_at(ro, 0)? != u32::from(is_meta) + if root { 2 } else { 0 }
-                        || u32_at(ro, 4)?
-                            != if is_meta {
-                                40
-                            } else if root {
-                                0
-                            } else {
-                                8
-                            }
-                        || u32_at(ro, 8)? != if is_meta { 40 } else { 8 }
+                        || (is_meta && (u32_at(ro, 4)? != 40 || u32_at(ro, 8)? != 40))
                         || u32_at(ro, 12)? != 0
                         || [16, 56, 64].iter().any(|&at| u64_at(ro, at).unwrap() != 0)
                     {
@@ -563,28 +564,12 @@ pub(crate) fn register(
                         adoption = Some((list, protocols.adoption(object, slide, list)?));
                     }
                     let ivars = u64_at(ro, 48)?;
-                    if (is_meta || !root) && ivars != 0 {
-                        return Err("ObjC metaclass/subclass ivars unsupported".into());
+                    if is_meta && ivars != 0 {
+                        return Err("ObjC metaclass ivars unsupported".into());
                     }
-                    if !is_meta && ivars != 0 {
-                        let data = record(object, slide, "__objc_const", ivars, 40)?;
-                        let cell = u64_at(data, 8)?;
-                        object
-                            .objc_sections
-                            .contains("__objc_ivar", slide, cell, 4)?;
-                        if u32_at(data, 0)? != 32
-                            || u32_at(data, 4)? != 1
-                            || cell % 4 != 0
-                            || u32_at(object.image.read(cell, 4, 1)?, 0)? != 0
-                            || owned_string(object, slide, "__objc_methname", u64_at(data, 16)?)?
-                                != "isa"
-                            || owned_string(object, slide, "__objc_methtype", u64_at(data, 24)?)?
-                                != "#"
-                            || u32_at(data, 32)? != 3
-                            || u32_at(data, 36)? != 8
-                        {
-                            return Err("unsupported ObjC ivar layout".into());
-                        }
+                    if !is_meta {
+                        instance_layout =
+                            Some(payload::parse(object, slide, ro, root, &mut used_cells)?);
                     }
                     let mut local = Vec::new();
                     tables.push(methods(
@@ -608,6 +593,7 @@ pub(crate) fn register(
                     superclass,
                     meta_isa: u64_at(metaclass, 0)?,
                     meta_super: u64_at(metaclass, 8)?,
+                    layout: instance_layout.unwrap(),
                     name,
                     instance,
                     class,
@@ -640,6 +626,15 @@ pub(crate) fn register(
                 .ok_or("unregistered ObjC superclass")?;
             if parent.superclass != 0 {
                 return Err("ObjC hierarchy exceeds depth two or cycles".into());
+            }
+            if class.layout.start != parent.layout.size
+                || class
+                    .layout
+                    .names
+                    .iter()
+                    .any(|n| parent.layout.names.contains(n))
+            {
+                return Err("ObjC child layout disagrees with inherited prefix".into());
             }
             (parent.meta, parent.meta)
         };
@@ -718,6 +713,7 @@ pub(crate) fn register(
             address: p.address,
             meta: p.meta,
             superclass: (p.superclass != 0).then_some(p.superclass),
+            size: p.layout.size,
             name: p.name,
             instance: convert(p.instance),
             class: convert(p.class),
@@ -822,7 +818,7 @@ impl Plan {
                 .iter()
                 .find(|c| c.address == x0)
                 .ok_or("unregistered instance allocation class")?;
-            return memory.create_instance(class.address, x1);
+            return memory.create_instance(class.address, class.size as usize, x1);
         }
         if word == instances::DISPOSE {
             if x0 == 0 {

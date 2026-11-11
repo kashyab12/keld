@@ -213,6 +213,7 @@ impl Assembler {
         at
     }
     fn memory(&mut self, op: Op) -> Result<()> {
+        let signed_word = matches!(op, Op::Literal { signed: true, .. });
         let literal = if let Op::Literal { address, .. } = op {
             Some(address)
         } else {
@@ -296,7 +297,13 @@ impl Assembler {
                 match bytes {
                     1 => self.emit(&[0x0f, 0xb6, 0x10]),
                     2 => self.emit(&[0x0f, 0xb7, 0x10]),
-                    4 => self.emit(&[0x8b, 0x10]),
+                    4 => {
+                        if signed_word {
+                            self.emit(&[0x48, 0x63, 0x10]);
+                        } else {
+                            self.emit(&[0x8b, 0x10]);
+                        }
+                    }
                     8 => self.emit(&[0x48, 0x8b, 0x10]),
                     _ => unreachable!(),
                 }

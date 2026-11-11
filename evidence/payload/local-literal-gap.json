@@ -1,0 +1,9 @@
+{
+  "kind": "Observed initial local Sable failure before signed-literal support; no cloud failure",
+  "input_profile": "absolute/chained/0/1/payload-0.macho",
+  "exit": 125,
+  "stderr": "sable: signed/prefetch literal load unsupported\n",
+  "observed_instruction": "LDRSW X8, _OBJC_IVAR_$_PayloadChild.childValue",
+  "source_context": "Compiler-generated split-dylib setter/getter/super-sum offset load",
+  "correction": "Decode and execute signed word literal loads with independent sign/ZR/fault checks"
+}

@@ -4,6 +4,10 @@ These are raw receipts from bounded experiments, not a complete simulator or
 competitive benchmark. No Apple runtime, SDK, credentials, cloud account ID,
 instance IP or SSH key is distributed here.
 
+The [Q payload report](payload/RESULTS.md) adds original getters, void setters,
+inherited fields and exact class-size allocation bounds. Native Apple reference,
+Sable execution and the missing UIKit app path are recorded separately.
+
 The [fixed-layout instance report](instances/RESULTS.md) adds actual guest storage,
 object-pointer method transport, lifetime checks and TLS/constructor coexistence.
 It remains separate from UIKit rendering or a competitor benchmark.

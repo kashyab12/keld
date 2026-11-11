@@ -173,6 +173,19 @@ bash scripts/check-objc.sh
 bash scripts/check-protocols.sh
 bash scripts/check-super.sh
 bash scripts/check-instances.sh
+bash scripts/check-payload.sh
+for format in absolute compact; do
+  for mode in chained legacy; do
+    for profile in 0 1 2 3; do
+      for split in 0 1; do
+        out="artifacts/payload/$format/$mode/$profile/$split"
+        dest="results/payload/$format/$mode/$profile/$split"
+        mkdir -p "$dest"
+        cp "$out"/interp-*.txt "$out"/jit-*.txt "$out"/format-records.json "$dest/"
+      done
+    done
+  done
+done
 for format in absolute compact; do
   for mode in chained legacy; do
     for split in 0 1; do

@@ -1,0 +1,179 @@
+[
+  {
+    "file": "payload-0.macho",
+    "sha256": "73bc062d84e33266b6b0baad1017bfe9ff48a8f42cc96a04dcee8a9f1fa9a0e3",
+    "classes": {
+      "PayloadChild": {
+        "address": 4295000072,
+        "meta": 4295000112,
+        "superclass": "_OBJC_CLASS_$_PayloadBase",
+        "meta_isa": "_OBJC_METACLASS_$_PayloadBase",
+        "meta_superclass": "_OBJC_METACLASS_$_PayloadBase"
+      }
+    },
+    "superref_targets": [
+      4295000072
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "payload-0.macho",
+      "sha256": "73bc062d84e33266b6b0baad1017bfe9ff48a8f42cc96a04dcee8a9f1fa9a0e3",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadChild": {
+        "start": 16,
+        "size": 24,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            16
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  },
+  {
+    "file": "payload-1.macho",
+    "sha256": "f42319b51a5ffeb178ca2a66195599a1d061af94ae37b53c0c7b15dda9990e4a",
+    "classes": {
+      "PayloadChild": {
+        "address": 4295000072,
+        "meta": 4295000112,
+        "superclass": "_OBJC_CLASS_$_PayloadBase",
+        "meta_isa": "_OBJC_METACLASS_$_PayloadBase",
+        "meta_superclass": "_OBJC_METACLASS_$_PayloadBase"
+      }
+    },
+    "superref_targets": [
+      4295000072
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "payload-1.macho",
+      "sha256": "f42319b51a5ffeb178ca2a66195599a1d061af94ae37b53c0c7b15dda9990e4a",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadChild": {
+        "start": 16,
+        "size": 24,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            16
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  },
+  {
+    "file": "libsable_base.dylib",
+    "sha256": "b896f6384aae0ed0eb24f8b68cb383e280982836f7906a6cb4fade74c999e705",
+    "classes": {
+      "PayloadBase": {
+        "address": 32768,
+        "meta": 32808,
+        "superclass": 0,
+        "meta_isa": 32808,
+        "meta_superclass": 32768
+      }
+    },
+    "superref_targets": [],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "libsable_base.dylib",
+      "sha256": "b896f6384aae0ed0eb24f8b68cb383e280982836f7906a6cb4fade74c999e705",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadBase": {
+        "start": 0,
+        "size": 16,
+        "fields": [
+          [
+            "isa",
+            "#",
+            0
+          ],
+          [
+            "baseValue",
+            "Q",
+            8
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "setBase:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "base",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  }
+]

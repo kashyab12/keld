@@ -1,0 +1,173 @@
+[
+  {
+    "file": "payload-0.macho",
+    "sha256": "762248f4a49608a36ff9cff9ccecfa89ebca44603711318204b201ca8e65b2d5",
+    "classes": {
+      "PayloadChild": {
+        "address": 4295000120,
+        "meta": 4295000160,
+        "superclass": "_OBJC_CLASS_$_PayloadBase",
+        "meta_isa": "_OBJC_METACLASS_$_PayloadBase",
+        "meta_superclass": "_OBJC_METACLASS_$_PayloadBase"
+      }
+    },
+    "superref_targets": [
+      4295000120
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "payload-0.macho",
+      "sha256": "762248f4a49608a36ff9cff9ccecfa89ebca44603711318204b201ca8e65b2d5",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadChild": {
+        "start": 16,
+        "size": 24,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            16
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  },
+  {
+    "file": "payload-1.macho",
+    "sha256": "fc00e8d8d8a59f89f5c3ce7a979929a71d5b9256771f96c2b325cdbbd6ca5b58",
+    "classes": {
+      "PayloadChild": {
+        "address": 4295000120,
+        "meta": 4295000160,
+        "superclass": "_OBJC_CLASS_$_PayloadBase",
+        "meta_isa": "_OBJC_METACLASS_$_PayloadBase",
+        "meta_superclass": "_OBJC_METACLASS_$_PayloadBase"
+      }
+    },
+    "superref_targets": [
+      4295000120
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "payload-1.macho",
+      "sha256": "fc00e8d8d8a59f89f5c3ce7a979929a71d5b9256771f96c2b325cdbbd6ca5b58",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadChild": {
+        "start": 16,
+        "size": 24,
+        "fields": [
+          [
+            "childValue",
+            "Q",
+            16
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "setChild:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "child",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadChild",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  },
+  {
+    "file": "libsable_base.dylib",
+    "sha256": "502d3364154e3d7b21478c2d0fcf5a55631925d999c8fa439824699ad62f5efd",
+    "classes": {
+      "PayloadBase": {
+        "address": 32768,
+        "meta": 32808,
+        "superclass": 0,
+        "meta_isa": 32808,
+        "meta_superclass": 32768
+      }
+    },
+    "superref_targets": [],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "libsable_base.dylib",
+      "sha256": "502d3364154e3d7b21478c2d0fcf5a55631925d999c8fa439824699ad62f5efd",
+      "format": "absolute",
+      "lists": []
+    },
+    "payload_layouts": {
+      "PayloadBase": {
+        "start": 0,
+        "size": 16,
+        "fields": [
+          [
+            "isa",
+            "#",
+            0
+          ],
+          [
+            "baseValue",
+            "Q",
+            8
+          ]
+        ]
+      }
+    },
+    "methods": [
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "setBase:",
+        "encoding": "v24@0:8Q16"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "base",
+        "encoding": "Q16@0:8"
+      },
+      {
+        "owner": "PayloadBase",
+        "kind": "instance",
+        "name": "sum",
+        "encoding": "Q16@0:8"
+      }
+    ]
+  }
+]

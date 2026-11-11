@@ -10,7 +10,7 @@ import struct
 method_format=runpy.run_path(str(Path(__file__).with_name('check-objc-format.py')))['inspect']
 
 
-def inspect(path, expected, split, class_names=("SableBase","SableChild","SableGrandchild"), pointer_signatures=False):
+def inspect(path, expected, split, class_names=("SableBase","SableChild","SableGrandchild"), pointer_signatures=False, payload_sizes=None):
     base_name,child_name,deep_name=class_names
     raw=path.read_bytes();sections={};segments=[];binds={};imports=[];chain=None;bind_stream=None;at=32
     def u32(at):return struct.unpack_from('<I',raw,at)[0]
@@ -100,15 +100,35 @@ def inspect(path, expected, split, class_names=("SableBase","SableChild","SableG
             if not b:return result.decode()
             result.append(b)
         raise AssertionError('unterminated fixture string')
-    classes={};cl=sections['__objc_classlist'];is_base=path.suffix=='.dylib'
+    classes={};payload_layouts={};cl=sections['__objc_classlist'];is_base=path.suffix=='.dylib'
+    root_size,child_size=payload_sizes or (8,8)
     for offset in range(0,cl['length'],8):
         p=pointer(cl['address']+offset);meta=pointer(p);ro=pointer(p+32);mr=pointer(meta+32)
         name=string(pointer(ro+24));root=name==base_name
         assert name in class_names
-        assert read(ro,'<4I')==(2 if root else 0,0 if root else 8,8,0)
+        assert read(ro,'<4I')==(2 if root else 0,0 if root else root_size,root_size if root else child_size,0)
         assert read(mr,'<4I')==(3 if root else 1,40,40,0)
         assert string(pointer(mr+24))==name
-        if not root:assert pointer(ro+48)==0
+        if payload_sizes is None:
+            if not root:assert pointer(ro+48)==0
+        else:
+            ivars=pointer(ro+48);fields=[]
+            expected_fields=[]
+            if root:expected_fields.append(('isa','#',0))
+            start=8 if root else root_size
+            size=root_size if root else child_size
+            for n in range((size-start)//8):
+                field=('baseValue' if n==0 else f'base{n+1}') if root else ('childValue' if n==0 else f'child{n+1}')
+                expected_fields.append((field,'Q',start+n*8))
+            if expected_fields:
+                assert read(ivars,'<II')==(32,len(expected_fields))
+                for n in range(len(expected_fields)):
+                    row=ivars+8+n*32;cell=pointer(row)
+                    assert cell%4==0 and read(row+24,'<II')==(3,8)
+                    fields.append((string(pointer(row+8)),string(pointer(row+16)),read(cell,'<I')[0]))
+                assert fields==expected_fields
+            else:assert ivars==0
+            payload_layouts[name]=dict(start=0 if root else root_size,size=size,fields=fields)
         classes[name]=dict(address=p,meta=meta,superclass=pointer(p+8),meta_isa=pointer(meta),meta_superclass=pointer(meta+8))
     expected_names={base_name} if is_base else ({child_name} if split else {base_name,child_name})
     if path.stem.endswith('-2'):expected_names.add(deep_name)
@@ -120,15 +140,15 @@ def inspect(path, expected, split, class_names=("SableBase","SableChild","SableG
         parent='_OBJC_CLASS_$_'+base_name if split else classes[base_name]['address']
         parent_meta='_OBJC_METACLASS_$_'+base_name if split else classes[base_name]['meta']
         assert c['superclass']==parent and c['meta_isa']==c['meta_superclass']==parent_meta, (path, c, parent, parent_meta)
-        refs=sections['__objc_superrefs'];assert refs['length']==(8 if pointer_signatures else 16) and refs['align']==3 and refs['flags']&255==0
+        refs=sections['__objc_superrefs'];assert refs['length']==(8 if pointer_signatures or payload_sizes else 16) and refs['align']==3 and refs['flags']&255==0
         targets=[pointer(refs['address']+i) for i in range(0,refs['length'],8)]
-        assert set(targets)==({c['address']} if pointer_signatures else {c['address'],c['meta']})
+        assert set(targets)==({c['address']} if pointer_signatures or payload_sizes else {c['address'],c['meta']})
         assert '_objc_msgSendSuper2' in imports
     else:targets=[]
     if deep_name in classes:
         g=classes[deep_name];c=classes[child_name];assert g['superclass']==c['address'] and g['meta_superclass']==c['meta']
     result=dict(file=path.name,sha256=hashlib.sha256(raw).hexdigest(),classes=classes,superref_targets=targets,pointer_formats=sorted(formats),method_format=method_format(path,expected))
-    if pointer_signatures:
+    if pointer_signatures or payload_sizes:
         methods=[]
         for label,cls in classes.items():
             for kind,address in [('instance',cls['address']),('class',cls['meta'])]:
@@ -142,12 +162,21 @@ def inspect(path, expected, split, class_names=("SableBase","SableChild","SableG
                     else:
                         off=read(row,'<iii');sel=pointer(row+off[0]);types=row+4+off[1]
                     method=string(sel);encoding=string(types)
-                    expected_type={'make:':'@24@0:8Q16','identity':'@16@0:8','choose:':'@24@0:8@16','matches:':'Q24@0:8@16','value:':'Q24@0:8Q16'}[method]
+                    expected_type=({'base':'Q16@0:8','child':'Q16@0:8','sum':'Q16@0:8','setBase:':'v24@0:8Q16','setChild:':'v24@0:8Q16'} if payload_sizes else {'make:':'@24@0:8Q16','identity':'@16@0:8','choose:':'@24@0:8@16','matches:':'Q24@0:8@16','value:':'Q24@0:8Q16'})[method]
                     assert encoding==expected_type
                     methods.append(dict(owner=label,kind=kind,name=method,encoding=encoding))
-        assert len(methods)==(5 if is_base else 1 if split else 6)
-        assert '_class_createInstance' in imports
-        if not is_base:assert '_object_dispose' in imports
+        if payload_sizes:
+            expected_methods=set()
+            for label in classes:
+                names=['base','sum']+(['setBase:'] if root_size>8 else []) if label==base_name else ['child','sum']+(['setChild:'] if child_size>root_size else [])
+                expected_methods.update((label,'instance',n) for n in names)
+            assert {(m['owner'],m['kind'],m['name']) for m in methods}==expected_methods
+            result['payload_layouts']=payload_layouts
+            if not is_base:assert '_class_createInstance' in imports and '_object_dispose' in imports
+        else:
+            assert len(methods)==(5 if is_base else 1 if split else 6)
+            assert '_class_createInstance' in imports
+            if not is_base:assert '_object_dispose' in imports
         result['methods']=methods
     return result
 

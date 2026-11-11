@@ -9,3 +9,4 @@ evidence/objc-boundary/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/protocols/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/super/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/instances/** -text whitespace=cr-at-eol,-blank-at-eof
+evidence/payload/** -text whitespace=cr-at-eol,-blank-at-eof

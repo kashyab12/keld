@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-11T05:30:22.861237+00:00",
+  "host": {
+    "os": "Linux",
+    "kernel": "7.0.0-1014-aws",
+    "arch": "x86_64"
+  },
+  "pci_inventory_available": true,
+  "pci_graphics": [
+    {
+      "pci_address": "0000:00:03.0",
+      "pci_class": "0x030000",
+      "vendor": "0x1d0f",
+      "device": "0x1111",
+      "driver": null
+    }
+  ],
+  "pci_errors": [],
+  "exposed_gpu_nodes": [],
+  "graphics_commands": {
+    "vulkaninfo": {
+      "status": "not_installed"
+    },
+    "nvidia-smi": {
+      "status": "not_installed"
+    }
+  },
+  "software_renderer_overrides": {},
+  "display_environment_present": {
+    "DISPLAY": false,
+    "WAYLAND_DISPLAY": false
+  },
+  "interpretation": "Exposure inventory only. Headless does not mean GPU-free. A software Vulkan device is not a hardware GPU. App rendering is a separate correctness gate."
+}
+Linux x86_64
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  2
+On-line CPU(s) list:                     0,1
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Platinum 8488C
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      2
+Core(s) per socket:                      1
+Socket(s):                               1
+Stepping:                                8
+BogoMIPS:                                4800.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq monitor ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd ida arat avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq rdpid cldemote movdiri movdir64b md_clear serialize amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+L1d cache:                               48 KiB (1 instance)
+L1i cache:                               32 KiB (1 instance)
+L2 cache:                                2 MiB (1 instance)
+L3 cache:                                105 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0,1
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+rustc 1.93.1 (01f6ddf75 2026-02-11)
+
+running 23 tests
+test chained::tests::both_pointer_formats_import_addends_tags_and_slide ... ok
+test chained::tests::rejects_malformed_metadata_and_pointer_slots_without_mutating ... ok
+test chained::tests::tls_import_and_inline_addends_reject_before_patching ... ok
+test jit::tests::cpu_layout_matches_emitter ... ok
+test linker::tests::bounded_integer_and_trie_parsing ... ok
+test linker::tests::legacy_bind_backwards_deltas_keep_every_cursor_inside_selected_storage ... ok
+test linker::tests::malformed_binding_streams_never_patch_executable_storage ... ok
+test linker::tests::tls_export_kind_and_addend_contract ... ok
+test memory::tests::immutable_bytes_are_shared_and_writable_bytes_are_private ... ok
+test objc::hierarchy_tests::subclass_layout_superrefs_and_owning_records_reject_unsupported_forms ... ok
+test chained::tests::malformed_chains_are_bounded_and_never_panic ... ok
+test objc::hierarchy_tests::superclass_graph_collection_is_order_independent_and_malformed_edges_reject ... ok
+test objc::instances::tests::arena_layout_checks_images_reserved_ranges_and_total_cap ... ok
+test objc::instances::tests::object_signature_subset_retains_exact_counts_offsets_and_unsigned_protocol_profile ... ok
+test objc::instances::tests::lifetime_capacity_zeroing_and_backing_addresses_are_private_and_stable ... ok
+test objc::payload::tests::exact_owner_cells_rows_types_ranges_and_unique_names_reject_malformed_layouts ... ok
+test objc::payload::tests::layout_bounds_coverage_inherited_prefix_and_collection_order_are_checked ... ok
+test objc::payload::tests::validated_class_sizes_drive_requested_span_without_allocator_rounding ... ok
+test objc::protocol::tests::ordinary_data_is_not_blanket_metadata_and_protocol_body_cannot_alias_sections ... ok
+test objc::protocol::tests::malformed_real_protocol_bodies_descriptions_types_and_refs_reject ... ok
+test objc::tests::malformed_real_root_graph_ro_methods_ivars_and_owning_imp_reject ... ok
+test objc::tests::plain_c_string_section_keeps_the_existing_image_limit ... ok
+test objc::tests::compact_field_relative_math_and_malformed_real_records_reject ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test llvm_chains_execute_with_rebases_transitive_imports_and_addends ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+
+running 5 tests
+test corrupted_import_and_version_are_not_silently_accepted ... ok
+test malformed_initializers_and_tls_metadata_are_rejected ... ok
+test missing_duplicate_and_wrong_kind_dependencies_fail_closed ... ok
+test supplied_order_does_not_change_two_level_resolution ... ok
+test transitive_binding_rebasing_and_private_state ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 11 tests
+test architecture_rejects_unimplemented_and_reserved_ops ... ok
+test exhausted_budget_precedes_faults_in_both_engines ... ok
+test finite_budget_and_unknown_trap_fail ... ok
+test loader_rejects_unimplemented_optional_commands ... ok
+test loader_rejects_wrong_arch_platform_permissions_and_entry ... ok
+test malformed_inputs_do_not_panic ... ok
+test memory_permissions_and_bounds ... ok
+test original_compute_checksum ... ok
+test original_linked_simulator_binary ... ok
+test wrapping_w_registers_sp_and_zero_register ... ok
+test differential_generated_programs_and_control_flow ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+
+running 4 tests
+test callback_exit_nonreturn_and_unbalanced_stack_stop_startup ... ok
+test constructor_return_at_exact_budget_and_main_return_status ... ok
+test malformed_arrays_and_targets_reject_before_execution ... ok
+test dependency_array_order_diamond_once_arguments_and_private_reset ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 5 tests
+test creation_and_disposal_preserve_scalar_state_and_each_svc_ret_budget_edge ... ok
+test invalid_classes_sizes_ownership_isa_and_stale_message_identities_reject ... ok
+test pointer_arguments_remain_guest_values_and_foreign_or_mutated_services_reject ... ok
+test saturation_returns_nil_without_reusing_retired_slots_or_resizing_memory ... ok
+test compiled_pointer_methods_instances_zeroing_isolation_tls_ctor_and_private_reset ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+
+running 11 tests
+test compiled_c_checksums_and_private_memory ... ok
+test discontiguous_images_do_not_allow_fallthrough_across_gaps ... ok
+test faults_preserve_cpu_and_memory_before_writeback ... ok
+test flags_have_arm_carry_and_signed_overflow_semantics ... ok
+test indirect_dispatch_checks_ranges_alignment_and_budget_before_jump ... ok
+test native_block_budgets_preserve_partial_state_and_mid_block_entries ... ok
+test pair_fault_does_not_partially_store_or_update_base ... ok
+test reject_vector_signed_unprivileged_and_overlap_encodings ... ok
+test signed_literal_word_values_zr_displacements_and_precise_faults ... ok
+test stack_alignment_and_region_collision ... ok
+test arithmetic_checksum_is_observable_by_external_runner ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s
+
+
+running 8 tests
+test compact_section_shape_code_flags_and_mixed_malformed_list_reject ... ok
+test compiled_methods_nested_messages_cross_image_selectors_abi_ctor_and_reset ... ok
+test foreign_traps_bad_receiver_selector_and_mutated_runtime_metadata_reject ... ok
+test malformed_sections_flags_metadata_and_missing_dependencies_reject ... ok
+test metadata_instruction_aliases_reject_before_registration_and_preparation ... ok
+test exact_budget_lookup_tail_branch_imp_ret_and_nil ... ok
+test unknown_nonnil_selector_fails_explicitly ... ok
+test mixed_formats_and_compact_metadata_are_immutable_noncode ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+
+running 3 tests
+test payload_cells_sizes_and_names_reject_prepared_live_changes_and_code_aliases ... ok
+test real_void_setter_side_effects_and_each_lookup_store_return_budget_edge ... ok
+test compiled_fields_setters_super_sums_all_sizes_extra_bounds_tls_ctor_and_reset ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+
+running 6 tests
+test null_missing_and_unknown_identities_and_foreign_services ... ok
+test prepared_and_live_protocol_record_ref_and_adoption_mutation_reject ... ok
+test compiled_protocol_identity_adoption_real_method_abi_ctor_and_fresh_data ... ok
+test test_bit_branch_decoding_covers_extreme_signed_displacements ... ok
+test unsigned_bitfield_rejects_reserved_widths_and_other_bitfield_operations ... ok
+test services_preserve_modeled_registers_flags_and_every_budget_edge ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 5 tests
+test depth_three_rejects_and_protocol_adoption_stays_direct_despite_inherited_methods ... ok
+test super_metadata_stub_mutation_and_instruction_aliases_reject ... ok
+test super_pair_lookup_tail_imp_return_preserves_scalar_state_and_exact_budget ... ok
+test super_rejects_bad_pairs_current_receiver_selector_and_foreign_traps ... ok
+test compiled_same_image_and_dylib_hierarchies_nested_super_calls_and_private_reset ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+
+running 6 tests
+test invalid_prepared_templates_offsets_caps_and_reserved_arena_reject ... ok
+test malformed_disk_metadata_rejects_before_execution ... ok
+test resolver_call_svc_ret_budget_edges_and_nested_return ... ok
+test unknown_middle_mutated_descriptors_and_foreign_traps_reject ... ok
+test zero_only_template_and_large_alignment_use_private_backing ... ok
+test two_images_both_fixups_scalar_abi_constructors_and_private_prepared_reset ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+Both initializer formats match the native-checked order and startup arguments.
+Scalar TLV templates, ABI and constructor/main access passed in both fixup formats.
+Compiler predates the relative-list switch; final absolute metadata will be checked.
+Ubuntu clang version 18.1.3 (1ubuntu1)
+Compiler predates the relative-list switch; final absolute metadata will be checked.
+Ubuntu clang version 18.1.3 (1ubuntu1)
+Absolute/compact static scalar ObjC2 dispatch, nesting, ABI, constructor access and explicit rejection passed.
+Static protocol identity/name/adoption, real IMP, scalar ABI, constructor and mutable storage checks passed.
+Same-image/dylib superclass lookup, scalar Super2, ABI, nesting, constructor/reset and depth rejection passed.
+Fixed-layout instance creation/disposal, object-pointer methods, zeroing, isolation, ABI and constructor state passed.
+Q payload fields, void setter effects, inherited/super access, size/extra boundaries and private reset passed.
+All four rebuilt chained fixtures match in every available engine.
+SABLE_ARM64_DARWIN_OK
+{"oracle": "Unicorn", "version": "2.1.4", "engine": "interp", "seed": 12648430, "cases": 14117, "kinds": {"arithmetic_flags_conditions": 2000, "condition_truth_table": 256, "logical_immediate_masks_sp_zr": 1360, "conditional_compare_flags": 2048, "conditional_select_zr_aliases": 2048, "test_bit_branches_signed_zr": 1024, "unsigned_bitfield_all_immediates": 5120, "ubuntu_clang_protocol_ubfiz": 8, "memory_unscaled_pre_post": 120, "memory_unsigned": 8, "memory_register_offset": 64, "memory_pair": 24, "signed_word_literal_forward": 15, "signed_word_literal_backward": 15, "call_return": 1, "literal_data_load": 2, "literal_code_load_backward": 2, "indirect_call_x30_alias": 1, "indirect_branch": 1}, "input_sha256": "064636413accd096e98fe7bf68f0e6c5a68f3411cdab8babd29bfdbb62e1752c", "elapsed_seconds": 15.98768473299998, "input_build_elapsed_seconds": 0.5434912839999981, "full_registers_flags_memory_equal": true}
+{"oracle": "Unicorn", "version": "2.1.4", "engine": "jit", "seed": 12648430, "cases": 14117, "kinds": {"arithmetic_flags_conditions": 2000, "condition_truth_table": 256, "logical_immediate_masks_sp_zr": 1360, "conditional_compare_flags": 2048, "conditional_select_zr_aliases": 2048, "test_bit_branches_signed_zr": 1024, "unsigned_bitfield_all_immediates": 5120, "ubuntu_clang_protocol_ubfiz": 8, "memory_unscaled_pre_post": 120, "memory_unsigned": 8, "memory_register_offset": 64, "memory_pair": 24, "signed_word_literal_forward": 15, "signed_word_literal_backward": 15, "call_return": 1, "literal_data_load": 2, "literal_code_load_backward": 2, "indirect_call_x30_alias": 1, "indirect_branch": 1}, "input_sha256": "064636413accd096e98fe7bf68f0e6c5a68f3411cdab8babd29bfdbb62e1752c", "elapsed_seconds": 16.40312136700001, "input_build_elapsed_seconds": 0.5573175290000165, "full_registers_flags_memory_equal": true}
+{"oracle": "Unicorn", "version": "2.1.4", "engine": "interp", "seed": 42, "cases": 14117, "kinds": {"arithmetic_flags_conditions": 2000, "condition_truth_table": 256, "logical_immediate_masks_sp_zr": 1360, "conditional_compare_flags": 2048, "conditional_select_zr_aliases": 2048, "test_bit_branches_signed_zr": 1024, "unsigned_bitfield_all_immediates": 5120, "ubuntu_clang_protocol_ubfiz": 8, "memory_unscaled_pre_post": 120, "memory_unsigned": 8, "memory_register_offset": 64, "memory_pair": 24, "signed_word_literal_forward": 15, "signed_word_literal_backward": 15, "call_return": 1, "literal_data_load": 2, "literal_code_load_backward": 2, "indirect_call_x30_alias": 1, "indirect_branch": 1}, "input_sha256": "ffd5f3226d52c85c70f2dccafb6192280ff6477d61cebeacfbed1f6febdf3761", "elapsed_seconds": 15.752606822000018, "input_build_elapsed_seconds": 0.5500644999999906, "full_registers_flags_memory_equal": true}
+{"oracle": "Unicorn", "version": "2.1.4", "engine": "jit", "seed": 42, "cases": 14117, "kinds": {"arithmetic_flags_conditions": 2000, "condition_truth_table": 256, "logical_immediate_masks_sp_zr": 1360, "conditional_compare_flags": 2048, "conditional_select_zr_aliases": 2048, "test_bit_branches_signed_zr": 1024, "unsigned_bitfield_all_immediates": 5120, "ubuntu_clang_protocol_ubfiz": 8, "memory_unscaled_pre_post": 120, "memory_unsigned": 8, "memory_register_offset": 64, "memory_pair": 24, "signed_word_literal_forward": 15, "signed_word_literal_backward": 15, "call_return": 1, "literal_data_load": 2, "literal_code_load_backward": 2, "indirect_call_x30_alias": 1, "indirect_branch": 1}, "input_sha256": "ffd5f3226d52c85c70f2dccafb6192280ff6477d61cebeacfbed1f6febdf3761", "elapsed_seconds": 15.619160224000012, "input_build_elapsed_seconds": 0.5409836800000107, "full_registers_flags_memory_equal": true}
+{"oracle": "Unicorn", "version": "2.1.4", "engine": "interp", "seed": 8675309, "cases": 14117, "kinds": {"arithmetic_flags_conditions": 2000, "condition_truth_table": 256, "logical_immediate_masks_sp_zr": 1360, "conditional_compare_flags": 2048, "conditional_select_zr_aliases": 2048, "test_bit_branches_signed_zr": 1024, "unsigned_bitfield_all_immediates": 5120, "ubuntu_clang_protocol_ubfiz": 8, "memory_unscaled_pre_post": 120, "memory_unsigned": 8, "memory_register_offset": 64, "memory_pair": 24, "signed_word_literal_forward": 15, "signed_word_literal_backward": 15, "call_return": 1, "literal_data_load": 2, "literal_code_load_backward": 2, "indirect_call_x30_alias": 1, "indirect_branch": 1}, "input_sha256": "b9d416b0bfad5aed59b093193e8b009b1783214370bb6c200cece265287c0db6", "elapsed_seconds": 15.829290635000007, "input_build_elapsed_seconds": 0.5416667340000458, "full_registers_flags_memory_equal": true}
+{"oracle": "Unicorn", "version": "2.1.4", "engine": "jit", "seed": 8675309, "cases": 14117, "kinds": {"arithmetic_flags_conditions": 2000, "condition_truth_table": 256, "logical_immediate_masks_sp_zr": 1360, "conditional_compare_flags": 2048, "conditional_select_zr_aliases": 2048, "test_bit_branches_signed_zr": 1024, "unsigned_bitfield_all_immediates": 5120, "ubuntu_clang_protocol_ubfiz": 8, "memory_unscaled_pre_post": 120, "memory_unsigned": 8, "memory_register_offset": 64, "memory_pair": 24, "signed_word_literal_forward": 15, "signed_word_literal_backward": 15, "call_return": 1, "literal_data_load": 2, "literal_code_load_backward": 2, "indirect_call_x30_alias": 1, "indirect_branch": 1}, "input_sha256": "b9d416b0bfad5aed59b093193e8b009b1783214370bb6c200cece265287c0db6", "elapsed_seconds": 15.895735480999974, "input_build_elapsed_seconds": 0.5396667989999742, "full_registers_flags_memory_equal": true}
+{'0xd2800090': 1, '0xd2800030': 1, '0xd4001001': 2}
+{'0xd2800090': 1, '0xd2800030': 1, '0xd4001001': 2}
+{"protocol": "process_startup_load_translate_execute", "blocks": 31, "seed": 12648430, "host": {"system": "Linux", "machine": "x86_64", "release": "7.0.0-1014-aws"}, "qemu_version": "qemu-aarch64 version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)", "fingerprints": {"target/release/sable": "70e54f70c1394ee2f4cc540df32915eb7629dca921e259f4550e6981fc525c90", "modules/sable/fixtures/bin/checksum.macho": "295aa066e680e77490220c38ccfa564f943d7f470ea9f8cde0ca714fde4d8a19", "modules/sable/fixtures/bin/workload.macho": "b67e1318144f45e51e23154e22c14e789583a856151e3d521cb64b01224263f9", "artifacts/checksum.elf": "bfb4fa51469d2c1e7ae7f6a8fdd8a077925eda9694d194db0a00209285738c2a", "artifacts/workload.elf": "4bdcef375ae5bbedb8bb8199f066f8a563e991e0a096cc7e3177e1be4c22421d"}, "samples": 186, "failures": 0, "summaries": {"checksum": {"interp": {"median_seconds": 0.502098023, "p95_seconds": 0.552293597, "min_seconds": 0.493655946, "max_seconds": 0.621653442, "median_max_rss_kib": 2532}, "jit": {"median_seconds": 0.008110731, "p95_seconds": 0.008520624, "min_seconds": 0.007537059, "max_seconds": 0.008565758, "median_max_rss_kib": 2532}, "qemu": {"median_seconds": 0.011479257, "p95_seconds": 0.012989852, "min_seconds": 0.009893764, "max_seconds": 0.013015825, "median_max_rss_kib": 8740}, "interp_over_jit": {"ratio_of_medians": 61.9053970597718, "paired_bootstrap_95_percent": [60.952601911799256, 62.49965588685884]}, "qemu_over_jit": {"ratio_of_medians": 1.4153171890425167, "paired_bootstrap_95_percent": [1.3440969859562992, 1.4467330133706828]}}, "workload": {"interp": {"median_seconds": 0.02297918, "p95_seconds": 0.023199972, "min_seconds": 0.02264597, "max_seconds": 0.023220896, "median_max_rss_kib": 2532}, "jit": {"median_seconds": 0.002938554, "p95_seconds": 0.0030681, "min_seconds": 0.002818882, "max_seconds": 0.003088958, "median_max_rss_kib": 2464}, "qemu": {"median_seconds": 0.004262709, "p95_seconds": 0.004522232, "min_seconds": 0.004138901, "max_seconds": 0.004649516, "median_max_rss_kib": 8812}, "interp_over_jit": {"ratio_of_medians": 7.819893730045457, "paired_bootstrap_95_percent": [7.742356579305585, 7.8712453967156755]}, "qemu_over_jit": {"ratio_of_medians": 1.4506144859002081, "paired_bootstrap_95_percent": [1.4383962859021788, 1.4776264108129373]}}}, "limitations": ["original freestanding fixtures, no Apple frameworks or UI", "ELF adaptation changes only fixed syscall protocol instructions", "process-level wall time includes startup, file loading and translation", "confidence intervals resample paired blocks within one host; not fleet-wide estimates", "GNU time CPU durations have 10 ms resolution", "max RSS is per-process peak, not total host memory or achievable density"]}

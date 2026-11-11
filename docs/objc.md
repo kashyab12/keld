@@ -3,7 +3,7 @@
 Sable registers a bounded original Objective-C root-class profile and dispatches
 messages to the compiled ARM64 method bodies. This is an original MIT
 implementation, with an explicit original libobjc fixture. It supplies no Apple
-runtime, Foundation, UIKit, allocator or UI. [Execution receipts](../evidence/objc/RESULTS.md)
+runtime, Foundation, UIKit, general allocator or UI. [Execution receipts](../evidence/objc/RESULTS.md)
 separate Sable on Linux from the native Apple reference.
 
 ## Registration and ownership
@@ -19,10 +19,12 @@ The initial profile accepts imageinfo version 0/flags 0x40, 40-byte root class
 and metaclass records, 72-byte class RO records, and either 24-byte absolute or 12-byte on-disk relative method entries. A root class has no superclass; its metaclass points to itself and has
 the ordinary class as superclass. Names must agree, cache/vtable fields must
 match the supplied profile, and methods must name aligned code in their owning
-image. Instances have one raw eight-byte isa word. An optional single explicit
-isa ivar must have offset 0, type `#`, alignment 8 and size 8.
+image. Instances have a raw eight-byte isa header and may have validated
+[Q payload fields](payload.md) through a total class size of 64. An optional
+explicit isa ivar has offset 0, type `#`, alignment 8 and size 8. Other fields
+require exact contiguous Q storage and owning four-byte offset cells.
 
-Supported class/instance method signatures return Q or @ with zero through
+Supported class/instance method signatures return Q, @ or void with zero through
 six Q/@ arguments, using the same 64-bit scalar register channel. Protocol
 descriptions retain the unsigned-Q-only profile. Encodings exactly match the selector's
 colon count and argument positions. Classrefs name registered ordinary classes.
@@ -144,9 +146,12 @@ now works separately from method dispatch. Protocol method descriptions never
 become executable IMPs; declaring conformance does not prove implementation.
 
 [Bounded depth-two superclass lookup and Super2 calls](super.md) now support
-static children with no added instance storage, including supplied dylib parents.
+static children, including supplied dylib parents. Their validated payload
+prefix must begin at the registered parent RO size.
 [Fixed-layout creation/disposal](instances.md) now supplies bounded runtime-owned
 objects and object-pointer method transport without automatic init/ARC.
+[Q payload execution](payload.md) runs original getters, void setters and super
+sums over allocated storage; no property access shim supplies the result.
 
 Deeper/dynamic inheritance, categories, inherited/dynamic/optional protocol forms,
 +load/+initialize, ARC/retain-release,

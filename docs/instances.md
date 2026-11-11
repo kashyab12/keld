@@ -1,7 +1,9 @@
 # Fixed-layout guest instances
 
 Sable implements original bounded `class_createInstance` and `object_dispose`
-services for its registered eight-byte root/direct-child layout. Allocations
+services for registered root/direct-child layouts. The original header-only
+profile is eight bytes; [Q payload layouts](payload.md) extend validated class
+sizes through 64 bytes. Allocations
 contain real writable guest bytes with checked identity and lifetime; original
 factory, pointer-returning, comparison and superclass method bodies execute.
 [Execution receipts](../evidence/instances/RESULTS.md). This adds no ARC, automatic
@@ -11,7 +13,9 @@ init/dealloc, general malloc/free or UIKit service.
 
 A registered ObjC process with the complete instance-runtime export pair receives a
 32 KiB RW arena at `0x72000000`: 256 slots ×128 bytes, each aligned to 16 bytes.
-The eight-byte raw isa header is followed by at most 64 requested extra bytes.
+Each validated class size includes its eight-byte raw isa header and supported
+Q fields. At most 64 requested extra bytes begin at that exact class size,
+independently of allocator rounding or slot padding.
 The arena and its bounded allocation ledger are allocated once during run setup,
 before native code obtains backing pointers. Service calls do not resize mapped
 regions, clone arena buffers or grow the ledger's reserved capacity. Guest
@@ -47,7 +51,7 @@ separate requested storage and private runs, not cross-tenant or UI capacity.
 
 ## Exact scalar signatures and calls
 
-Class/instance method metadata now accepts Q or @ returns and up to six Q/@
+Class/instance method metadata accepts Q, @ or void returns and up to six Q/@
 arguments, with exact frame sizes and offsets. For example, `@24@0:8Q16` is the
 original factory, `@16@0:8` returns self, and `Q24@0:8@16` compares an object
 argument. All use the existing scalar GPR channel. An @ argument is a guest value;
@@ -55,7 +59,9 @@ it is not automatically dereferenced or retained. Actual guest IMP instructions
 must produce the result. Ordinary nil object-returning messages return x0=0.
 Protocol description records retain their earlier unsigned-Q-only profile.
 
-Class/SEL arguments, quoted/qualified object types, pointers, blocks, void,
+Only ordinary method returns may be void; real setters execute guest stores
+and callers ignore unspecified return registers. Void arguments remain invalid.
+Class/SEL arguments, quoted/qualified object types, pointers, blocks,
 structs, FP/SIMD/aggregate ABI and general Objective-C encodings remain unsupported.
 The loader still rejects unsupported class/layout/lifecycle flags rather than
 silently skipping constructors or destructors.

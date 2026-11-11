@@ -1,0 +1,1 @@
+Guest instances, pointer methods, zeroing, isolation and disposal OK

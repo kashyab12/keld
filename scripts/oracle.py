@@ -125,6 +125,12 @@ def corpus(seed, count):
                 for base in [20,31]:
                     case([0x28000000|(2 if size==8 else 0)<<30|mode<<23|load<<22|((-2)&127)<<15|5<<10|base<<5|4],"memory_pair")
                     cases[-1]["x"][20]=DATA+128
+    # Compiler-emitted LDRSW literal: both signs, XZR and backwards code data.
+    for value in [0,1,0x7fffffff,0x80000000,0xffffffff]:
+        for reg in [0,8,31]:
+            case([0x98000000|(((DATA-BASE)//4)<<5)|reg],"signed_word_literal_forward")
+            cases[-1]['data']=struct.pack('<I',value)+cases[-1]['data'][4:]
+            case([0x14000002,value,0x98000000|(0x7ffff<<5)|reg],"signed_word_literal_backward")
     # BL/RET, including a nonzero return address, without overwriting random X30.
     case([0x94000003,0x14000004,0xd503201f,0x91000400,0xd65f03c0],"call_return")
     for size,baseword in [(4,0x18000000),(8,0x58000000)]:

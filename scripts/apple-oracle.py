@@ -33,6 +33,7 @@ def main():
     parser.add_argument("--protocols",action="store_true")
     parser.add_argument("--super",action="store_true")
     parser.add_argument("--instances",action="store_true")
+    parser.add_argument("--payload",action="store_true")
     options=parser.parse_args()
     runtimes = json.loads(sim("list", "runtimes", "--json").stdout)["runtimes"]
     runtime = next(r for r in runtimes if r["isAvailable"] and r.get("platform") == "iOS" and any(t["identifier"] == "com.apple.CoreSimulator.SimDeviceType.iPhone-17" for t in r["supportedDeviceTypes"]))
@@ -55,6 +56,7 @@ def main():
         if options.super:expected.update({f"super/{fmt}/{mode}/{split}/super-{ctor}":b"Superclass lookup, Super2 guest methods, nesting and ABI OK\n" for fmt in ['absolute','compact'] for mode in ['chained','legacy'] for split in [0,1] for ctor in [0,1]})
         if options.super:expected.update({f"super/{fmt}/{mode}/0/super-3":b"Superclass lookup, Super2 guest methods, nesting and ABI OK\n" for fmt in ['absolute','compact'] for mode in ['chained','legacy']})
         if options.instances:expected.update({f"instances/{fmt}/{mode}/{split}/instance-{ctor}":b"Guest instances, pointer methods, zeroing, isolation and disposal OK\n" for fmt in ['absolute','compact'] for mode in ['chained','legacy'] for split in [0,1] for ctor in [0,1]})
+        if options.payload:expected.update({f"payload/{fmt}/{mode}/{profile}/{split}/payload-{ctor}":b"Payload fields, void setters, super sums, extra bounds and reset OK\n" for fmt in ['absolute','compact'] for mode in ['chained','legacy'] for profile in range(4) for split in [0,1] for ctor in [0,1]})
         for name in expected:
             result = sim("spawn", device, str(ROOT / "modules/sable/fixtures/bin" / (name + ".macho")), owned_set=owned_set, check=False, text=False)
             receipt["runs"].append({"fixture": name, "exit": result.returncode, "stdout_hex": result.stdout.hex(), "stderr": result.stderr.decode(errors="replace")})

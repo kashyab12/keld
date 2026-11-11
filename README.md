@@ -24,6 +24,8 @@ The [scalar superclass/Super2 profile](docs/super.md) adds inherited methods and
 real guest super calls for a root and direct subclasses, including dylib parents.
 Bounded [instance creation/disposal](docs/instances.md) adds private zeroed storage,
 lifetime checks and scalar object-pointer methods alongside TLS and constructors.
+Validated [Q payload fields](docs/payload.md) add real getter/void-setter execution,
+inherited storage and class-size-based extra-byte boundaries.
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 
@@ -46,6 +48,7 @@ to build Sable or run these probes. See [fixture provenance](modules/sable/fixtu
 - [Real app interaction and GPU benchmark gates](docs/app-benchmarks.md)
 - [Static protocol registration, names and direct conformance](docs/protocols.md)
 - [Checked superclass lookup and Super2 execution](docs/super.md)
+- [Q payload layouts, guest getters/setters and allocation boundaries](docs/payload.md)
 - [Fixed-layout guest instances, pointer methods and lifetime](docs/instances.md)
 - [Static scalar Objective-C2 registration and method execution](docs/objc.md)
 - [Scalar Darwin TLS contract and runtime checks](docs/tls.md)

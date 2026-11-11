@@ -50,19 +50,22 @@ Scalar memory access supports 1/2/4/8-byte loads/stores, unsigned immediate offs
 unscaled signed offsets, pre/post-index writeback and UXTW/LSL/SXTW/SXTX register
 offsets. Integer pairs support 4/8-byte elements and stack frame addressing.
 Constrained-unpredictable overlaps are rejected rather than assigned arbitrary
-semantics. Signed loads, SIMD, unprivileged access forms and atomics remain unsupported.
+semantics. LDRSW literal loads sign-extend a checked four-byte read to 64 bits;
+the x86 backend uses guarded MOVSXD. Other signed-load addressing families, SIMD,
+unprivileged access forms and atomics remain unsupported.
 
 `memory.rs` forks writable image buffers into each run, shares immutable image
 bytes through `Arc<Vec<u8>>`, and adds a reserved 1 MiB stack.
 The freestanding process starts with aligned SP at the stack top. Images with
 initializers use the bounded [startup arguments](initializers.md). Scalar
 [TLS storage](tls.md) is fixed before compilation and private to each run.
-Loads zero-extend, stores truncate to the access width, and
+Unsigned loads zero-extend, LDRSW literal sign-extends, stores truncate to the access width, and
 an access must fit wholly in one region with the required permission. SP-based
 accesses check 16-byte alignment. Failed memory operations preserve registers,
 base writeback, memory and the remaining instruction count; pair stores validate
 the entire range before writing either element. Executable image bytes remain
-immutable. There is no dynamic allocation or guest memory-mapping syscall yet.
+immutable. There is no general dynamic allocator or guest memory-mapping syscall yet.
+The bounded ObjC arena described below is fixed before execution.
 
 `engine.rs` provides the reference state transition. A finite instruction budget
 stops loops. The reference is intentionally straightforward and unoptimized;
@@ -169,7 +172,7 @@ precedes execution; W inputs are truncated, register 31 is ZR and NZCV is retain
 
 ## Bounded static inheritance
 
-The [Super2 profile](super.md) validates roots and direct same-layout children
+The [Super2 profile](super.md) validates roots and direct children with checked layout prefixes
 after collecting every class/metaclass identity. Normal messages search own then
 parent tables; Super2 begins at the supplied current class's parent. The original
 bridge loads the guest pair, returns the checked IMP in x16 and tail-transfers
@@ -186,3 +189,7 @@ mapped memory or exposes host pointers. Normal/Super2 messaging checks arena
 liveness and expected isa. Static raw-isa objects remain supported separately.
 Q/@ method arguments/results use real scalar guest IMPs; no ARC or init service
 is synthesized. Arena state is shared across constructors/main and reset per run.
+[Q payload validation](payload.md) registers owning ivar offset cells and contiguous
+fields, checks inherited prefixes and passes exact RO size to creation. Original
+getter and void-setter bodies access guest bytes; extras begin at class size,
+not slot padding. Both size and extra-byte caps are 64 within the existing slot.

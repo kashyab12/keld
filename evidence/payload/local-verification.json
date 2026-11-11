@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-11-11T05:30:41.907713+00:00",
+  "rust_tests": 82,
+  "recipe_version": 17,
+  "recipe_quick": "passed",
+  "recipe_full": "passed: tests, oracle-build, oracle, dynamic, chained, initializers, graphics-inventory, tls, objc, protocols, super, instances, payload",
+  "recipe_published": true,
+  "manual_hello": "SABLE_ARM64_DARWIN_OK; guest exit0, host exit0",
+  "local_payload_cli_passes": 64,
+  "local_format_reports": 32,
+  "inspected_format_inputs": 80,
+  "matching_rebuilt_original_binaries": 144,
+  "source_fixture_hashes": 161,
+  "oracle_cases": 14117,
+  "native_reference_programs": 68,
+  "native_cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  }
+}

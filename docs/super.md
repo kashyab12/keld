@@ -1,7 +1,8 @@
 # Scalar superclass lookup and Super2
 
-Sable supports a root class and direct subclasses with the same eight-byte raw
-isa instance layout. Ordinary scalar messages search the receiver's own method
+Sable supports a root class and direct subclasses with a raw eight-byte isa
+header. [Validated Q payloads](payload.md) may extend the instance layout to 64
+bytes, preserving the parent prefix. Ordinary scalar messages search the receiver's own method
 table and then its parent's corresponding table. An explicit original
 `objc_msgSendSuper2` bridge searches the supplied current class's superclass,
 then tail-calls a checked guest ARM64 IMP. [Execution receipts](../evidence/super/RESULTS.md).
@@ -20,8 +21,9 @@ unknown/mixed-kind edges and depth greater than two reject. The existing cap is
 64 total ordinary classes (128 ordinary/meta identities), not 64 roots plus children.
 
 Observed RO flags are 2/3 for root ordinary/meta and 0/1 for child ordinary/meta.
-Root instanceStart/instanceSize are 0/8; child fields are 8/8. Metaclass fields
-remain 40/40. Children add no ivars or storage. Existing name, cache, scalar type,
+The original header-only profile uses root start/size 0/8 and child 8/8.
+Q payload profiles additionally validate contiguous local fields; child start
+equals parent size. Metaclass fields remain 40/40. Existing name, cache, scalar type,
 owning method/code, metadata cap and snapshot checks still apply. A superclass
 may come from an explicitly supplied original dylib; a missing dependency fails.
 No placeholder superclass is manufactured.
@@ -93,7 +95,7 @@ SP and incoming platform state. Separate Sable probes test additional modeled
 scalar state and every call/return budget edge, including both Linux dispatch
 modes. Third-level class metadata is explicitly rejected.
 
-Deeper or dynamic hierarchies, added instance storage, general allocation/ARC, categories,
+Deeper or dynamic hierarchies, non-Q/general layouts, general allocation/ARC, categories,
 +load/+initialize, forwarding, general Protocol objects, inherited protocol
 records, tagged/PAC isa, exceptions, FP/SIMD/aggregate ABI and guest threads remain
 unsupported. Foundation/UIKit execution, UI recordings on Sable/Linux, concurrent

@@ -1,0 +1,1 @@
+Payload fields, void setters, super sums, extra bounds and reset OK

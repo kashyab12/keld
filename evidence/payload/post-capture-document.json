@@ -1,0 +1,19 @@
+{
+  "path": "modules/sable/README.md",
+  "captured_sha256": "e92db240e0b372eee124d4268758cf5ee6f2ae5a2088da99350eb99b32501922",
+  "published_sha256": "ece418919369abedbbb45bac3cf986809db6d54688f5a0da48b3d7d35ab2e8ab",
+  "only_change": [
+    "--- captured",
+    "+++ published",
+    "@@ -9,7 +9,7 @@",
+    " extra storage and private lifetime tracking. These add no ARC or automatic init.",
+    " ",
+    " The bounded [superclass/Super2 profile](../../docs/super.md) supports roots and",
+    "-direct subclasses with no added storage, inherited scalar method lookup and",
+    "+direct subclasses with validated layout prefixes, inherited scalar method lookup and",
+    " real guest super calls, including supplied dylib parents. This does not add",
+    " allocation, class initialization or general object lifecycle support.",
+    " "
+  ],
+  "runtime_code_or_input_changed": false
+}
