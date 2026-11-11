@@ -1,5 +1,9 @@
 # Sable
 
+[FirstFrame](../../docs/firstframe.md): an SDK-compiled UIKit scene app runs on
+original providers, draws a guest-rendered red frame, takes an external tap and
+draws blue or green, checked by a separate driver process.
+
 [FP/SIMD state and the HFA calling convention](../../docs/fp-simd.md): V registers,
 FPCR/FPSR and the scalar FP forms clang emits for CGRect/CGFloat code, checked
 against Unicorn; other FP/SIMD encodings reject by name.

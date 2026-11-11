@@ -8,6 +8,17 @@
 #define WIDTH 390
 #define HEIGHT 844
 
+// Negative-control builds only (scripts/build-firstframe.sh): present an
+// unmapped framebuffer range, or omit the UIApplicationMain export.
+#ifdef SABLE_FORGED_FRAMEBUFFER
+#define PRESENTED ((const char *)framebuffer + 0x40000000)
+#else
+#define PRESENTED framebuffer
+#endif
+#ifdef SABLE_MISSING_EXPORT
+#define UIApplicationMain SableNegativeControlApplicationMain
+#endif
+
 // Host services (checked SVC stubs in UIKit-services.s).
 extern Word sable_ui_launch_info(char *buffer, Word capacity);
 extern void sable_ui_present(const void *pixels, Word width, Word height, Word stride);
@@ -351,7 +362,7 @@ int UIApplicationMain(int argc, char **argv, NSString *principal, NSString *dele
             layout(keyWindow);
             render(keyWindow, 0, 0);
         }
-        sable_ui_present(framebuffer, WIDTH, HEIGHT, WIDTH * 4);
+        sable_ui_present(PRESENTED, WIDTH, HEIGHT, WIDTH * 4);
         unsigned kind = sable_ui_wait_event(&input);
         if (kind == 3) exit(0);
         if (kind == 1 && keyWindow) {

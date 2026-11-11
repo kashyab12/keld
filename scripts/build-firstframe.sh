@@ -25,11 +25,17 @@ clang "${flags[@]}" "${objc[@]}" -c "$p/Foundation.m" -o "$out/Foundation.o"
 clang "${flags[@]}" -c "$p/UIKit-services.s" -o "$out/UIKit-services.o"
 clang "${flags[@]}" "${objc[@]}" -c "$p/UIKit.m" -o "$out/UIKit.o"
 "$linker" "${link[@]}" -dylib "${version[@]}" -install_name /System/Library/Frameworks/UIKit.framework/UIKit "$out/UIKit.o" "$out/UIKit-services.o" "$out/Foundation.dylib" "$out/libobjc.dylib" "$out/libSystem.dylib" -o "$out/UIKit.dylib"
+for variant in forged:-DSABLE_FORGED_FRAMEBUFFER missing:-DSABLE_MISSING_EXPORT; do
+  name="${variant%%:*}"
+  clang "${flags[@]}" "${objc[@]}" "${variant#*:}" -c "$p/UIKit.m" -o "$out/UIKit-$name.o"
+  "$linker" "${link[@]}" -dylib "${version[@]}" -install_name /System/Library/Frameworks/UIKit.framework/UIKit "$out/UIKit-$name.o" "$out/UIKit-services.o" "$out/Foundation.dylib" "$out/libobjc.dylib" "$out/libSystem.dylib" -o "$out/UIKit-$name.dylib"
+done
 if [[ "$(uname -s)" == Darwin && "${SABLE_FIRSTFRAME_SDK:-1}" == 1 ]]; then
   export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
   sdk="$(xcrun --sdk iphonesimulator --show-sdk-path)"
   for opt in O0 Os; do
     xcrun clang -target arm64-apple-ios17.0-simulator -isysroot "$sdk" -fobjc-arc "-$opt" "$src/main.m" -framework UIKit -framework Foundation -o "$out/FirstFrame-$opt"
   done
-  plutil -convert binary1 -o "$out/Info.plist" "$src/Info.plist"
+  plutil -convert binary1 -o "$out/Info.bplist" "$src/Info.plist"
+  cmp "$out/Info.bplist" "$src/Info.bplist"
 fi

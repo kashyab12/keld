@@ -33,8 +33,9 @@ permissions and is not per-object memory protection.
 ## Class size and allocation size
 
 Validated class size is passed to instance creation. The ledger's requested span
-is `class size + extra bytes`; both caps are 64, so the maximum span exactly fits
-the existing 128-byte slot. Allocation still zeroes the entire slot and writes
+is `class size + extra bytes`. Extra bytes are capped at 64 and the span must fit
+the slot (512 bytes since the [FirstFrame profile](firstframe.md), which also adds
+typed ivars and non-fragile sliding). Allocation still zeroes the entire slot and writes
 raw isa, with the same private arena, stable backing pointers, lifetime checks,
 disposal, quarantine and reset behavior. No mapped growth is introduced.
 

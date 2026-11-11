@@ -22,7 +22,7 @@ ownership, exact stub instructions, and SVC origin are checked. Partial sets,
 forged bridges, and unregistered origins reject. Providers still require the
 existing strict dependency, version, metadata and signature checks.
 
-Each execution uses the existing 256 quarantined 128-byte slots. Allocations have
+Each execution uses 256 quarantined slots (512 bytes each since the FirstFrame profile). Allocations have
 live strong counts (cap 1,000,000), finalizing and retired states. There are at most
 32 active pools, 1024 pending releases, and one active dealloc continuation.
 Ledger, pool and queue capacity is reserved before guest execution and never
