@@ -175,6 +175,15 @@ bash scripts/check-super.sh
 bash scripts/check-instances.sh
 bash scripts/check-payload.sh
 bash scripts/check-strings.sh
+bash scripts/check-ownership.sh
+for format in absolute compact; do
+  for mode in chained legacy; do
+    out="artifacts/ownership/$format/$mode"
+    dest="results/ownership/$format/$mode"
+    mkdir -p "$dest"
+    cp "$out"/interp-*.txt "$out"/jit-*.txt "$out"/format-records.json "$dest/"
+  done
+done
 for format in absolute compact; do
   for mode in chained legacy; do
     out="artifacts/strings/$format/$mode"

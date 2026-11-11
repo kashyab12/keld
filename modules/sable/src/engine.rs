@@ -561,16 +561,17 @@ impl Process {
         self.cpu.x[..5].copy_from_slice(&[1, args.argv, args.envp, args.apple, args.vars]);
         self.cpu.x[30] = CALL_RETURN;
     }
-    fn finish(self, exit: u8) -> Outcome {
+    fn finish(self, exit: u8) -> Result<Outcome> {
+        self.memory.ownership_complete()?;
         let [stdout, stderr] = self.out;
-        Outcome {
+        Ok(Outcome {
             cpu: self.cpu,
             memory: self.memory,
             stdout,
             stderr,
             exit,
             syscalls: self.syscalls,
-        }
+        })
     }
 }
 
@@ -627,7 +628,7 @@ impl<'a> Prepared<'a> {
                     .drive(&mut process, Some(CALL_RETURN))
                     .map_err(|e| format!("initializer {target:#x}: {e}"))?
                 {
-                    return Ok(process.finish(exit));
+                    return process.finish(exit);
                 }
                 if process.cpu.sp != args.sp {
                     return Err("initializer returned with unbalanced SP".into());
@@ -640,15 +641,16 @@ impl<'a> Prepared<'a> {
             if process.cpu.pc == CALL_RETURN && process.cpu.sp != args.sp {
                 return Err("main returned with unbalanced SP".into());
             }
-            return Ok(process.finish(exit));
+            return process.finish(exit);
         }
         let exit = self
             .drive(&mut process, None)?
             .ok_or("unexpected freestanding return")?;
-        Ok(process.finish(exit))
+        process.finish(exit)
     }
 
     fn drive(&self, process: &mut Process, return_pc: Option<u64>) -> Result<Option<u8>> {
+        let mut continuation: Option<(Cpu, u64)> = None;
         let Process {
             cpu,
             memory,
@@ -659,12 +661,43 @@ impl<'a> Prepared<'a> {
         #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
         let compiled = &self.compiled;
         loop {
-            if return_pc == Some(cpu.pc) {
+            let active_return = if continuation.is_some() {
+                Some(crate::objc::ownership::RETURN)
+            } else {
+                return_pc
+            };
+            if continuation.is_some() && active_return == Some(cpu.pc) {
+                let (saved, object) = continuation.take().unwrap();
+                if cpu.sp != saved.sp {
+                    return Err("guest dealloc returned with unbalanced SP".into());
+                }
+                memory.finish_dealloc(object)?;
+                // Native void ABI: restore callee-preserved state and the checked service resume.
+                cpu.x[18..].copy_from_slice(&saved.x[18..]);
+                cpu.sp = saved.sp;
+                cpu.pc = saved.pc;
+                cpu.x[0] = 0;
+                let plan = self.image.objc.as_ref().ok_or("ownership plan absent")?;
+                if let crate::objc::ownership::Action::Dealloc {
+                    object,
+                    selector,
+                    imp,
+                } = plan.drain_next(memory)?
+                {
+                    continuation = Some((cpu.clone(), object));
+                    cpu.x[0] = object;
+                    cpu.x[1] = selector;
+                    cpu.x[30] = crate::objc::ownership::RETURN;
+                    cpu.pc = imp;
+                }
+                continue;
+            }
+            if active_return == Some(cpu.pc) {
                 return Ok(None);
             }
             #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
             let trapped = if let Some(code) = &compiled {
-                code.execute_until(cpu, self.image, memory, return_pc)?
+                code.execute_until(cpu, self.image, memory, active_return)?
             } else {
                 step_memory(cpu, self.image, memory)?
             };
@@ -677,6 +710,37 @@ impl<'a> Prepared<'a> {
                     continue;
                 }
                 let word = self.image.instruction(trap)?;
+                if crate::objc::ownership::is_service(word) {
+                    if continuation.is_some() {
+                        return Err("lifecycle reentrancy unsupported".into());
+                    }
+                    let plan = self
+                        .image
+                        .objc
+                        .as_ref()
+                        .ok_or("unregistered ownership trap")?;
+                    match plan.ownership_trap(
+                        memory,
+                        trap,
+                        word,
+                        cpu.x[0],
+                        crate::objc::ownership::release_register(word).map_or(0, |r| cpu.x[r]),
+                    )? {
+                        crate::objc::ownership::Action::Return(value) => cpu.x[0] = value,
+                        crate::objc::ownership::Action::Dealloc {
+                            object,
+                            selector,
+                            imp,
+                        } => {
+                            continuation = Some((cpu.clone(), object));
+                            cpu.x[0] = object;
+                            cpu.x[1] = selector;
+                            cpu.x[30] = crate::objc::ownership::RETURN;
+                            cpu.pc = imp;
+                        }
+                    }
+                    continue;
+                }
                 if word == crate::objc::GET_CLASS
                     || word == crate::objc::LOOKUP
                     || word == crate::objc::SUPER_LOOKUP
@@ -694,6 +758,9 @@ impl<'a> Prepared<'a> {
                 }
                 *syscalls += 1;
                 if let Some(exit) = syscall(cpu, memory, out, *started)? {
+                    if continuation.is_some() {
+                        return Err("guest exit during dealloc".into());
+                    }
                     return Ok(Some(exit));
                 }
             }
@@ -703,4 +770,177 @@ impl<'a> Prepared<'a> {
 
 pub fn run(image: &Image, budget: u64, jit: bool) -> Result<Outcome> {
     Prepared::new(image, jit)?.run(budget)
+}
+
+#[cfg(test)]
+mod ownership_execution_tests {
+    use super::*;
+    fn image() -> Image {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures/bin/ownership/absolute/chained");
+        let raw = std::fs::read(dir.join("client.macho")).unwrap();
+        let libs = [
+            "CoreFoundation.dylib",
+            "Foundation.dylib",
+            "libsable_objc.dylib",
+            "libsable_system.dylib",
+        ]
+        .map(|n| std::fs::read(dir.join(n)).unwrap());
+        Image::link_main(&raw, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()).unwrap()
+    }
+    fn patch(image: &mut Image, a: u64, words: &[u32]) {
+        let s = image
+            .segments
+            .iter_mut()
+            .find(|s| {
+                a >= s.address && a + (words.len() * 4) as u64 <= s.address + s.bytes.len() as u64
+            })
+            .unwrap();
+        let at = (a - s.address) as usize;
+        for (i, w) in words.iter().enumerate() {
+            std::sync::Arc::make_mut(&mut s.bytes)[at + i * 4..at + i * 4 + 4]
+                .copy_from_slice(&w.to_le_bytes());
+        }
+    }
+    fn failed(p: &Prepared<'_>) -> (Cpu, Memory, Vec<u8>, String) {
+        let mut process = Process {
+            cpu: Cpu::new(p.image.entry, 30000),
+            memory: Memory::new(p.image).unwrap(),
+            out: [Vec::new(), Vec::new()],
+            syscalls: 0,
+            started: Instant::now(),
+        };
+        let args = process
+            .arguments(p.image.startup.as_ref().unwrap().header)
+            .unwrap();
+        process.call(p.image.entry, &args);
+        let err = p.drive(&mut process, Some(CALL_RETURN)).unwrap_err();
+        (process.cpu, process.memory, process.out[0].clone(), err)
+    }
+    fn dealloc(image: &Image) -> u64 {
+        let arena_class = 0x72000000;
+        let mut memory = Memory::new(image).unwrap();
+        // The first created object is the receiver for the original uppercase operation.
+        // Resolve its class via the actual post-fixup class reference in the original Foundation metadata.
+        let plan = image.objc.as_ref().unwrap();
+        // Discover NSString using the existing checked runtime lookup, no host method implementation.
+        let name = image
+            .segments
+            .iter()
+            .find_map(|s| {
+                s.bytes
+                    .windows(9)
+                    .position(|b| b == b"NSString\0")
+                    .map(|n| s.address + n as u64)
+            })
+            .unwrap();
+        let get = image
+            .code_ranges()
+            .flat_map(|(a, n)| (a..a + n).step_by(4))
+            .find(|&a| image.instruction(a).unwrap() == crate::objc::GET_CLASS)
+            .unwrap();
+        let class = plan
+            .trap(&mut memory, get, crate::objc::GET_CLASS, name, 0, 0)
+            .unwrap();
+        assert_eq!(memory.create_instance(class, 32, 1).unwrap(), arena_class);
+        plan.dealloc_target(class).unwrap().1
+    }
+    #[test]
+    fn checked_dealloc_return_disposal_reentrancy_and_precise_fault_state() {
+        let image = image();
+        let hook = dealloc(&image);
+        let mut skip = image.clone();
+        patch(&mut skip, hook, &[0xd65f03c0]);
+        assert!(
+            failed(&Prepared::new(&skip, false).unwrap())
+                .3
+                .contains("without exactly one final disposal")
+        );
+        // A checked dealloc callback cannot push a pool or invoke another ownership service.
+        let push = image
+            .code_ranges()
+            .flat_map(|(a, n)| (a..a + n).step_by(4))
+            .find(|&a| image.instruction(a).unwrap() == crate::objc::ownership::word(0))
+            .unwrap();
+        let mut reentrant = image.clone();
+        let mut jump = Vec::new();
+        for shift in 0..4 {
+            jump.push(
+                (if shift == 0 { 0xd2800010 } else { 0xf2800010 })
+                    | shift << 21
+                    | (((push >> (shift * 16)) & 65535) as u32) << 5,
+            );
+        }
+        jump.push(0xd61f0200);
+        patch(&mut reentrant, hook, &jump);
+        assert!(
+            failed(&Prepared::new(&reentrant, false).unwrap())
+                .3
+                .contains("lifecycle reentrancy")
+        );
+        // Keep LR intact but deliberately change SP before the callback RET.
+        let mut unbalanced = image.clone();
+        patch(&mut unbalanced, hook, &[0xd10043ff, 0xd65f03c0]);
+        assert!(
+            failed(&Prepared::new(&unbalanced, false).unwrap())
+                .3
+                .contains("unbalanced SP")
+        );
+        // Inject a guest store to read-only image bytes during the real dealloc continuation.
+        let readonly = image
+            .segments
+            .iter()
+            .find(|s| s.protection == 1)
+            .unwrap()
+            .address;
+        let address = hook + 0x01000000;
+        let mut words = Vec::new();
+        for shift in 0..4 {
+            words.push(
+                (if shift == 0 { 0xd2800009 } else { 0xf2800009 })
+                    | shift << 21
+                    | (((readonly >> (shift * 16)) & 65535) as u32) << 5,
+            );
+        }
+        words.push(0xf900013f);
+        let code: Vec<_> = words.iter().flat_map(|w| w.to_le_bytes()).collect();
+        let mut fault = image.clone();
+        fault.extra_text.push((address, code.len() as u64));
+        fault.segments.push(crate::macho::Segment {
+            address,
+            bytes: code.into(),
+            protection: 5,
+        });
+        patch(
+            &mut fault,
+            hook,
+            &[0x14000000 | (((address - hook) / 4) as u32)],
+        );
+        let first = failed(&Prepared::new(&fault, false).unwrap());
+        assert!(first.3.contains("permission 2"));
+        assert_eq!(first.0.pc, address + 16);
+        assert_eq!(first.2, b"SABLE FOUNDATION\n");
+        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+        for dispatch in [false, true] {
+            let other = failed(&Prepared::new_with_dispatch(&fault, dispatch).unwrap());
+            assert!(other.3.starts_with("guest memory/SP fault at PC "));
+            assert_eq!(other.0, first.0);
+            assert_eq!(other.1, first.1);
+            assert_eq!(other.2, first.2);
+            for bad in [&skip, &reentrant, &unbalanced] {
+                assert_eq!(
+                    failed(&Prepared::new_with_dispatch(bad, dispatch).unwrap()),
+                    failed(&Prepared::new(bad, false).unwrap())
+                );
+            }
+        }
+        assert_eq!(
+            Prepared::new(&image, false)
+                .unwrap()
+                .run(30000)
+                .unwrap()
+                .exit,
+            0
+        );
+    }
 }

@@ -429,6 +429,12 @@ fn bind(
 }
 
 pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
+    link_entry(main, libraries, false)
+}
+pub fn link_main(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
+    link_entry(main, libraries, true)
+}
+fn link_entry(main: &[u8], libraries: &[&[u8]], main_entry: bool) -> Result<Image> {
     if libraries.len() > 31 {
         return Err("at most 31 explicitly supplied libraries".into());
     }
@@ -678,6 +684,21 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
         } else {
             None
         };
+        let ownership = if crate::objc::ownership::NAMES
+            .iter()
+            .any(|n| all_exports[index].contains_key(*n))
+        {
+            if all_exports[index].contains_key("_objc_autoreleaseReturnValue") {
+                return Err("optimized autoreleaseReturnValue producer unsupported".into());
+            }
+            let mut entries = [0; crate::objc::ownership::NAMES.len()];
+            for (i, name) in crate::objc::ownership::NAMES.iter().enumerate() {
+                entries[i] = symbol(name)?;
+            }
+            Some(crate::objc::ownership::Runtime { entries })
+        } else {
+            None
+        };
         Some(crate::objc::Runtime {
             get_class: symbol("_objc_getClass")?,
             msg_send: symbol("_objc_msgSend")?,
@@ -699,6 +720,7 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
                 .transpose()?,
             protocols,
             constants,
+            ownership,
         })
     } else {
         None
@@ -734,7 +756,7 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
             );
         }
     }
-    if !initialization.is_empty() {
+    if !initialization.is_empty() || main_entry {
         image.startup = Some(crate::macho::Startup {
             header: objects[0].header_base,
             initializers: initialization,

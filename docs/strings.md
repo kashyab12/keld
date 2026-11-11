@@ -66,24 +66,26 @@ and guest exit. Native reference execution resolves Apple's installed framework
 methods locally; Sable resolves our explicit original libraries. No Apple SDK,
 framework or implementation is shipped or transferred to Linux.
 
-## Next ownership gate
+## Following ownership gate
 
-The retained unchanged-source ARC Foundation executable now resolves the supplied
-original framework dependencies, then rejects its missing autorelease-pool
-import. [Actual attempt](../evidence/strings/arc-minimal-still-unsupported.json).
-It has not completed uppercase/UTF-8/pool execution on Sable. The earlier native
+At the constant-only checkpoint, the retained unchanged-source ARC Foundation
+executable resolved the supplied original framework dependencies, then rejected
+its missing autorelease-pool import.
+[Actual attempt](../evidence/strings/arc-minimal-still-unsupported.json).
+That receipt predates the following ownership gate and remains unchanged.
+The earlier native
 [constant/lifetime and ownership observers](../evidence/strings/research-native-summary.json)
 passed six references across macOS/iOS; their original sources are in
 [the native-only reference directory](../modules/sable/fixtures/foundation/string-reference).
 Failed compile/preservation expectations are retained in the curated summary.
 
-The next implementation needs real strong counts and nested pool draining,
-ordinary fallback return claims, specialized x20 release and a shared-budget
-guest dealloc continuation. Uppercase must allocate and transform actual input,
-retain the UTF-8 backing through its use and retire it at the right lifetime
-boundary. The retained binary also needs a checked main-entry return policy
-when it has no initializers; this is a source-derived prerequisite, not an
-observed post-pool failure. The current constant probes use their real wrapper.
+The [following bounded ownership implementation](ownership.md) adds real strong
+counts and nested pool draining, ordinary fallback return claims, specialized
+register release and a shared-budget
+guest dealloc continuation. Its original guest uppercase method allocates and
+transforms actual ASCII input, and ARC keeps the UTF-8 backing alive through use.
+The explicit `link_main`/`--main` entry policy handles a main return with no
+initializers. The current constant probes continue to use their real wrapper.
 Optimized return handoff, general Unicode/NSString, NSObject lifecycle,
 ARC strong/weak fields, threads and UIKit remain outside this first read gate.
 Sable still renders no app frames and completes no Notes interactions.

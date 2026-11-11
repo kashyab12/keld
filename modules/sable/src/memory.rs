@@ -12,6 +12,7 @@ pub struct Memory {
     pub(crate) regions: Vec<Segment>,
     tls_bases: Vec<u64>,
     tls_ready: Vec<bool>,
+    pub(crate) ownership: Option<crate::objc::ownership::State>,
     pub(crate) objects: Option<crate::objc::instances::Allocations>,
 }
 
@@ -78,6 +79,11 @@ impl Memory {
             regions,
             tls_bases,
             tls_ready: vec![false; image.tls.len()],
+            ownership: image
+                .objc
+                .as_ref()
+                .filter(|p| p.ownership_enabled())
+                .map(|_| Default::default()),
             objects: (object_length != 0).then(Default::default),
         })
     }

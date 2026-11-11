@@ -464,6 +464,10 @@ impl Image {
         }
         Ok(object.image)
     }
+    /// Opt in to the checked LC_MAIN calling convention, including zero initializers.
+    pub fn link_main(main: &[u8], libraries: &[&[u8]]) -> Result<Self> {
+        crate::linker::link_main(main, libraries)
+    }
     pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Self> {
         crate::linker::link(main, libraries)
     }

@@ -137,3 +137,8 @@ are in `bin/protocols`. `check-protocol-format.py` independently inspects emitte
 protocol bodies, null-IMP descriptions, extended types and class adoption before
 execution. The same final binaries are checked on native Apple Simulator locally.
 No Apple implementation or SDK is distributed.
+
+`ownership/` adds original headerless ARC ASCII-uppercase clients and explicit
+ownership observers, with full ordinary bridges and guest dealloc counters.
+`build-ownership.sh` emits both method and fixup formats; `--main` opts into a
+checked main call without introducing constructors into the ARC client.

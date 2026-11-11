@@ -14,9 +14,12 @@ fn main() {
 fn execute() -> Result<u8> {
     let mut args: Vec<String> = Vec::new();
     let mut libraries = Vec::new();
+    let mut main_entry = false;
     let mut raw = std::env::args();
     while let Some(arg) = raw.next() {
-        if arg == "--lib" {
+        if arg == "--main" {
+            main_entry = true;
+        } else if arg == "--lib" {
             let path = raw.next().ok_or("--lib requires a dylib path")?;
             libraries.push(std::fs::read(path).map_err(|e| e.to_string())?);
         } else {
@@ -24,10 +27,15 @@ fn execute() -> Result<u8> {
         }
     }
     if args.len() < 3 {
-        return Err("usage: sable inspect FILE | sable run FILE [interp|jit] [BUDGET] | sable bench FILE [PAIRS]".into());
+        return Err("usage: sable inspect FILE | sable run FILE [interp|jit] [BUDGET] [--main] | sable bench FILE [PAIRS]".into());
     }
     let main = std::fs::read(&args[2]).map_err(|e| e.to_string())?;
-    let image = Image::link(
+    let link = if main_entry {
+        Image::link_main
+    } else {
+        Image::link
+    };
+    let image = link(
         &main,
         &libraries.iter().map(Vec::as_slice).collect::<Vec<_>>(),
     )?;

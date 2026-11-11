@@ -5,7 +5,7 @@ from pathlib import Path
 method_format=runpy.run_path(str(Path(__file__).with_name('check-objc-format.py')))['inspect']
 CF='/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation'
 FOUNDATION='/System/Library/Frameworks/Foundation.framework/Foundation'
-def inspect(path,expected):
+def inspect(path,expected,ownership=False):
     raw=path.read_bytes();sections={};segments=[];binds={};imports=[];chain=None;bind_stream=None;at=32
     def u32(at):return struct.unpack_from('<I',raw,at)[0]
     def u64(at):return struct.unpack_from('<Q',raw,at)[0]
@@ -122,24 +122,43 @@ def inspect(path,expected):
         assert {r['length'] for r in rows}=={0,16,63}
         assert {'_objc_msgSend','_strcmp','_strlen','_write'}.issubset(imports)
         assert not any('autorelease' in s.lower() or 'retain' in s.lower() for s in imports)
+    if ownership and path.name=='client.macho':
+        assert {r['length'] for r in rows}=={0,8,16,63}
+        assert {'_objc_autoreleasePoolPush','_objc_autoreleasePoolPop','_objc_retainAutorelease','_strcmp','_strlen','_write'}.issubset(imports)
+        assert {'_objc_claimAutoreleasedReturnValue','_objc_retainAutoreleasedReturnValue'} & set(imports)
+        assert '_objc_autoreleaseReturnValue' not in imports
+        result['ownership_imports']=sorted(set(s for s in imports if s.startswith('_objc_')))
     if path.name in ['Foundation.dylib','CoreFoundation.dylib']:
-        cl=sections['__objc_classlist'];assert cl['length']==8
-        c=pointer(cl['address']);meta=pointer(c);ro=pointer(c+32);mr=pointer(meta+32)
+        cl=sections['__objc_classlist'];assert cl['length']==(16 if ownership and path.name=='Foundation.dylib' else 8)
+        c=pointer(cl['address'])
+        if ownership and path.name=='Foundation.dylib':
+            identities=[pointer(cl['address']+n) for n in range(0,cl['length'],8)]
+            c=next(c for c in identities if string(pointer(pointer(c+32)+24))=='NSString')
+            child=next(v for v in identities if v!=c);child_ro=pointer(child+32)
+            assert pointer(child+8)==c and read(child_ro,'<4I')==(0,32,32,0) and pointer(child_ro+48)==0
+        meta=pointer(c);ro=pointer(c+32);mr=pointer(meta+32)
         root=path.name=='Foundation.dylib';assert read(ro,'<4I')==((2,0,32,0) if root else (0,32,32,0))
         assert read(mr,'<4I')==((3,40,40,0) if root else (1,40,40,0))
         if root:
             assert string(pointer(ro+24))=='NSString' and pointer(c+8)==0
             ivars=pointer(ro+48);assert read(ivars,'<II')==(32,4)
             assert [read(pointer(ivars+8+n*32),'<I')[0] for n in range(4)]==[0,8,16,24]
-            methods=pointer(ro+32);flags,count=read(methods,'<II');assert count==1
-            row=methods+8
-            if flags==24:sel,ty,imp=pointer(row),pointer(row+8),pointer(row+16)
-            else:
-                assert flags==0x8000000c
-                off=read(row,'<iii');sel=pointer(row+off[0]);ty=row+4+off[1];imp=row+8+off[2]
-            assert string(sel)=='UTF8String' and string(ty)=='r*16@0:8'
-            assert sections['__text']['address']<=imp<sections['__text']['address']+sections['__text']['length']
-            result['getter']=dict(selector=string(sel),encoding=string(ty),imp=imp)
+            methods=pointer(ro+32);flags,count=read(methods,'<II');assert count==(3 if ownership else 1)
+            found={}
+            for n in range(count):
+                row=methods+8+n*(24 if flags==24 else 12)
+                if flags==24:sel,ty,imp=pointer(row),pointer(row+8),pointer(row+16)
+                else:
+                    assert flags==0x8000000c
+                    off=read(row,'<iii');sel=pointer(row+off[0]);ty=row+4+off[1];imp=row+8+off[2]
+                assert sections['__text']['address']<=imp<sections['__text']['address']+sections['__text']['length']
+                found[string(sel)]=dict(selector=string(sel),encoding=string(ty),imp=imp)
+            assert found['UTF8String']['encoding']=='r*16@0:8'
+            if ownership:
+                assert found['dealloc']['encoding']=='v16@0:8'
+                assert found['uppercaseString']['encoding']=='@16@0:8'
+            result['getter']=found['UTF8String']
+            if ownership:result['methods']=found
             result['method_format']=method_format(path,expected)
         else:
             assert pointer(c+8)=='_OBJC_CLASS_$_NSString' and FOUNDATION in deps

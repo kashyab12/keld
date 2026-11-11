@@ -1,4 +1,4 @@
-//! Original fixed-layout guest instances. No host malloc pointers or ARC.
+//! Fixed-layout guest instances with quarantined identities and stable backing.
 use crate::{
     Result,
     macho::Image,
@@ -63,11 +63,17 @@ pub(crate) fn layout(image: &Image, tls_length: usize) -> Result<usize> {
     }
     Ok(LENGTH)
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Lifetime {
+    Live(u32),
+    Finalizing,
+    Retired,
+}
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Allocation {
     pub class: u64,
     pub extent: usize,
-    pub live: bool,
+    pub lifetime: Lifetime,
 }
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Allocations {
@@ -95,7 +101,7 @@ impl Memory {
         let record = objects
             .rows
             .get(offset / SLOT_SIZE)
-            .filter(|r| r.live)
+            .filter(|r| r.lifetime != Lifetime::Retired)
             .ok_or("unallocated or disposed instance identity")?;
         if u64::from_le_bytes(self.read(address, 8)?.try_into().unwrap()) != record.class {
             return Err("mutated owned instance isa".into());
@@ -128,15 +134,17 @@ impl Memory {
         self.objects.as_mut().unwrap().rows.push(Allocation {
             class,
             extent,
-            live: true,
+            lifetime: Lifetime::Live(1),
         });
         Ok(address)
     }
     pub(crate) fn dispose_instance(&mut self, address: u64) -> Result<u64> {
         self.instance_class(address)?
             .ok_or("disposal requires an owned instance")?;
+        self.check_final_disposal(address)?;
         self.write(address, &[0; SLOT_SIZE])?;
-        self.objects.as_mut().unwrap().rows[(address - BASE) as usize / SLOT_SIZE].live = false;
+        self.objects.as_mut().unwrap().rows[(address - BASE) as usize / SLOT_SIZE].lifetime =
+            Lifetime::Retired;
         Ok(0)
     }
 }

@@ -1,5 +1,5 @@
 //! Original bounded ObjC2 registration and uncached scalar dispatch.
-//! No Apple runtime code, host objects, allocation, ARC or Foundation services.
+//! No Apple runtime code or host objects; explicit original runtime services only.
 use crate::{
     Result,
     macho::{Image, Object, u32_at, u64_at},
@@ -9,6 +9,7 @@ pub(crate) mod constants;
 #[cfg(test)]
 mod hierarchy_tests;
 pub(crate) mod instances;
+pub(crate) mod ownership;
 mod payload;
 pub(crate) mod protocol;
 use std::collections::{BTreeMap, BTreeSet};
@@ -256,6 +257,7 @@ pub struct Plan {
     selectors: BTreeSet<u64>,
     snapshots: Vec<(u64, Vec<u8>)>,
     constants: constants::Registry,
+    dealloc_selector: Option<u64>,
     runtime: Runtime,
     protocols: protocol::Plan,
 }
@@ -268,6 +270,7 @@ pub(crate) struct Runtime {
     pub instances: Option<instances::Runtime>,
     pub protocols: Option<protocol::Runtime>,
     pub constants: Option<constants::Provider>,
+    pub ownership: Option<ownership::Runtime>,
 }
 
 fn string(read: impl Fn(u64, usize) -> Result<Vec<u8>>, address: u64) -> Result<String> {
@@ -384,6 +387,7 @@ fn methods(
     address: u64,
     selectors: &mut BTreeMap<String, u64>,
     patches: &mut Vec<(u64, String)>,
+    ownership_mode: bool,
 ) -> Result<Vec<(String, u64)>> {
     if address == 0 {
         return Ok(Vec::new());
@@ -450,6 +454,9 @@ fn methods(
         let name = owned_string(object, slide, "__objc_methname", name_address)?;
         let encoding = owned_string(object, slide, "__objc_methtype", types)?;
         scalar_signature(&name, &encoding, true)?;
+        if ownership_mode && name == "dealloc" && encoding != "v16@0:8" {
+            return Err("unsupported dealloc signature".into());
+        }
         if !seen.insert(name.clone()) {
             return Err("unsupported/duplicate ObjC scalar method".into());
         }
@@ -611,6 +618,7 @@ pub(crate) fn register(
                         u64_at(ro, 32)?,
                         &mut selectors,
                         &mut local,
+                        runtime.ownership.is_some(),
                     )?);
                     patches.extend(local.into_iter().map(|(a, n)| (index, a, n)));
                 }
@@ -754,11 +762,13 @@ pub(crate) fn register(
             protocols: p.protocols,
         })
         .collect();
+    let dealloc_selector = selectors.get("dealloc").copied();
     Ok(Some(Plan {
         classes,
         selectors: selectors.into_values().collect(),
         snapshots,
         constants,
+        dealloc_selector,
         runtime,
         protocols,
     }))
@@ -775,6 +785,12 @@ impl Plan {
             }
         }
         instances::validate_runtime(image, self.runtime.instances)?;
+        if let Some(r) = self.runtime.ownership {
+            r.validate(image)?;
+            if self.runtime.instances.is_none() {
+                return Err("ownership requires instance services".into());
+            }
+        }
         self.protocols.validate(image)?;
         for (address, bytes) in &self.snapshots {
             metadata_not_code(*address, bytes.len(), image.code_ranges())?;
@@ -823,6 +839,18 @@ impl Plan {
         }
         Ok(())
     }
+    fn check_memory(&self, memory: &Memory) -> Result<()> {
+        for (address, bytes) in &self.snapshots {
+            if memory.read(*address, bytes.len())? != bytes {
+                return Err("mutated ObjC metadata unsupported".into());
+            }
+        }
+        self.protocols.validate_memory(memory)?;
+        if memory.read(self.runtime.empty_cache, 8)? != [0; 8] {
+            return Err("mutated ObjC cache unsupported".into());
+        }
+        Ok(())
+    }
     pub(crate) fn trap(
         &self,
         memory: &mut Memory,
@@ -841,16 +869,11 @@ impl Plan {
         {
             return Err("unregistered ObjC trap".into());
         }
-        for (address, bytes) in &self.snapshots {
-            if memory.read(*address, bytes.len())? != bytes {
-                return Err("mutated ObjC metadata unsupported".into());
-            }
-        }
-        self.protocols.validate_memory(memory)?;
-        if memory.read(self.runtime.empty_cache, 8)? != [0; 8] {
-            return Err("mutated ObjC cache unsupported".into());
-        }
+        self.check_memory(memory)?;
         if word == instances::CREATE {
+            if memory.ownership_busy() {
+                return Err("lifecycle reentrancy unsupported".into());
+            }
             if x0 == 0 {
                 return Ok(0);
             }
@@ -905,6 +928,9 @@ impl Plan {
                 .iter()
                 .find(|c| c.name == name)
                 .map_or(0, |c| c.address));
+        }
+        if self.ownership_enabled() && self.dealloc_selector == Some(x1) {
+            return Err("direct dealloc dispatch unsupported in ownership mode".into());
         }
         if !self.selectors.contains(&x1) {
             return Err("unregistered ObjC selector".into());
@@ -1219,7 +1245,8 @@ mod tests {
         let mut selectors = BTreeMap::new();
         let mut patches = Vec::new();
         assert_eq!(
-            super::methods(&original, 0, methods, &mut selectors, &mut patches).unwrap()[0].1,
+            super::methods(&original, 0, methods, &mut selectors, &mut patches, false).unwrap()[0]
+                .1,
             imp
         );
         // A wrong source-level target may still be aligned owning code. Decode
@@ -1232,7 +1259,8 @@ mod tests {
                 0,
                 methods,
                 &mut BTreeMap::new(),
-                &mut Vec::new()
+                &mut Vec::new(),
+                false,
             )
             .unwrap()[0]
                 .1,
