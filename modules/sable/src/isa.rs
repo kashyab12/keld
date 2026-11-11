@@ -266,6 +266,7 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
             && word != crate::tls::SVC
             && word != crate::objc::GET_CLASS
             && word != crate::objc::LOOKUP
+            && word != crate::objc::SUPER_LOOKUP
             && !crate::objc::protocol::is_service(word)
         {
             return Err("only Darwin svc #0x80 or registered Sable runtime traps supported".into());

@@ -25,16 +25,17 @@ The [native Foundation investigation](foundation-contracts.md) now identifies
 checked image initialization and plain C TLV storage as bounded next contracts.
 [Initialization](initializers.md) is implemented and independently exercised;
 [Scalar TLV resolution/storage](tls.md) and bounded [ObjC2 root-class dispatch](objc.md)
-and [static protocol introspection](protocols.md) are also implemented. Full guest
-pthread behavior, general object lifecycle and
+and [static protocol introspection](protocols.md) are also implemented. Bounded
+[depth-two superclass lookup and Super2](super.md) adds static inheritance and
+guest superclass calls. Full guest pthread behavior, general object lifecycle and
 framework execution remain open. The actual
 Foundation program still stops at its unsupplied framework dependency.
 
 The [Notes app reference](../modules/sable/fixtures/apps/Notes) now exercises
 external taps/typing, scroll/navigation, persisted state/reset and real Metal
-readback plus presented pixels on native Simulator. Sable rejects its ARM64
-executable at unsupported `__objc_superrefs` metadata and completes zero app
-interactions ([current attempt](../evidence/protocols/app-still-unsupported.json)).
+readback plus presented pixels on native Simulator. Sable parses its ARM64
+executable's sections, then rejects the missing UIKit dependency and completes zero app
+interactions ([current attempt](../evidence/super/app-still-unsupported.json)).
 UIKit itself remains unsupplied.
 Restricted chained pointer linking now works on original LLVM fixtures, with
 matching Apple-native outputs; [format coverage](chained-fixups.md) and

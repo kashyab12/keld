@@ -171,6 +171,17 @@ bash scripts/check-initializers.sh
 bash scripts/check-tls.sh
 bash scripts/check-objc.sh
 bash scripts/check-protocols.sh
+bash scripts/check-super.sh
+for format in absolute compact; do
+  for mode in chained legacy; do
+    for split in 0 1; do
+      out="artifacts/super/$format/$mode/$split"
+      dest="results/super/$format/$mode/$split"
+      mkdir -p "$dest"
+      cp "$out"/interp-*.txt "$out"/jit-*.txt "$out"/*-deep.stderr "$out"/format-records.json "$dest/"
+    done
+  done
+done
 for format in absolute compact; do
   for mode in chained legacy; do
     mkdir -p "results/protocols/$format/$mode"

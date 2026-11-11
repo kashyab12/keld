@@ -1,5 +1,10 @@
 # Sable
 
+The bounded [superclass/Super2 profile](../../docs/super.md) supports roots and
+direct subclasses with no added storage, inherited scalar method lookup and
+real guest super calls, including supplied dylib parents. This does not add
+allocation, class initialization or general object lifecycle support.
+
 A small, inspectable starting point for modern Darwin compatibility research.
 
 Sable accepts thin ARM64 Mach-O executables tagged `PLATFORM_IOSSIMULATOR` (7).

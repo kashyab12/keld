@@ -7,3 +7,4 @@ evidence/objc/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/objc-compact/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/objc-boundary/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/protocols/** -text whitespace=cr-at-eol,-blank-at-eof
+evidence/super/** -text whitespace=cr-at-eol,-blank-at-eof

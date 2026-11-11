@@ -1,0 +1,156 @@
+{
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+  "version": "27.2",
+  "build": "24B8117",
+  "runs": [
+    {
+      "fixture": "hello",
+      "exit": 0,
+      "stdout_hex": "5341424c455f41524d36345f44415257494e5f4f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "compute",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": ""
+    },
+    {
+      "fixture": "workload",
+      "exit": 0,
+      "stdout_hex": "fa23b45693b4658e",
+      "stderr": ""
+    },
+    {
+      "fixture": "checksum",
+      "exit": 0,
+      "stdout_hex": "406b8988792d0000",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/chained/0/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/chained/0/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/chained/1/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/chained/1/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/legacy/0/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/legacy/0/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/legacy/1/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/legacy/1/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/chained/0/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/chained/0/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/chained/1/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/chained/1/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/legacy/0/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/legacy/0/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/legacy/1/super-0",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/legacy/1/super-1",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/chained/0/super-3",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/absolute/legacy/0/super-3",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/chained/0/super-3",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "super/compact/legacy/0/super-3",
+      "exit": 0,
+      "stdout_hex": "5375706572636c617373206c6f6f6b75702c20537570657232206775657374206d6574686f64732c206e657374696e6720616e6420414249204f4b0a",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  }
+}

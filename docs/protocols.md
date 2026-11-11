@@ -66,7 +66,10 @@ than inventing Apple's Protocol class/isa.
 Prepared/live mutation of bodies, names, references, descriptions, adoptions or
 the nil-name constant rejects. Writable program values remain private per run;
 registration precedes constructors and fresh runs start from pristine data.
-Inheritance/super, inherited protocols, categories, ARC/allocation, dynamic
+[Scalar superclass/Super2 support](super.md) retains direct adoption separately
+from inherited method lookup. The native control checks an adopting parent is
+true and its non-adopting child is false for the C conformance service.
+Deeper/dynamic hierarchies, inherited protocols, categories, ARC/allocation, dynamic
 protocols, forwarding, caches, +load/+initialize, general signatures, exceptions,
 FP/vector/aggregate ABI and guest threads remain unsupported.
 

@@ -1,5 +1,14 @@
 # Original fixtures
 
+`super-main.m`, `super-runtime.s` and `super-abi.s` are original headerless
+inheritance/Super2 probes. `scripts/build-super.sh` links both method-list and
+fixup formats with same-image or supplied-dylib parents, plain/constructor
+variants, an intentionally rejected third level, and a direct-adoption control
+on a subclass with inherited methods. Only original LLVM
+outputs are retained in `bin/super`; no Apple runtime is embedded. The independent
+`check-super-format.py` validates emitted class/metaclass graphs and superref
+identities, including legacy and chained import names.
+
 `hello.s` and `compute.s` are original assembly, released under MIT. `bin/*.macho`
 are their linked ARM64 executables, not Apple binaries. Each has an iOS Simulator
 platform tag (7), an `LC_MAIN` entry, no imported symbols, no loaded dylibs,

@@ -28,7 +28,8 @@ colon count and argument positions. Classrefs name registered ordinary classes.
 Selectors are interned by byte name into deterministic guest SEL addresses;
 method name pointers and selref slots are patched together, including duplicate
 selectors across images. Names/encodings use bounded printable ASCII strings. Ranges, alignment, file
-correspondence and arithmetic are checked. Limits are 64 root classes, 1,024 selectors/methods,
+correspondence and arithmetic are checked. Limits are 64 total ordinary classes,
+including supported children, 1,024 selectors/methods,
 128 methods per list, 255-byte strings and 256 KiB aggregate registered metadata
 (including the participating images' C-string sections). Plain C images
 without ObjC metadata retain the existing image limit; the ObjC cap is not
@@ -139,7 +140,10 @@ Bounded [static protocol registration and direct introspection](protocols.md)
 now works separately from method dispatch. Protocol method descriptions never
 become executable IMPs; declaring conformance does not prove implementation.
 
-Inheritance/super, categories, inherited/dynamic/optional protocol forms,
+[Bounded depth-two superclass lookup and Super2 calls](super.md) now support
+static children with no added instance storage, including supplied dylib parents.
+
+Deeper/dynamic inheritance, categories, inherited/dynamic/optional protocol forms,
 +load/+initialize, ARC/retain-release,
 allocation, forwarding, dynamic class changes, caches, tagged/nonpointer isa,
 shared-cache direct/signed method lists, PAC, exceptions, vector/FP/aggregate returns,

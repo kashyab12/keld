@@ -5,11 +5,14 @@ use crate::{
     macho::{Image, Object, u32_at, u64_at},
     memory::Memory,
 };
+#[cfg(test)]
+mod hierarchy_tests;
 pub(crate) mod protocol;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const GET_CLASS: u32 = 0xd400_0001 | (0x5ab2 << 5);
 pub const LOOKUP: u32 = 0xd400_0001 | (0x5ab3 << 5);
+pub const SUPER_LOOKUP: u32 = 0xd400_0001 | (0x5ab7 << 5);
 const RET: u32 = 0xd65f_03c0;
 const BR_X16: u32 = 0xd61f_0200;
 const CAP: usize = 256 * 1024;
@@ -91,6 +94,7 @@ impl Sections {
             "__objc_imageinfo"
                 | "__objc_classlist"
                 | "__objc_classrefs"
+                | "__objc_superrefs"
                 | "__objc_selrefs"
                 | "__objc_protolist"
                 | "__objc_protorefs"
@@ -118,6 +122,7 @@ impl Sections {
             name,
             "__objc_classlist"
                 | "__objc_classrefs"
+                | "__objc_superrefs"
                 | "__objc_selrefs"
                 | "__objc_protolist"
                 | "__objc_protorefs"
@@ -218,6 +223,7 @@ struct Method {
 struct Class {
     address: u64,
     meta: u64,
+    superclass: Option<u64>,
     name: String,
     instance: Vec<Method>,
     class: Vec<Method>,
@@ -236,6 +242,7 @@ pub(crate) struct Runtime {
     pub get_class: u64,
     pub msg_send: u64,
     pub empty_cache: u64,
+    pub super_send: Option<u64>,
     pub protocols: Option<protocol::Runtime>,
 }
 
@@ -415,6 +422,9 @@ fn methods(
 struct Pending {
     address: u64,
     meta: u64,
+    superclass: u64,
+    meta_isa: u64,
+    meta_super: u64,
     name: String,
     instance: Vec<(String, u64)>,
     class: Vec<(String, u64)>,
@@ -488,15 +498,17 @@ pub(crate) fn register(
                 let class = record(object, slide, "__objc_data", address, 40)?;
                 let meta = u64_at(class, 0)?;
                 let metaclass = record(object, slide, "__objc_data", meta, 40)?;
+                let superclass = u64_at(class, 8)?;
+                let root = superclass == 0;
                 if address == meta
                     || !addresses.insert(address)
                     || !addresses.insert(meta)
                     || addresses.len() > 128
-                    || u64_at(class, 8)? != 0
-                    || u64_at(metaclass, 0)? != meta
-                    || u64_at(metaclass, 8)? != address
                 {
-                    return Err("unsupported ObjC root class graph".into());
+                    return Err("unsupported ObjC class identities".into());
+                }
+                if !root && runtime.super_send.is_none() {
+                    return Err("subclasses require explicit Super2 runtime".into());
                 }
                 let mut tables = Vec::new();
                 let mut adoption = None;
@@ -506,8 +518,15 @@ pub(crate) fn register(
                         return Err("unsupported ObjC cache/vtable".into());
                     }
                     let ro = record(object, slide, "__objc_const", u64_at(words, 32)?, 72)?;
-                    if u32_at(ro, 0)? != if is_meta { 3 } else { 2 }
-                        || u32_at(ro, 4)? != if is_meta { 40 } else { 0 }
+                    if u32_at(ro, 0)? != u32::from(is_meta) + if root { 2 } else { 0 }
+                        || u32_at(ro, 4)?
+                            != if is_meta {
+                                40
+                            } else if root {
+                                0
+                            } else {
+                                8
+                            }
                         || u32_at(ro, 8)? != if is_meta { 40 } else { 8 }
                         || u32_at(ro, 12)? != 0
                         || [16, 56, 64].iter().any(|&at| u64_at(ro, at).unwrap() != 0)
@@ -531,8 +550,8 @@ pub(crate) fn register(
                         adoption = Some((list, protocols.adoption(object, slide, list)?));
                     }
                     let ivars = u64_at(ro, 48)?;
-                    if is_meta && ivars != 0 {
-                        return Err("ObjC metaclass ivars unsupported".into());
+                    if (is_meta || !root) && ivars != 0 {
+                        return Err("ObjC metaclass/subclass ivars unsupported".into());
                     }
                     if !is_meta && ivars != 0 {
                         let data = record(object, slide, "__objc_const", ivars, 40)?;
@@ -573,6 +592,9 @@ pub(crate) fn register(
                 pending.push(Pending {
                     address,
                     meta,
+                    superclass,
+                    meta_isa: u64_at(metaclass, 0)?,
+                    meta_super: u64_at(metaclass, 8)?,
                     name,
                     instance,
                     class,
@@ -591,6 +613,25 @@ pub(crate) fn register(
                     .or_insert(address);
                 patches.push((index, slot, name));
             }
+        }
+    }
+    // Resolve after collecting every identity: declaration/library order is not
+    // an inheritance order. This profile admits roots and direct children only.
+    for class in &pending {
+        let (isa, superclass) = if class.superclass == 0 {
+            (class.meta, class.address)
+        } else {
+            let parent = pending
+                .iter()
+                .find(|p| p.address == class.superclass)
+                .ok_or("unregistered ObjC superclass")?;
+            if parent.superclass != 0 {
+                return Err("ObjC hierarchy exceeds depth two or cycles".into());
+            }
+            (parent.meta, parent.meta)
+        };
+        if class.meta_isa != isa || class.meta_super != superclass {
+            return Err("unsupported ObjC metaclass graph".into());
         }
     }
     if selectors.len() > 1024
@@ -612,6 +653,23 @@ pub(crate) fn register(
                 let target = u64_at(object.image.read(base + at as u64, 8, 1)?, 0)?;
                 if !pending.iter().any(|p| p.address == target) {
                     return Err("unregistered ObjC classref".into());
+                }
+            }
+        }
+        if let Some((base, len)) = object
+            .objc_sections
+            .section("__objc_superrefs", slides[index])?
+        {
+            if runtime.super_send.is_none() {
+                return Err("superrefs require explicit Super2 runtime".into());
+            }
+            for at in (0..len).step_by(8) {
+                let target = u64_at(object.image.read(base + at as u64, 8, 1)?, 0)?;
+                if !pending
+                    .iter()
+                    .any(|p| p.address == target || p.meta == target)
+                {
+                    return Err("unregistered ObjC superref".into());
                 }
             }
         }
@@ -646,6 +704,7 @@ pub(crate) fn register(
         .map(|p| Class {
             address: p.address,
             meta: p.meta,
+            superclass: (p.superclass != 0).then_some(p.superclass),
             name: p.name,
             instance: convert(p.instance),
             class: convert(p.class),
@@ -670,6 +729,17 @@ impl Plan {
             }
         }
         let r = self.runtime;
+        if let Some(base) = r.super_send {
+            for (i, word) in [0xa9404400, SUPER_LOOKUP, BR_X16].into_iter().enumerate() {
+                if image.instruction(
+                    base.checked_add(i as u64 * 4)
+                        .ok_or("Super2 stub overflow")?,
+                )? != word
+                {
+                    return Err("unsupported ObjC Super2 runtime stub".into());
+                }
+            }
+        }
         for (base, words) in [
             (r.get_class, vec![GET_CLASS, RET]),
             (
@@ -706,9 +776,12 @@ impl Plan {
         word: u32,
         x0: u64,
         x1: u64,
+        current: u64,
     ) -> Result<u64> {
         if !((word == GET_CLASS && trap == self.runtime.get_class)
             || (word == LOOKUP && trap == self.runtime.msg_send + 4)
+            || (word == SUPER_LOOKUP
+                && self.runtime.super_send.and_then(|a| a.checked_add(4)) == Some(trap))
             || self.protocols.registered_trap(trap, word))
         {
             return Err("unregistered ObjC trap".into());
@@ -754,25 +827,59 @@ impl Plan {
         if self.classes.iter().any(|c| c.meta == x0) {
             return Err("ObjC metaclass receiver unsupported".into());
         }
-        let methods = if let Some(class) = self.classes.iter().find(|c| c.address == x0) {
-            &class.class
+        let (class, is_class) = if let Some(class) = self.classes.iter().find(|c| c.address == x0) {
+            (class, true)
         } else {
             if x0 == 0 || !x0.is_multiple_of(8) {
                 return Err("unsupported ObjC receiver".into());
             }
             let isa = u64_at(memory.read(x0, 8)?, 0)?;
-            &self
+            (
+                self.classes
+                    .iter()
+                    .find(|c| c.address == isa)
+                    .ok_or("unregistered ObjC raw isa")?,
+                false,
+            )
+        };
+        let search = if word == SUPER_LOOKUP {
+            if current != if is_class { class.meta } else { class.address } {
+                return Err("Super2 current class does not match receiver".into());
+            }
+            self.classes
+                .iter()
+                .find(|p| Some(p.address) == class.superclass)
+                .ok_or("Super2 root has no supported superclass")?
+        } else {
+            class
+        };
+        self.method(search, is_class, x1)
+    }
+    fn method(&self, class: &Class, is_class: bool, selector: u64) -> Result<u64> {
+        let table = if is_class {
+            &class.class
+        } else {
+            &class.instance
+        };
+        if let Some(method) = table.iter().find(|m| m.selector == selector) {
+            return Ok(method.imp);
+        }
+        if let Some(parent) = class.superclass {
+            let root = self
                 .classes
                 .iter()
-                .find(|c| c.address == isa)
-                .ok_or("unregistered ObjC raw isa")?
-                .instance
-        };
-        methods
-            .iter()
-            .find(|m| m.selector == x1)
-            .map(|m| m.imp)
-            .ok_or("unknown ObjC selector for receiver".into())
+                .find(|p| p.address == parent)
+                .ok_or("unregistered prepared ObjC superclass")?;
+            let table = if is_class {
+                &root.class
+            } else {
+                &root.instance
+            };
+            if let Some(method) = table.iter().find(|m| m.selector == selector) {
+                return Ok(method.imp);
+            }
+        }
+        Err("unknown ObjC selector for receiver".into())
     }
 }
 

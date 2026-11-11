@@ -4,6 +4,10 @@ These are raw receipts from bounded experiments, not a complete simulator or
 competitive benchmark. No Apple runtime, SDK, credentials, cloud account ID,
 instance IP or SSH key is distributed here.
 
+The [superclass/Super2 report](super/RESULTS.md) adds original inherited and
+super-call execution with same-image/dylib parents. Native and Sable results,
+failed expectations and the still-missing UIKit dependency remain separate.
+
 The [static protocol report](protocols/RESULTS.md) separates native Apple
 reference execution, Sable on Linux and the still-rejected UIKit app. It adds
 name/identity/adoption checks and compiler-driven CPU coverage; it establishes

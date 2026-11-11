@@ -1,0 +1,102 @@
+[
+  {
+    "file": "super-0.macho",
+    "sha256": "c8ec0e19f9505155c3dd0253c9dbae6c6e0faae3cb61e7d6781a6da501cc6a9d",
+    "classes": {
+      "SableChild": {
+        "address": 4295000144,
+        "meta": 4295000104,
+        "superclass": "_OBJC_CLASS_$_SableBase",
+        "meta_isa": "_OBJC_METACLASS_$_SableBase",
+        "meta_superclass": "_OBJC_METACLASS_$_SableBase"
+      }
+    },
+    "superref_targets": [
+      4295000104,
+      4295000144
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "super-0.macho",
+      "sha256": "c8ec0e19f9505155c3dd0253c9dbae6c6e0faae3cb61e7d6781a6da501cc6a9d",
+      "format": "absolute",
+      "lists": []
+    }
+  },
+  {
+    "file": "super-1.macho",
+    "sha256": "c9c3d197778ba963269473395d0051bc1c476fd80b157fae065adb806855b6d1",
+    "classes": {
+      "SableChild": {
+        "address": 4295000144,
+        "meta": 4295000104,
+        "superclass": "_OBJC_CLASS_$_SableBase",
+        "meta_isa": "_OBJC_METACLASS_$_SableBase",
+        "meta_superclass": "_OBJC_METACLASS_$_SableBase"
+      }
+    },
+    "superref_targets": [
+      4295000104,
+      4295000144
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "super-1.macho",
+      "sha256": "c9c3d197778ba963269473395d0051bc1c476fd80b157fae065adb806855b6d1",
+      "format": "absolute",
+      "lists": []
+    }
+  },
+  {
+    "file": "super-2.macho",
+    "sha256": "bc7e27a8ad9ff4792960b634a005051eaf8d4324f270f261f55ac4086cd86a7b",
+    "classes": {
+      "SableChild": {
+        "address": 4295000144,
+        "meta": 4295000104,
+        "superclass": "_OBJC_CLASS_$_SableBase",
+        "meta_isa": "_OBJC_METACLASS_$_SableBase",
+        "meta_superclass": "_OBJC_METACLASS_$_SableBase"
+      },
+      "SableGrandchild": {
+        "address": 4295000224,
+        "meta": 4295000184,
+        "superclass": 4295000144,
+        "meta_isa": "_OBJC_METACLASS_$_SableBase",
+        "meta_superclass": 4295000104
+      }
+    },
+    "superref_targets": [
+      4295000104,
+      4295000144
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "super-2.macho",
+      "sha256": "bc7e27a8ad9ff4792960b634a005051eaf8d4324f270f261f55ac4086cd86a7b",
+      "format": "absolute",
+      "lists": []
+    }
+  },
+  {
+    "file": "libsable_base.dylib",
+    "sha256": "c04242befda895d01097e1971004bd4905688c1db92f9df7bb140c77071c6f03",
+    "classes": {
+      "SableBase": {
+        "address": 32800,
+        "meta": 32840,
+        "superclass": 0,
+        "meta_isa": 32840,
+        "meta_superclass": 32800
+      }
+    },
+    "superref_targets": [],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "libsable_base.dylib",
+      "sha256": "c04242befda895d01097e1971004bd4905688c1db92f9df7bb140c77071c6f03",
+      "format": "absolute",
+      "lists": []
+    }
+  }
+]

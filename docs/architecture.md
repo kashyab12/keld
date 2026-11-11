@@ -166,3 +166,13 @@ with checked targets/budgets and independent CPU comparisons.
 Unsigned bitfield moves (UBFM, including UBFIZ/UBFX and immediate LSL/LSR aliases)
 also have direct scalar translations. Width/N/reserved-immediate validation
 precedes execution; W inputs are truncated, register 31 is ZR and NZCV is retained.
+
+## Bounded static inheritance
+
+The [Super2 profile](super.md) validates roots and direct same-layout children
+after collecting every class/metaclass identity. Normal messages search own then
+parent tables; Super2 begins at the supplied current class's parent. The original
+bridge loads the guest pair, returns the checked IMP in x16 and tail-transfers
+with real self/LR intact. Methods and returns run under the existing shared budget.
+Legacy binding accepts LLVM's wrapped backwards cursor deltas only within the
+selected mapped segment; each pointer write remains bounded and non-executable.

@@ -1,0 +1,26 @@
+[
+  {
+    "file": "objc-0.macho",
+    "sha256": "b151605c44eb6acb69e1cd962c23162f67eaa4c391f862aa549781d5cbdec8ee",
+    "format": "absolute",
+    "lists": []
+  },
+  {
+    "file": "objc-1.macho",
+    "sha256": "9c6bf2964b3c77e207344591266a87e23b142852ff7473987e5adc0f1967636b",
+    "format": "absolute",
+    "lists": []
+  },
+  {
+    "file": "objc-2.macho",
+    "sha256": "ddcd1ba7a61ccf75a7ec6bfaaccfff9afe63264677f350c3afe18a7459905201",
+    "format": "absolute",
+    "lists": []
+  },
+  {
+    "file": "libsable_other.dylib",
+    "sha256": "0e69714842b5a831fc28d5f2817b133c11e9ecee2d992561fd9315c578df550f",
+    "format": "absolute",
+    "lists": []
+  }
+]

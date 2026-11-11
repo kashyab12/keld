@@ -184,6 +184,18 @@ impl Position {
             .ok_or("dyld offset overflow")?;
         Ok(())
     }
+    fn bind_advance(&mut self, object: &Object, amount: u64) -> Result<()> {
+        // Legacy bind deltas are 64-bit unsigned cursor arithmetic. LLVM can
+        // encode a backwards step as a large ULEB, including after DO_BIND.
+        // The resulting cursor must still belong to the selected segment.
+        let index = self.segment.ok_or("dyld segment not selected")?;
+        let next = self.offset.wrapping_add(amount);
+        if next > object.image.segments[index].bytes.len() as u64 {
+            return Err("dyld bind cursor outside selected segment".into());
+        }
+        self.offset = next;
+        Ok(())
+    }
     fn slot(&self, object: &Object) -> Result<(usize, usize)> {
         let index = self.segment.ok_or("dyld segment not selected")?;
         let region = &object.image.segments[index];
@@ -381,7 +393,7 @@ fn bind(
                 continue;
             }
             0x80 => {
-                position.advance(uleb(&data, &mut cursor)?)?;
+                position.bind_advance(object, uleb(&data, &mut cursor)?)?;
                 continue;
             }
             0x90 => (1, 0),
@@ -405,7 +417,8 @@ fn bind(
             let (index, offset) = position.slot(object)?;
             std::sync::Arc::make_mut(&mut object.image.segments[index].bytes)[offset..offset + 8]
                 .copy_from_slice(&value.to_le_bytes());
-            position.advance(8u64.checked_add(skip).ok_or("bind stride overflow")?)?;
+            position.bind_advance(object, 8)?;
+            position.bind_advance(object, skip)?;
         }
     }
     if finished {
@@ -642,6 +655,10 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
             get_class: symbol("_objc_getClass")?,
             msg_send: symbol("_objc_msgSend")?,
             empty_cache,
+            super_send: all_exports[index]
+                .contains_key("_objc_msgSendSuper2")
+                .then(|| symbol("_objc_msgSendSuper2"))
+                .transpose()?,
             protocols,
         })
     } else {
@@ -767,6 +784,80 @@ mod tests {
         assert!(sleb(&[0xff; 10], &mut 0).is_err());
         assert!(exports(&[0, 1, b'a', 0, 0], 0).is_err());
         assert!(exports(&[255], 0).is_err());
+    }
+
+    #[test]
+    fn legacy_bind_backwards_deltas_keep_every_cursor_inside_selected_storage() {
+        let raw = include_bytes!("../fixtures/bin/dynamic/dynamic-8.macho");
+        fn encoded(mut v: u64) -> Vec<u8> {
+            let mut out = Vec::new();
+            loop {
+                let byte = (v & 127) as u8;
+                v >>= 7;
+                out.push(byte | if v != 0 { 128 } else { 0 });
+                if v == 0 {
+                    return out;
+                }
+            }
+        }
+        let mut step = vec![0x90, 0x80];
+        step.extend(encoded(u64::MAX - 15));
+        step.extend([0x90, 0]);
+        let mut combined = vec![0xa0];
+        combined.extend(encoded(u64::MAX - 15));
+        combined.extend([0x90, 0]);
+        let mut repeated = vec![0xc0, 2];
+        repeated.extend(encoded(u64::MAX - 15));
+        repeated.push(0);
+        for tail in [step, combined, repeated] {
+            let mut o = Object::parse(raw, true).unwrap();
+            let rw = o
+                .image
+                .segments
+                .iter()
+                .position(|s| s.protection == 3)
+                .unwrap();
+            let disk_index = o
+                .segment_indices
+                .iter()
+                .position(|&i| i == Some(rw))
+                .unwrap();
+            let mut stream = vec![0x11, 0x40];
+            stream.extend(b"_sable_mix\0");
+            stream.extend([0x51, 0x70 | disk_index as u8, 16]);
+            stream.extend(tail);
+            o.streams[1] = stream;
+            let maps = vec![
+                BTreeMap::new(),
+                BTreeMap::from([(
+                    "_sable_mix".to_string(),
+                    Symbol {
+                        address: 0x200000388,
+                        tls: false,
+                    },
+                )]),
+            ];
+            let ids = HashMap::from([("@loader_path/libsable_math.dylib".to_string(), 1)]);
+            bind(&mut o, 1, 0, &maps, &ids).unwrap();
+            for at in [8, 16] {
+                assert_eq!(
+                    &o.image.segments[rw].bytes[at..at + 8],
+                    &0x200000388u64.to_le_bytes()
+                );
+            }
+            let mut position = Position {
+                segment: Some(rw),
+                offset: 16,
+            };
+            assert!(position.bind_advance(&o, u64::MAX - 31).is_err());
+            assert_eq!(position.offset, 16);
+            assert!(
+                position
+                    .bind_advance(&o, o.image.segments[rw].bytes.len() as u64)
+                    .is_err()
+            );
+            assert!(Position::default().bind_advance(&o, 0).is_err());
+        }
     }
 
     #[test]

@@ -41,8 +41,9 @@ including constructor access, guest method bodies, ABI checks and explicit
 unknown-message rejection. The protocol matrix checks names, exact identities,
 declared adoption, real method execution, constructor access and mutable storage
 with both method-list and fixup formats. These are console programs, not UIKit
-apps. The
-`--extended` path runs three independent oracle seeds in interpreter/JIT modes.
+apps. The superclass matrix additionally checks same-image/dylib parents, inherited and
+Super2 method calls, ABI, direct-adoption controls and explicit depth rejection.
+The `--extended` path runs three independent oracle seeds in interpreter/JIT modes.
 It also rebuilds and checks four original chained-fixup programs in both engines;
 the eight outputs and rebuilt binary hashes are retained under `results/chained`.
 Logs are saved under `evidence/aws-smoke/`. The internal translator/reference ratio

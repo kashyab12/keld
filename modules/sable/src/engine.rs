@@ -668,11 +668,12 @@ impl<'a> Prepared<'a> {
                 let word = self.image.instruction(trap)?;
                 if word == crate::objc::GET_CLASS
                     || word == crate::objc::LOOKUP
+                    || word == crate::objc::SUPER_LOOKUP
                     || crate::objc::protocol::is_service(word)
                 {
                     let plan = self.image.objc.as_ref().ok_or("unregistered ObjC trap")?;
-                    let result = plan.trap(memory, trap, word, cpu.x[0], cpu.x[1])?;
-                    if word != crate::objc::LOOKUP {
+                    let result = plan.trap(memory, trap, word, cpu.x[0], cpu.x[1], cpu.x[17])?;
+                    if word != crate::objc::LOOKUP && word != crate::objc::SUPER_LOOKUP {
                         cpu.x[0] = result;
                     } else {
                         cpu.x[16] = result;

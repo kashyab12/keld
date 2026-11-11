@@ -1,0 +1,8 @@
+{
+  "modules/sable/fixtures/super-main.m": "a42b00e894f65df38cc8324ce2882648749a06c418064d75e337b03f92410c68",
+  "modules/sable/fixtures/bin/super/absolute/legacy/0/super-3.macho": "25f828938e1140b983780440aefe6475ffa0b4d12f0cabe3e53fa8c1aab7ba37",
+  "modules/sable/fixtures/bin/super/absolute/chained/0/super-3.macho": "75e3086643c709a8dcbe4593dfc834690498eefa04e1d59cc285e59ca2be17dc",
+  "modules/sable/fixtures/bin/super/compact/legacy/0/super-3.macho": "a4fdb87557130c45381a45c42c48a16f071c9f5dbdee3ec9bc02d804a27fcc29",
+  "modules/sable/fixtures/bin/super/compact/chained/0/super-3.macho": "d2a2a19a0de500a9ca275c4cf2b220d3ee4c3e82bfbf17f2f33250cc28d27f45",
+  "evidence/super/native-assumption-source.m": "a42b00e894f65df38cc8324ce2882648749a06c418064d75e337b03f92410c68"
+}

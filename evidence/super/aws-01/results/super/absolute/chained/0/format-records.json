@@ -1,0 +1,141 @@
+[
+  {
+    "file": "super-0.macho",
+    "sha256": "e8fee17a719181500cea7087b01918aefe50733d24716a786f67f33ad5cb47b1",
+    "classes": {
+      "SableBase": {
+        "address": 4295000096,
+        "meta": 4295000136,
+        "superclass": 0,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000096
+      },
+      "SableChild": {
+        "address": 4295000216,
+        "meta": 4295000176,
+        "superclass": 4295000096,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000136
+      }
+    },
+    "superref_targets": [
+      4295000176,
+      4295000216
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "super-0.macho",
+      "sha256": "e8fee17a719181500cea7087b01918aefe50733d24716a786f67f33ad5cb47b1",
+      "format": "absolute",
+      "lists": []
+    }
+  },
+  {
+    "file": "super-1.macho",
+    "sha256": "8c69253249638eee222c89f0133b5c3d0e2d3f7689294e58bbcc36e362dce205",
+    "classes": {
+      "SableBase": {
+        "address": 4295000096,
+        "meta": 4295000136,
+        "superclass": 0,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000096
+      },
+      "SableChild": {
+        "address": 4295000216,
+        "meta": 4295000176,
+        "superclass": 4295000096,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000136
+      }
+    },
+    "superref_targets": [
+      4295000176,
+      4295000216
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "super-1.macho",
+      "sha256": "8c69253249638eee222c89f0133b5c3d0e2d3f7689294e58bbcc36e362dce205",
+      "format": "absolute",
+      "lists": []
+    }
+  },
+  {
+    "file": "super-2.macho",
+    "sha256": "16a19bf072a88764b72f0d181b51692894a19de6e9aa3e7756bf3fc0be9422e2",
+    "classes": {
+      "SableBase": {
+        "address": 4295000096,
+        "meta": 4295000136,
+        "superclass": 0,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000096
+      },
+      "SableChild": {
+        "address": 4295000216,
+        "meta": 4295000176,
+        "superclass": 4295000096,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000136
+      },
+      "SableGrandchild": {
+        "address": 4295000296,
+        "meta": 4295000256,
+        "superclass": 4295000216,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000176
+      }
+    },
+    "superref_targets": [
+      4295000176,
+      4295000216
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "super-2.macho",
+      "sha256": "16a19bf072a88764b72f0d181b51692894a19de6e9aa3e7756bf3fc0be9422e2",
+      "format": "absolute",
+      "lists": []
+    }
+  },
+  {
+    "file": "super-3.macho",
+    "sha256": "4dcb222209d9c47ba914db87a61dae81a92dd41a3f8030eb22f640eb4ee389fb",
+    "classes": {
+      "SableBase": {
+        "address": 4295000096,
+        "meta": 4295000136,
+        "superclass": 0,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000096
+      },
+      "SableChild": {
+        "address": 4295000216,
+        "meta": 4295000176,
+        "superclass": 4295000096,
+        "meta_isa": 4295000136,
+        "meta_superclass": 4295000136
+      }
+    },
+    "superref_targets": [
+      4295000176,
+      4295000216
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "super-3.macho",
+      "sha256": "4dcb222209d9c47ba914db87a61dae81a92dd41a3f8030eb22f640eb4ee389fb",
+      "format": "absolute",
+      "lists": []
+    }
+  }
+]
