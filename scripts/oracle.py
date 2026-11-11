@@ -236,11 +236,11 @@ def fp_corpus(rng,case,cases):
         for imm in range(256):
             case([0x1e201000|ftype<<22|imm<<13|r()],'fp_fmov_imm')
         for sf in [0,1]:
-            for rmode,opcode in [(0,2),(0,3),(3,0),(3,1)]:
+            for rmode,opcode in [(0,2),(0,3),(3,0),(3,1),(0,0),(0,1),(0,4),(0,5),(1,0),(1,1),(2,0),(2,1)]:
                 for _ in range(200):
                     d,n=r(),r()
                     case([0x1e200000|sf<<31|ftype<<22|rmode<<19|opcode<<16|n<<5|d],'fp_int_conv')
-                    if rmode==3:edges(dbl,n)
+                    if opcode not in (2,3):edges(dbl,n)
             if sf==ftype:
                 for opcode in [6,7]:
                     for _ in range(40):case([0x1e200000|sf<<31|ftype<<22|opcode<<16|r()<<5|r()],'fp_fmov_general')

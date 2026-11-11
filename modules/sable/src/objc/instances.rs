@@ -6,7 +6,8 @@ use crate::{
 };
 pub const BASE: u64 = 0x7200_0000;
 pub const SLOTS: usize = 256;
-pub const SLOT_SIZE: usize = 128;
+/// One size class large enough for UIKit-profile views (UIView is 136 bytes).
+pub const SLOT_SIZE: usize = 512;
 pub const LENGTH: usize = SLOTS * SLOT_SIZE;
 pub const MAX_EXTRA: u64 = 64;
 pub(crate) const CREATE: u32 = 0xd4000001 | (0x5ab8 << 5);
@@ -109,7 +110,7 @@ impl Memory {
         Ok(Some(record.class))
     }
     pub(crate) fn create_instance(&mut self, class: u64, size: usize, extra: u64) -> Result<u64> {
-        if !(8..=64).contains(&size) || !size.is_multiple_of(8) {
+        if !(8..=SLOT_SIZE).contains(&size) {
             return Err("unsupported instance class size".into());
         }
         if extra > MAX_EXTRA {

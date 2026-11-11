@@ -125,6 +125,7 @@ pub(super) fn register(
     let mut bodies = Vec::new();
     let mut names = BTreeSet::new();
     let mut intervals = Vec::new();
+    let mut parents = Vec::new();
     for &index in active {
         let object = &objects[index];
         let slide = slides[index];
@@ -141,11 +142,10 @@ pub(super) fn register(
                     return Err("overlapping/duplicate/excessive protocols".into());
                 }
                 intervals.push((address, end));
+                // Clang's protocol_t: isa 0, no Swift demangled name, size 96, flags 0.
                 if u32_at(data, 64)? != 96
                     || u32_at(data, 68)? != 0
-                    || [0, 16, 32, 40, 48, 56, 80, 88]
-                        .iter()
-                        .any(|&n| u64_at(data, n).unwrap() != 0)
+                    || [0, 80].iter().any(|&n| u64_at(data, n).unwrap() != 0)
                 {
                     return Err("unsupported protocol body size/flags/fields".into());
                 }
@@ -154,41 +154,110 @@ pub(super) fn register(
                 if !names.insert(name.clone()) {
                     return Err("duplicate protocol name unsupported".into());
                 }
-                let descriptions = u64_at(data, 24)?;
-                let extended = u64_at(data, 72)?;
-                if descriptions == 0 {
-                    if extended != 0 {
-                        return Err("protocol extended types without descriptions".into());
+                let inherited = u64_at(data, 16)?;
+                if inherited != 0 {
+                    let count = u64_at(record(object, slide, "__objc_const", inherited, 8)?, 0)?;
+                    if count == 0 || count > 16 {
+                        return Err("unsupported inherited protocol list".into());
                     }
-                } else {
-                    let header = record(object, slide, "__objc_const", descriptions, 8)?;
+                    let rows = record(
+                        object,
+                        slide,
+                        "__objc_const",
+                        inherited,
+                        8 + count as usize * 8,
+                    )?;
+                    for n in 0..count as usize {
+                        parents.push((address, u64_at(rows, 8 + n * 8)?));
+                    }
+                }
+                // Required/optional instance/class descriptions share one extended-types array.
+                let extended = u64_at(data, 72)?;
+                let mut lists = Vec::new();
+                for offset in [24, 32, 40, 48] {
+                    let list = u64_at(data, offset)?;
+                    if list == 0 {
+                        continue;
+                    }
+                    let compact = object
+                        .objc_sections
+                        .contains("__objc_methlist", slide, list, 8)
+                        .is_ok();
+                    let (section, flags, align) = if compact {
+                        ("__objc_methlist", 0x8000_000c, 4)
+                    } else {
+                        ("__objc_const", 24, 8)
+                    };
+                    if !list.is_multiple_of(align) {
+                        return Err("unaligned protocol descriptions".into());
+                    }
+                    object.objc_sections.contains(section, slide, list, 8)?;
+                    let header = object.image.read(list, 8, 1)?;
                     let count = u32_at(header, 4)? as usize;
-                    if u32_at(header, 0)? != 24 || count > 128 {
+                    if u32_at(header, 0)? != flags || count == 0 || count > 128 {
                         return Err("unsupported protocol descriptions".into());
                     }
-                    let rows = record(object, slide, "__objc_const", descriptions, 8 + count * 24)?;
-                    let types = if count == 0 {
-                        if extended != 0 {
-                            return Err("unsupported empty protocol types".into());
-                        }
-                        &[][..]
+                    lists.push((list, count, compact));
+                }
+                let described: usize = lists.iter().map(|(_, n, _)| n).sum();
+                if described == 0 && extended != 0 {
+                    return Err("protocol extended types without descriptions".into());
+                }
+                let types = if described == 0 {
+                    &[][..]
+                } else {
+                    record(object, slide, "__objc_const", extended, described * 8)?
+                };
+                let mut seen = BTreeSet::new();
+                let mut type_index = 0;
+                for (list, count, compact) in lists {
+                    let stride = if compact { 12 } else { 24 };
+                    let section = if compact {
+                        "__objc_methlist"
                     } else {
-                        record(object, slide, "__objc_const", extended, count * 8)?
+                        "__objc_const"
                     };
-                    let mut seen = BTreeSet::new();
+                    object
+                        .objc_sections
+                        .contains(section, slide, list, 8 + count * stride)?;
+                    let rows = object.image.read(list, 8 + count * stride, 1)?;
                     for n in 0..count {
-                        let offset = 8 + n * 24;
-                        let selector_address = u64_at(rows, offset)?;
-                        let type_address = u64_at(rows, offset + 8)?;
-                        if u64_at(rows, offset + 16)? != 0 || u64_at(types, n * 8)? != type_address
-                        {
+                        let offset = 8 + n * stride;
+                        let entry = list + offset as u64;
+                        let (selector_address, type_address, no_imp) = if compact {
+                            let slot = relative(entry, u32_at(rows, offset)?)?;
+                            let (base, _) = object
+                                .objc_sections
+                                .section("__objc_selrefs", slide)?
+                                .ok_or("relative protocol selector without selrefs")?;
+                            object
+                                .objc_sections
+                                .contains("__objc_selrefs", slide, slot, 8)?;
+                            if !slot.is_multiple_of(8) || !(slot - base).is_multiple_of(8) {
+                                return Err("protocol selector not a complete selref slot".into());
+                            }
+                            (
+                                u64_at(object.image.read(slot, 8, 1)?, 0)?,
+                                relative(entry + 4, u32_at(rows, offset + 4)?)?,
+                                u32_at(rows, offset + 8)? == 0,
+                            )
+                        } else {
+                            (
+                                u64_at(rows, offset)?,
+                                u64_at(rows, offset + 8)?,
+                                u64_at(rows, offset + 16)? == 0,
+                            )
+                        };
+                        if !no_imp || type_address == 0 {
                             return Err("protocol description IMP/types mismatch".into());
                         }
                         let selector =
                             owned_string(object, slide, "__objc_methname", selector_address)?;
-                        let encoding =
-                            owned_string(object, slide, "__objc_methtype", type_address)?;
-                        scalar_signature(&selector, &encoding, false)?;
+                        // Descriptions are metadata only and never dispatched, so the
+                        // plain and extended encodings are bounded ASCII, not type-walked.
+                        owned_string(object, slide, "__objc_methtype", type_address)?;
+                        image_string(&object.image, u64_at(types, type_index * 8)?)?;
+                        type_index += 1;
                         if !seen.insert(selector.clone()) {
                             return Err("duplicate protocol description".into());
                         }
@@ -196,7 +265,24 @@ pub(super) fn register(
                             .entry(selector.clone())
                             .and_modify(|v| *v = (*v).min(selector_address))
                             .or_insert(selector_address);
-                        patches.push((index, descriptions + offset as u64, selector));
+                        if !compact {
+                            patches.push((index, entry, selector));
+                        }
+                    }
+                }
+                for offset in [56, 88] {
+                    let list = u64_at(data, offset)?;
+                    if list == 0 {
+                        continue;
+                    }
+                    let header = record(object, slide, "__objc_const", list, 8)?;
+                    let count = u32_at(header, 4)? as usize;
+                    if u32_at(header, 0)? != 16 || count == 0 || count > 64 {
+                        return Err("unsupported protocol property list".into());
+                    }
+                    let rows = record(object, slide, "__objc_const", list, 8 + count * 16)?;
+                    for n in 0..count * 2 {
+                        image_string(&object.image, u64_at(rows, 8 + n * 8)?)?;
                     }
                 }
                 *total = total
@@ -219,6 +305,12 @@ pub(super) fn register(
         bodies,
         runtime,
     };
+    for (child, parent) in parents {
+        if child == parent {
+            return Err("protocol inherits itself".into());
+        }
+        plan.definition(parent)?;
+    }
     for &index in active {
         let object = &objects[index];
         if let Some((base, len)) = object

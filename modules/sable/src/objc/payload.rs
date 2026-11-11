@@ -1,12 +1,87 @@
-//! Original bounded Q ivar layout; offsets are metadata, never inferred from code.
+//! Bounded typed ivar layouts; offsets are metadata, never inferred from code.
 use super::*;
-pub(super) const MAX_SIZE: u32 = 64;
+pub(super) const MAX_SIZE: u32 = crate::objc::instances::SLOT_SIZE as u32;
 #[derive(Debug)]
 pub(super) struct Layout {
     pub start: u32,
     pub size: u32,
     pub names: Vec<String>,
+    /// (offset cell, offset, alignment) for non-fragile sliding.
+    pub cells: Vec<(u64, u32, u32)>,
+    /// Largest ivar alignment (bytes); 1 for classes without ivars.
+    pub alignment: u32,
 }
+
+/// Size and natural alignment of a supported ivar type encoding.
+pub(super) fn ivar_type(ty: &str) -> Result<(u32, u32)> {
+    // A leading const qualifier (`r*` for const char *) does not change layout.
+    let ty = ty.strip_prefix('r').filter(|t| !t.is_empty()).unwrap_or(ty);
+    let scalar = |b: u8| match b {
+        b'B' | b'c' | b'C' => Some((1, 1)),
+        b's' | b'S' => Some((2, 2)),
+        b'i' | b'I' | b'f' => Some((4, 4)),
+        b'q' | b'Q' | b'd' | b'#' | b':' | b'*' => Some((8, 8)),
+        _ => None,
+    };
+    let bytes = ty.as_bytes();
+    let object = |t: &str| {
+        t == "@"
+            || (t.len() > 3
+                && t.starts_with("@\"")
+                && t.ends_with('"')
+                && t[2..t.len() - 1]
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'<' || b == b'>'))
+    };
+    if bytes.len() == 1
+        && let Some(v) = scalar(bytes[0])
+    {
+        return Ok(v);
+    }
+    if object(ty) || (ty.len() >= 2 && ty.starts_with('^') && ty.as_bytes()[1] != b'?') {
+        return Ok((8, 8));
+    }
+    // Struct ivars may carry quoted field names: {CGPoint="x"d"y"d}.
+    let mut plain = String::new();
+    if ty.starts_with('{') {
+        let mut quoted = false;
+        for c in ty.chars() {
+            if c == '"' {
+                quoted = !quoted;
+            } else if !quoted {
+                plain.push(c);
+            }
+        }
+        if quoted {
+            return Err(format!("unsupported ObjC ivar type {ty}"));
+        }
+    }
+    let ty_plain = if plain.is_empty() { ty } else { plain.as_str() };
+    for (encoding, size) in [
+        ("{CGPoint=dd}", 16),
+        ("{CGSize=dd}", 16),
+        ("{CGRect={CGPoint=dd}{CGSize=dd}}", 32),
+        ("{_NSRange=QQ}", 16),
+    ] {
+        if ty_plain == encoding {
+            return Ok((size, 8));
+        }
+    }
+    // Fixed arrays of a supported element: [N<type>], N in 1..=64.
+    if let Some(body) = ty.strip_prefix('[').and_then(|t| t.strip_suffix(']')) {
+        let digits = body.bytes().take_while(u8::is_ascii_digit).count();
+        if let Ok(n) = body[..digits].parse::<u32>()
+            && (1..=64).contains(&n)
+            && !body[..digits].starts_with('0')
+            && !body[digits..].starts_with('[')
+        {
+            let (size, align) = ivar_type(&body[digits..])?;
+            return Ok((size * n, align));
+        }
+    }
+    Err(format!("unsupported ObjC ivar type {ty}"))
+}
+
 pub(super) fn parse(
     object: &Object,
     slide: u64,
@@ -16,22 +91,16 @@ pub(super) fn parse(
 ) -> Result<Layout> {
     let start = u32_at(ro, 4)?;
     let size = u32_at(ro, 8)?;
-    if (root && start != 0)
-        || (!root && (start < 8 || !start.is_multiple_of(8)))
-        || size < 8
-        || size < start
-        || size > MAX_SIZE
-        || !size.is_multiple_of(8)
-    {
+    if (root && start != 0) || (!root && start < 8) || size < start.max(8) || size > MAX_SIZE {
         return Err("unsupported ObjC payload start/size".into());
     }
     let list = u64_at(ro, 48)?;
     let mut names = BTreeSet::new();
-    let mut offsets = Vec::new();
+    let mut rows_out = Vec::new();
     if list != 0 {
         let head = record(object, slide, "__objc_const", list, 8)?;
         let count = u32_at(head, 4)? as usize;
-        if u32_at(head, 0)? != 32 || count > 8 {
+        if u32_at(head, 0)? != 32 || count == 0 || count > 32 {
             return Err("unsupported ObjC ivar list stride/count".into());
         }
         let rows = record(object, slide, "__objc_const", list, 8 + count * 32)?;
@@ -57,30 +126,42 @@ pub(super) fn parse(
             let offset = u32_at(object.image.read(cell, 4, 1)?, 0)?;
             let name = owned_string(object, slide, "__objc_methname", u64_at(row, 8)?)?;
             let ty = owned_string(object, slide, "__objc_methtype", u64_at(row, 16)?)?;
-            if !names.insert(name.clone()) || u32_at(row, 24)? != 3 || u32_at(row, 28)? != 8 {
+            let (ty_size, ty_align) = ivar_type(&ty)?;
+            let log2 = u32_at(row, 24)?;
+            if !names.insert(name.clone())
+                || log2 > 3
+                || 1u32 << log2 != ty_align
+                || u32_at(row, 28)? != ty_size
+            {
                 return Err("unsupported/duplicate ObjC ivar name/alignment/size".into());
             }
-            if ty == "#" && root && offset == 0 && name == "isa" {
+            if root && offset == 0 {
+                if ty != "#" || name != "isa" {
+                    return Err("unsupported ObjC root isa ivar".into());
+                }
                 continue;
             }
-            if ty != "Q"
-                || name == "isa"
-                || !offset.is_multiple_of(8)
-                || offset < if root { 8 } else { start }
-                || offset.checked_add(8).is_none_or(|end| end > size)
-            {
+            if name == "isa" {
                 return Err("unsupported ObjC payload ivar type/range".into());
             }
-            offsets.push(offset);
+            rows_out.push((offset, ty_size, ty_align, cell));
         }
     }
-    offsets.sort_unstable();
+    rows_out.sort_unstable();
     let mut cursor = if root { 8 } else { start };
-    for offset in offsets {
-        if offset != cursor {
+    let mut alignment = 1;
+    let mut cells = Vec::new();
+    for &(offset, ty_size, ty_align, cell) in &rows_out {
+        let aligned = cursor.next_multiple_of(ty_align);
+        if offset != aligned || offset < start {
             return Err("overlapping or noncontiguous ObjC payload ivars".into());
         }
-        cursor += 8;
+        cursor = offset
+            .checked_add(ty_size)
+            .filter(|&end| end <= size)
+            .ok_or("unsupported ObjC payload ivar type/range")?;
+        alignment = alignment.max(ty_align);
+        cells.push((cell, offset, ty_align));
     }
     if cursor != size {
         return Err("ObjC size lacks contiguous payload coverage".into());
@@ -89,6 +170,8 @@ pub(super) fn parse(
         start,
         size,
         names: names.into_iter().collect(),
+        cells,
+        alignment,
     })
 }
 
@@ -231,7 +314,14 @@ mod tests {
             reject(bad, r);
         }
         let ty = word(&o, rows + 24);
-        for byte in [b'@', b'q', b'[', b'^', b'#'] {
+        // Typed ivars: 8-byte object/class/integer types match the declared size.
+        for byte in [b'@', b'q', b'#'] {
+            let (mut ok, r) = loaded(0);
+            patch_bytes(&mut ok, ty, &[byte]);
+            assert!(register(&mut [ok], &[0], &[0], Some(r)).is_ok());
+        }
+        // Malformed or size-inconsistent types still reject.
+        for byte in [b'[', b'^', b'B', b'v', b'?'] {
             let (mut bad, r) = loaded(0);
             patch_bytes(&mut bad, ty, &[byte]);
             reject(bad, r);
@@ -287,7 +377,7 @@ mod tests {
             (base + 8, 72),
             (base + 8, u32::MAX),
             (child + 4, 0),
-            (child + 4, 12),
+            (child + 4, 20),
             (child + 8, 16),
             (child + 8, 32),
             (child + 8, 65),
@@ -296,10 +386,24 @@ mod tests {
             patch_bytes(&mut bad, a, &v.to_le_bytes());
             reject(bad, r);
         }
+        // Non-fragile ivars: a subclass compiled against an ivar-free superclass
+        // header (start = size = 8) slides to the real superclass size.
+        let (mut slid, r) = loaded(2);
+        let (child, _, _) = ids(&slid);
+        patch_bytes(&mut slid, child + 4, &8u32.to_le_bytes());
+        patch_bytes(&mut slid, child + 8, &8u32.to_le_bytes());
+        let plan = register(&mut [slid], &[0], &[0], Some(r)).unwrap().unwrap();
+        let class = plan
+            .classes
+            .iter()
+            .find(|c| c.superclass.is_some())
+            .unwrap();
+        assert_eq!(class.size, 64);
+        // A child that starts past its superclass's end still rejects.
         let (mut bad, r) = loaded(2);
         let (child, _, _) = ids(&bad);
-        patch_bytes(&mut bad, child + 4, &8u32.to_le_bytes());
-        patch_bytes(&mut bad, child + 8, &8u32.to_le_bytes());
+        patch_bytes(&mut bad, child + 4, &72u32.to_le_bytes());
+        patch_bytes(&mut bad, child + 8, &72u32.to_le_bytes());
         reject(bad, r);
         assert!(scalar_signature("setValue:", "v24@0:8Q16", true).is_ok());
         assert!(scalar_signature("setValue:", "v24@0:8Q16", false).is_err());

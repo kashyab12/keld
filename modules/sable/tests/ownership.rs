@@ -66,7 +66,7 @@ fn original_arc_transform_and_nested_ownership_matrix_private_state() {
                 assert!(
                     result
                         .memory
-                        .read(0x72000000, 256 * 128)
+                        .read(0x72000000, 256 * 512)
                         .unwrap()
                         .iter()
                         .all(|&v| v == 0)

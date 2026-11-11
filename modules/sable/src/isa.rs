@@ -498,6 +498,8 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
             && !crate::objc::protocol::is_service(word)
             && !crate::objc::instances::is_service(word)
             && !crate::objc::ownership::is_service(word)
+            && !crate::objc::is_reflection(word)
+            && !crate::ui::is_service(word)
         {
             return Err("only Darwin svc #0x80 or registered Sable runtime traps supported".into());
         }

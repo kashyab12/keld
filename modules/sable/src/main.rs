@@ -15,9 +15,17 @@ fn execute() -> Result<u8> {
     let mut args: Vec<String> = Vec::new();
     let mut libraries = Vec::new();
     let mut main_entry = false;
+    let (mut plist, mut input, mut frames) = (None, None, None);
     let mut raw = std::env::args();
     while let Some(arg) = raw.next() {
-        if arg == "--main" {
+        if matches!(arg.as_str(), "--info-plist" | "--input" | "--frames") {
+            let value = raw.next().ok_or(format!("{arg} requires a path"))?;
+            match arg.as_str() {
+                "--info-plist" => plist = Some(value),
+                "--input" => input = Some(value),
+                _ => frames = Some(value),
+            }
+        } else if arg == "--main" {
             main_entry = true;
         } else if arg == "--lib" {
             let path = raw.next().ok_or("--lib requires a dylib path")?;
@@ -27,7 +35,7 @@ fn execute() -> Result<u8> {
         }
     }
     if args.len() < 3 {
-        return Err("usage: sable inspect FILE | sable run FILE [interp|jit] [BUDGET] [--main] | sable bench FILE [PAIRS]".into());
+        return Err("usage: sable inspect FILE | sable run FILE [interp|jit] [BUDGET] [--main] [--info-plist P --input FIFO --frames DIR] | sable bench FILE [PAIRS]".into());
     }
     let main = std::fs::read(&args[2]).map_err(|e| e.to_string())?;
     let link = if main_entry {
@@ -63,7 +71,23 @@ fn execute() -> Result<u8> {
                 .transpose()
                 .map_err(|e| e.to_string())?
                 .unwrap_or(100_000_000);
-            let result = run(&image, budget, jit)?;
+            let result = match (plist, input, frames) {
+                (None, None, None) => run(&image, budget, jit)?,
+                (Some(plist), Some(input), Some(frames)) => {
+                    let data = std::fs::read(plist).map_err(|e| e.to_string())?;
+                    let input = std::fs::File::open(input).map_err(|e| e.to_string())?;
+                    std::fs::create_dir_all(&frames).map_err(|e| e.to_string())?;
+                    let mut host = sable::ui::FileHost {
+                        scene: sable::ui::scene_delegate_from_bplist(&data)?,
+                        frames: frames.into(),
+                        input: Box::new(std::io::BufReader::new(input)),
+                        presented: 0,
+                        events: Vec::new(),
+                    };
+                    sable::engine::Prepared::new(&image, jit)?.run_ui(budget, &mut host)?
+                }
+                _ => return Err("--info-plist, --input and --frames go together".into()),
+            };
             std::io::stdout()
                 .write_all(&result.stdout)
                 .map_err(|e| e.to_string())?;

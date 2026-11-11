@@ -8,7 +8,7 @@ const DISPOSE: u32 = 0xd4000001 | (0x5ab9 << 5);
 const LOOKUP: u32 = 0xd4000001 | (0x5ab3 << 5);
 const SUPER: u32 = 0xd4000001 | (0x5ab7 << 5);
 const BASE: u64 = 0x72000000;
-const SLOT: usize = 128;
+const SLOT: usize = 512;
 const SLOTS: usize = 256;
 fn fixtures(fmt: &str, mode: &str, split: u8, ctor: u8) -> (Vec<u8>, Vec<Vec<u8>>) {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

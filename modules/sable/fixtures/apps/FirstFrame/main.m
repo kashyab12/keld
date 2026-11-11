@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-// DRAFT, COMPILE-ONLY. This is not the Contract 2 FirstFrame fixture and is never
-// linked or run. It exists only so `scripts/fp-evidence.sh` can disassemble what
-// Xcode clang emits for an ordinary small UIKit app (CGRect/CGPoint/CGFloat HFAs,
-// UIColor component arguments, struct copies) to justify Sable's FP/SIMD subset.
+// Original FirstFrame fixture: the smallest ordinary UIKit scene app that draws a
+// red frame, then turns blue (tap in the left half) or green (right half).
+// Built with the iOS SDK and ARC; on Sable it runs against original providers.
 #import <UIKit/UIKit.h>
 
 @interface TapView : UIView
@@ -18,7 +17,7 @@
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     CGPoint point = [[touches anyObject] locationInView:self];
     CGRect bounds = self.bounds;
-    if (point.x < CGRectGetMidX(bounds)) {
+    if (point.x < bounds.origin.x + bounds.size.width / 2) {
         self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:1 alpha:1];
     } else {
         self.backgroundColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:1];
@@ -31,14 +30,8 @@
 
 @implementation ViewController
 - (void)loadView {
-    CGRect frame = self.view.window ? self.view.window.bounds : UIScreen.mainScreen.bounds;
-    self.view = [[TapView alloc] initWithFrame:CGRectInset(frame, 0, 0)];
-}
-- (void)viewDidLayoutSubviews {
-    [super viewDidLayoutSubviews];
-    CGRect bounds = self.view.bounds;
-    CGFloat scale = floor(bounds.size.width / 2) + ceil(bounds.size.height / 3);
-    self.view.layer.cornerRadius = scale > 0 ? fmin(scale, 8.0) : 0;
+    // UIWindow resizes the root view to its own bounds when it is installed.
+    self.view = [[TapView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
 }
 @end
 
@@ -49,9 +42,8 @@
 @implementation SceneDelegate
 - (void)scene:(UIScene *)scene
     willConnectToSession:(UISceneSession *)session
-                 options:(UISceneConnectionOptions *)options {
-    UIWindowScene *windowScene = (UIWindowScene *)scene;
-    self.window = [[UIWindow alloc] initWithWindowScene:windowScene];
+                 options:(UISceneConnectionOptions *)connectionOptions {
+    self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
     self.window.rootViewController = [ViewController new];
     [self.window makeKeyAndVisible];
 }
@@ -68,7 +60,9 @@
 @end
 
 int main(int argc, char *argv[]) {
+    NSString *appDelegateClassName;
     @autoreleasepool {
-        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+        appDelegateClassName = NSStringFromClass([AppDelegate class]);
     }
+    return UIApplicationMain(argc, argv, nil, appDelegateClassName);
 }

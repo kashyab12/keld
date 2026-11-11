@@ -9,5 +9,6 @@ pub mod macho;
 pub mod memory;
 pub mod objc;
 pub mod tls;
+pub mod ui;
 
 pub type Result<T> = std::result::Result<T, String>;

@@ -285,7 +285,6 @@ fn super_rejects_bad_pairs_current_receiver_selector_and_foreign_traps() {
         (0x3010, base, sel, 0x3000),
         (0x3010, meta, sel, 0x3000),
         (child, child, sel, 0x3000),
-        (base, bmeta, sel, 0x3000),
         (0x3018, child, sel, 0x3000),
         (0x3010, child, sel, u64::MAX),
         (0x3010, child, sel, 0x3018),
@@ -293,8 +292,15 @@ fn super_rejects_bad_pairs_current_receiver_selector_and_foreign_traps() {
         (0x3010, child, selector(&image, child, "nested:"), 0x3000),
     ] {
         let (probe, _) = query(image.clone(), receiver, current, selector, pair, child);
-        assert!(compare(&probe, 2000).is_err());
+        assert!(
+            compare(&probe, 2000).is_err(),
+            "{receiver:#x} {current:#x} {selector:#x} {pair:#x}"
+        );
     }
+    // A super call from a root class method resolves through the root metaclass
+    // to the root class's instance methods, as in the real runtime.
+    let (probe, _) = query(image.clone(), base, bmeta, sel, 0x3000, child);
+    assert!(compare(&probe, 2000).is_ok());
     let mut data = Vec::new();
     data.extend(0x3010u64.to_le_bytes());
     data.extend(u64::MAX.to_le_bytes());
@@ -368,12 +374,14 @@ fn super_metadata_stub_mutation_and_instruction_aliases_reject() {
     );
 }
 #[test]
-fn depth_three_rejects_and_protocol_adoption_stays_direct_despite_inherited_methods() {
+fn depth_three_runs_and_protocol_adoption_stays_direct_despite_inherited_methods() {
     for fmt in ["absolute", "compact"] {
         for mode in ["chained", "legacy"] {
             for split in [0, 1] {
+                // The former "rejected third level" fixture is within depth eight now.
                 let (raw, libs) = fixtures(fmt, mode, split, 2);
-                assert!(link(&raw, &libs).unwrap_err().contains("depth two"));
+                let deep = link(&raw, &libs).unwrap();
+                assert_eq!(compare(&deep, 20000).unwrap().exit, 0);
                 if split == 0 {
                     let (raw, libs) = fixtures(fmt, mode, 0, 3);
                     assert_eq!(compare(&link(&raw, &libs).unwrap(), 20000).unwrap().exit, 0);

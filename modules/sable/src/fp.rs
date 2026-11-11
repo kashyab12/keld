@@ -155,11 +155,12 @@ pub enum FpOp {
         signed: bool,
         double: bool,
     },
-    /// FCVTZS/FCVTZU to a general register.
+    /// FCVT{N,A,P,M,Z}{S,U} to a general register.
     ToInt {
         dst: u8,
         src: u8,
         signed: bool,
+        mode: Rounding,
         wide: bool,
         double: bool,
     },
@@ -471,10 +472,17 @@ fn decode_data(word: u32, pc: u64) -> Result<FpOp> {
                 wide,
                 double,
             }),
-            (3, kind @ (0 | 1)) => Ok(FpOp::ToInt {
+            (rmode @ 0..=3, kind @ (0 | 1 | 4 | 5)) if rmode == 0 || kind < 2 => Ok(FpOp::ToInt {
                 dst: rd,
                 src: rn,
-                signed: kind == 0,
+                signed: kind & 1 == 0,
+                mode: match (rmode, kind) {
+                    (0, 0 | 1) => Rounding::Nearest,
+                    (0, _) => Rounding::Away,
+                    (1, _) => Rounding::Ceil,
+                    (2, _) => Rounding::Floor,
+                    _ => Rounding::Trunc,
+                },
                 wide,
                 double,
             }),
@@ -937,6 +945,7 @@ pub fn execute(cpu: &mut Cpu, op: FpOp, memory: Option<&mut Memory>, pc: u64) ->
             dst,
             src,
             signed,
+            mode,
             wide,
             double,
         } => {
@@ -946,6 +955,7 @@ pub fn execute(cpu: &mut Cpu, op: FpOp, memory: Option<&mut Memory>, pc: u64) ->
                 value,
                 signed,
                 if wide { 64 } else { 32 },
+                mode,
                 &mut flags,
             );
             cpu.set_x(dst, result);
@@ -1106,7 +1116,7 @@ mod tests {
             (0x4c40_7000, "LD1/ST1"),
             (0x1e62_0400, "FCCMP"),
             (0x9e58_0000, "fixed-point"),
-            (0x1e24_0000, "FCVTAS"),
+            (0x9e26_0000, "FMOV (general)"),
             (0x4f00_0420, "MOVI (unsupported shifted form)"),
             (0x2f00_a400, "MVNI"),
             (0x2f20_a400, "USHLL"),

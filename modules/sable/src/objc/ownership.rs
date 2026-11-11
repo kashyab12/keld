@@ -18,16 +18,76 @@ pub(crate) const NAMES: [&str; 14] = [
     "_objc_release_x24",
     "_objc_retain_x22",
 ];
+/// Register-specific bridges beyond the base set, for every other x0-x28.
+/// They form one optional all-or-nothing table (`Runtime::extended`).
+const EXTRA_RELEASE: [u8; 24] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 25, 26, 27, 28,
+];
+const EXTRA_RETAIN: [u8; 28] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26,
+    27, 28,
+];
+pub(crate) const BRIDGES: usize = NAMES.len() + EXTRA_RELEASE.len() + EXTRA_RETAIN.len();
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Kind {
+    Push,
+    Pop,
+    Retain,
+    Release,
+    Autorelease,
+    RetainAutorelease,
+    Claim,
+    RetainAutoreleased,
+}
+/// (kind, register argument) of bridge `i`; the register replaces x0.
+fn bridge(i: usize) -> (Kind, Option<usize>) {
+    match i {
+        0 => (Kind::Push, None),
+        1 => (Kind::Pop, None),
+        2 => (Kind::Retain, None),
+        3 => (Kind::Release, None),
+        4 => (Kind::Autorelease, None),
+        5 => (Kind::RetainAutorelease, None),
+        6 => (Kind::Claim, None),
+        7 => (Kind::RetainAutoreleased, None),
+        8..=12 => (Kind::Release, Some(i + 12)),
+        13 => (Kind::Retain, Some(22)),
+        _ if i < NAMES.len() + EXTRA_RELEASE.len() => {
+            (Kind::Release, Some(EXTRA_RELEASE[i - NAMES.len()] as usize))
+        }
+        _ => (
+            Kind::Retain,
+            Some(EXTRA_RETAIN[i - NAMES.len() - EXTRA_RELEASE.len()] as usize),
+        ),
+    }
+}
+pub(crate) fn name(i: usize) -> String {
+    if i < NAMES.len() {
+        return NAMES[i].into();
+    }
+    match bridge(i) {
+        (Kind::Release, Some(r)) => format!("_objc_release_x{r}"),
+        (_, r) => format!("_objc_retain_x{}", r.unwrap()),
+    }
+}
 pub(crate) const fn word(index: usize) -> u32 {
-    0xd4000001 | ((0x5ac0 + index as u32) << 5)
+    let imm = if index < NAMES.len() {
+        0x5ac0 + index as u32
+    } else if index < NAMES.len() + EXTRA_RELEASE.len() {
+        0x5b00 + EXTRA_RELEASE[index - NAMES.len()] as u32
+    } else {
+        0x5b20 + EXTRA_RETAIN[index - NAMES.len() - EXTRA_RELEASE.len()] as u32
+    };
+    0xd4000001 | (imm << 5)
 }
 pub(crate) fn is_service(w: u32) -> bool {
-    (0..NAMES.len()).any(|i| word(i) == w)
+    (0..BRIDGES).any(|i| word(i) == w)
 }
 pub(crate) fn release_register(w: u32) -> Option<usize> {
-    (8..NAMES.len())
+    (0..BRIDGES)
         .find(|&i| word(i) == w)
-        .map(|i| if i == 13 { 22 } else { i + 12 })
+        .and_then(|i| bridge(i).1)
 }
 pub(crate) const RETURN: u64 = 0xffff_ffff_ffff_ffe0;
 const TOKEN_BASE: u64 = 0xffff_0000_0000_0000;
@@ -36,17 +96,22 @@ const MAX_QUEUE: usize = 1024;
 const MAX_STRONG: u32 = 1_000_000;
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Runtime {
-    pub entries: [u64; 14],
+    /// Export addresses; entries past `NAMES.len()` are 0 unless `extended`.
+    pub entries: [u64; BRIDGES],
+    pub extended: bool,
 }
 impl Runtime {
+    fn active(self) -> usize {
+        if self.extended { BRIDGES } else { NAMES.len() }
+    }
     fn index(self, pc: u64, w: u32) -> Result<usize> {
-        (0..NAMES.len())
+        (0..self.active())
             .find(|&i| self.entries[i] == pc && word(i) == w)
             .ok_or_else(|| "unregistered ownership trap".into())
     }
     pub(crate) fn validate(self, image: &Image) -> Result<()> {
         let mut seen = BTreeSet::new();
-        for (i, a) in self.entries.into_iter().enumerate() {
+        for (i, a) in self.entries.into_iter().take(self.active()).enumerate() {
             if !seen.insert(a)
                 || image.instruction(a)? != word(i)
                 || image.instruction(a.checked_add(4).ok_or("ownership stub overflow")?)? != RET
@@ -133,6 +198,12 @@ impl Memory {
                     .any(|r| r.lifetime != Lifetime::Retired))
         {
             return Err("unfinished ownership: live objects, pools or pending work".into());
+        }
+        Ok(())
+    }
+    pub(crate) fn ownership_quiescent(&self) -> Result<()> {
+        if self.ownership_busy() {
+            return Err("guest exit during dealloc or pool drain".into());
         }
         Ok(())
     }
@@ -274,7 +345,8 @@ impl Plan {
         if memory.ownership_busy() {
             return Err("lifecycle reentrancy unsupported".into());
         }
-        if op == 0 {
+        let (kind, register) = bridge(op);
+        if kind == Kind::Push {
             let s = memory.ownership.as_mut().ok_or("ownership state absent")?;
             if s.pools.len() == MAX_POOLS {
                 return Err("autorelease pool cap".into());
@@ -291,21 +363,28 @@ impl Plan {
             s.next_token = generation;
             return Ok(Action::Return(token));
         }
-        if op == 1 {
+        if kind == Kind::Pop {
             let begin = self.preflight_pop(memory, x0)?;
             memory.ownership.as_mut().unwrap().drain = Some(begin);
             return self.drain_next(memory);
         }
-        let a = if op >= 8 { register_argument } else { x0 };
+        let a = if register.is_some() {
+            register_argument
+        } else {
+            x0
+        };
         if self.immortal(a) {
-            return Ok(Action::Return(if matches!(op, 3 | 8..=12) { 0 } else { a }));
+            return Ok(Action::Return(if kind == Kind::Release { 0 } else { a }));
         }
-        if matches!(op, 3 | 8..=12) {
+        if kind == Kind::Release {
             return self.release_owned(memory, a);
         }
         let (i, n) = memory.strong(a)?;
-        let retain = matches!(op, 2 | 5 | 6 | 7 | 13);
-        let enqueue = matches!(op, 4 | 5);
+        let retain = matches!(
+            kind,
+            Kind::Retain | Kind::RetainAutorelease | Kind::Claim | Kind::RetainAutoreleased
+        );
+        let enqueue = matches!(kind, Kind::Autorelease | Kind::RetainAutorelease);
         let next = if retain {
             n.checked_add(1)
                 .filter(|&v| v <= MAX_STRONG)

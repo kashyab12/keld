@@ -691,11 +691,21 @@ fn link_entry(main: &[u8], libraries: &[&[u8]], main_entry: bool) -> Result<Imag
             if all_exports[index].contains_key("_objc_autoreleaseReturnValue") {
                 return Err("optimized autoreleaseReturnValue producer unsupported".into());
             }
-            let mut entries = [0; crate::objc::ownership::NAMES.len()];
+            let mut entries = [0; crate::objc::ownership::BRIDGES];
             for (i, name) in crate::objc::ownership::NAMES.iter().enumerate() {
                 entries[i] = symbol(name)?;
             }
-            Some(crate::objc::ownership::Runtime { entries })
+            // The extra register bridges are one all-or-nothing table.
+            let names: Vec<_> = (crate::objc::ownership::NAMES.len()..entries.len())
+                .map(crate::objc::ownership::name)
+                .collect();
+            let extended = names.iter().any(|n| all_exports[index].contains_key(n));
+            if extended {
+                for (offset, name) in names.iter().enumerate() {
+                    entries[crate::objc::ownership::NAMES.len() + offset] = symbol(name)?;
+                }
+            }
+            Some(crate::objc::ownership::Runtime { entries, extended })
         } else {
             None
         };
@@ -721,6 +731,51 @@ fn link_entry(main: &[u8], libraries: &[&[u8]], main_entry: bool) -> Result<Imag
             protocols,
             constants,
             ownership,
+            ui: {
+                const UIKIT: &str = "/System/Library/Frameworks/UIKit.framework/UIKit";
+                const NAMES: [&str; 3] = [
+                    "_sable_ui_launch_info",
+                    "_sable_ui_present",
+                    "_sable_ui_wait_event",
+                ];
+                match ids.get(UIKIT).copied().filter(|i| order.contains(i)) {
+                    Some(ui) if NAMES.iter().any(|n| all_exports[ui].contains_key(*n)) => {
+                        let mut addresses = [0u64; 3];
+                        for (slot, name) in addresses.iter_mut().zip(NAMES) {
+                            let s = all_exports[ui]
+                                .get(name)
+                                .ok_or_else(|| format!("missing UI service export: {name}"))?;
+                            if s.tls {
+                                return Err("UI service export cannot be TLS".into());
+                            }
+                            objects[ui].image.read(s.address, 8, 1)?;
+                            *slot = s.address;
+                        }
+                        Some(crate::ui::Runtime {
+                            launch_info: addresses[0],
+                            present: addresses[1],
+                            wait_event: addresses[2],
+                        })
+                    }
+                    _ => None,
+                }
+            },
+            reflection: if [
+                "_class_respondsToSelector",
+                "_class_getName",
+                "_sable_class_cxx_destruct",
+            ]
+            .iter()
+            .any(|name| all_exports[index].contains_key(*name))
+            {
+                Some(crate::objc::Reflection {
+                    responds: symbol("_class_respondsToSelector")?,
+                    name: symbol("_class_getName")?,
+                    destruct: symbol("_sable_class_cxx_destruct")?,
+                })
+            } else {
+                None
+            },
         })
     } else {
         None

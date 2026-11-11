@@ -501,6 +501,10 @@ pub enum Rounding {
     Ceil,
     /// FRINTZ: toward zero.
     Trunc,
+    /// FCVTN*: to nearest, ties to even.
+    Nearest,
+    /// FCVTA*: to nearest, ties away from zero.
+    Away,
 }
 
 /// FRINTM/FRINTP/FRINTZ. These never raise Inexact (only FRINTX does).
@@ -523,6 +527,9 @@ pub fn round_int(f: Format, a: u64, mode: Rounding, flags: &mut u32) -> u64 {
             Rounding::Floor => x.sign,
             Rounding::Ceil => !x.sign,
             Rounding::Trunc => false,
+            Rounding::Nearest | Rounding::Away => {
+                unreachable!("FRINTN/FRINTA are rejected by the decoder")
+            }
         };
     let int = int + u64::from(away);
     if int == 0 {
@@ -531,8 +538,8 @@ pub fn round_int(f: Format, a: u64, mode: Rounding, flags: &mut u32) -> u64 {
     round(f, x.sign, 0, int as u128, flags)
 }
 
-/// FCVTZS/FCVTZU: round toward zero, saturate, NaN -> 0; bits = 32 or 64.
-pub fn to_int(f: Format, a: u64, signed: bool, bits: u32, flags: &mut u32) -> u64 {
+/// FCVT{N,A,P,M,Z}{S,U}: round per `mode`, saturate, NaN -> 0; bits = 32 or 64.
+pub fn to_int(f: Format, a: u64, signed: bool, bits: u32, mode: Rounding, flags: &mut u32) -> u64 {
     let x = unpack(f, a);
     let (min, max): (i128, i128) = if signed {
         (-(1i128 << (bits - 1)), (1i128 << (bits - 1)) - 1)
@@ -559,16 +566,34 @@ pub fn to_int(f: Format, a: u64, signed: bool, bits: u32, flags: &mut u32) -> u6
             if x.exp >= 64 {
                 return saturate(x.sign, flags);
             }
-            let (magnitude, inexact) = if x.exp >= 0 {
-                ((x.sig as i128) << x.exp, false)
+            // Truncated magnitude plus the discarded fraction relative to one half.
+            let (mut magnitude, inexact, ordering) = if x.exp >= 0 {
+                ((x.sig as i128) << x.exp, false, std::cmp::Ordering::Less)
             } else {
                 let shift = (-x.exp) as u32;
-                if shift >= 64 {
-                    (0, true)
+                if shift > 64 {
+                    (0, true, std::cmp::Ordering::Less)
                 } else {
-                    ((x.sig >> shift) as i128, x.sig & ((1 << shift) - 1) != 0)
+                    let rem = u128::from(x.sig) & ((1u128 << shift) - 1);
+                    (
+                        (u128::from(x.sig) >> shift) as i128,
+                        rem != 0,
+                        rem.cmp(&(1u128 << (shift - 1))),
+                    )
                 }
             };
+            let up = inexact
+                && match mode {
+                    Rounding::Trunc => false,
+                    Rounding::Floor => x.sign,
+                    Rounding::Ceil => !x.sign,
+                    Rounding::Away => ordering != std::cmp::Ordering::Less,
+                    Rounding::Nearest => {
+                        ordering == std::cmp::Ordering::Greater
+                            || (ordering == std::cmp::Ordering::Equal && magnitude & 1 == 1)
+                    }
+                };
+            magnitude += i128::from(up);
             let value = if x.sign { -magnitude } else { magnitude };
             if value < min || value > max {
                 return saturate(x.sign, flags);

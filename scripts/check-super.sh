@@ -21,12 +21,9 @@ for format in absolute compact; do
      target/release/sable run "$out/super-$ctor.macho" "$engine" "${libs[@]}" > "$out/$engine-$ctor.txt"
      printf 'Superclass lookup, Super2 guest methods, nesting and ABI OK\n' | cmp - "$out/$engine-$ctor.txt"
     done
-    set +e
-    target/release/sable run "$out/super-2.macho" "$engine" "${libs[@]}" > "$out/$engine-deep.txt" 2> "$out/$engine-deep.stderr"
-    code=$?
-    set -e
-    [[ "$code" == 125 && ! -s "$out/$engine-deep.txt" ]]
-    [[ "$(< "$out/$engine-deep.stderr")" == *'ObjC hierarchy exceeds depth two or cycles'* ]]
+    # The third-level hierarchy is within the depth-eight profile and runs.
+    target/release/sable run "$out/super-2.macho" "$engine" "${libs[@]}" > "$out/$engine-deep.txt"
+    printf 'Superclass lookup, Super2 guest methods, nesting and ABI OK\n' | cmp - "$out/$engine-deep.txt"
     if [[ "$split" == 0 ]]; then
      target/release/sable run "$out/super-3.macho" "$engine" "${libs[@]}" > "$out/$engine-conformance.txt"
      printf 'Superclass lookup, Super2 guest methods, nesting and ABI OK\n' | cmp - "$out/$engine-conformance.txt"

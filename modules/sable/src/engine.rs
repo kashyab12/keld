@@ -752,8 +752,15 @@ impl Process {
         self.cpu.x[..5].copy_from_slice(&[1, args.argv, args.envp, args.apple, args.vars]);
         self.cpu.x[30] = CALL_RETURN;
     }
-    fn finish(self, exit: u8) -> Result<Outcome> {
-        self.memory.ownership_complete()?;
+    /// A guest `exit` ends the process like Darwin does: live objects and open
+    /// pools are discarded, but no dealloc callback or pool drain may be mid-flight.
+    /// Returning from main still requires complete ownership.
+    fn finish(self, exit: u8, exited: bool) -> Result<Outcome> {
+        if exited {
+            self.memory.ownership_quiescent()?;
+        } else {
+            self.memory.ownership_complete()?;
+        }
         let [stdout, stderr] = self.out;
         Ok(Outcome {
             cpu: self.cpu,
@@ -802,6 +809,13 @@ impl<'a> Prepared<'a> {
         })
     }
     pub fn run(&self, budget: u64) -> Result<Outcome> {
+        self.run_host(budget, None)
+    }
+    /// Run with a UI host attached for the UIKit-profile services.
+    pub fn run_ui(&self, budget: u64, host: &mut dyn crate::ui::Host) -> Result<Outcome> {
+        self.run_host(budget, Some(host))
+    }
+    fn run_host(&self, budget: u64, mut host: Option<&mut dyn crate::ui::Host>) -> Result<Outcome> {
         let mut cpu = Cpu::new(self.image.entry, budget);
         cpu.sp = STACK_BASE + STACK_SIZE as u64;
         let mut process = Process {
@@ -816,31 +830,35 @@ impl<'a> Prepared<'a> {
             for &target in &startup.initializers {
                 process.call(target, &args);
                 if let Some(exit) = self
-                    .drive(&mut process, Some(CALL_RETURN))
+                    .drive(&mut process, Some(CALL_RETURN), &mut host)
                     .map_err(|e| format!("initializer {target:#x}: {e}"))?
                 {
-                    return process.finish(exit);
+                    return process.finish(exit, true);
                 }
                 if process.cpu.sp != args.sp {
                     return Err("initializer returned with unbalanced SP".into());
                 }
             }
             process.call(self.image.entry, &args);
-            let exit = self
-                .drive(&mut process, Some(CALL_RETURN))?
-                .unwrap_or(process.cpu.x[0] as u8);
-            if process.cpu.pc == CALL_RETURN && process.cpu.sp != args.sp {
+            let exited = self.drive(&mut process, Some(CALL_RETURN), &mut host)?;
+            let exit = exited.unwrap_or(process.cpu.x[0] as u8);
+            if exited.is_none() && process.cpu.sp != args.sp {
                 return Err("main returned with unbalanced SP".into());
             }
-            return process.finish(exit);
+            return process.finish(exit, exited.is_some());
         }
         let exit = self
-            .drive(&mut process, None)?
+            .drive(&mut process, None, &mut host)?
             .ok_or("unexpected freestanding return")?;
-        process.finish(exit)
+        process.finish(exit, true)
     }
 
-    fn drive(&self, process: &mut Process, return_pc: Option<u64>) -> Result<Option<u8>> {
+    fn drive(
+        &self,
+        process: &mut Process,
+        return_pc: Option<u64>,
+        host: &mut Option<&mut dyn crate::ui::Host>,
+    ) -> Result<Option<u8>> {
         let mut continuation: Option<(Cpu, u64)> = None;
         let Process {
             cpu,
@@ -941,11 +959,28 @@ impl<'a> Prepared<'a> {
                     }
                     continue;
                 }
+                if crate::ui::is_service(word) {
+                    if continuation.is_some() {
+                        return Err("UI service during dealloc unsupported".into());
+                    }
+                    let runtime = self
+                        .image
+                        .objc
+                        .as_ref()
+                        .and_then(|p| p.ui_runtime())
+                        .filter(|r| r.origin(trap, word))
+                        .ok_or("unregistered UI service trap")?;
+                    let _ = runtime;
+                    let host = host.as_deref_mut().ok_or("UI service requires a UI host")?;
+                    ui_service(cpu, memory, host, word)?;
+                    continue;
+                }
                 if word == crate::objc::GET_CLASS
                     || word == crate::objc::LOOKUP
                     || word == crate::objc::SUPER_LOOKUP
                     || crate::objc::protocol::is_service(word)
                     || crate::objc::instances::is_service(word)
+                    || crate::objc::is_reflection(word)
                 {
                     let plan = self.image.objc.as_ref().ok_or("unregistered ObjC trap")?;
                     let result = plan.trap(memory, trap, word, cpu.x[0], cpu.x[1], cpu.x[17])?;
@@ -966,6 +1001,46 @@ impl<'a> Prepared<'a> {
             }
         }
     }
+}
+
+fn ui_service(
+    cpu: &mut Cpu,
+    memory: &mut Memory,
+    host: &mut dyn crate::ui::Host,
+    word: u32,
+) -> Result<()> {
+    use crate::ui::{HEIGHT, LAUNCH_INFO, PRESENT, STRIDE, WIDTH};
+    match word {
+        LAUNCH_INFO => {
+            let name = host.scene_delegate()?;
+            let capacity = cpu.x[1];
+            if capacity > 256 || name.len() as u64 + 1 > capacity {
+                return Err("launch_info buffer too small or too large".into());
+            }
+            let mut bytes = name.into_bytes();
+            bytes.push(0);
+            memory.write(cpu.x[0], &bytes)?;
+            cpu.x[0] = bytes.len() as u64 - 1;
+        }
+        PRESENT => {
+            if (cpu.x[1], cpu.x[2], cpu.x[3]) != (WIDTH, HEIGHT, STRIDE) {
+                return Err(format!(
+                    "present: unsupported frame {}x{} stride {}",
+                    cpu.x[1], cpu.x[2], cpu.x[3]
+                ));
+            }
+            // A checked read: forged or partially mapped framebuffers reject.
+            let pixels = memory.read(cpu.x[0], (STRIDE * HEIGHT) as usize)?;
+            host.present(pixels)?;
+            cpu.x[0] = 0;
+        }
+        _ => {
+            let event = host.wait_event()?;
+            memory.write(cpu.x[0], &event.record(0))?;
+            cpu.x[0] = event.kind();
+        }
+    }
+    Ok(())
 }
 
 pub fn run(image: &Image, budget: u64, jit: bool) -> Result<Outcome> {
@@ -1014,7 +1089,9 @@ mod ownership_execution_tests {
             .arguments(p.image.startup.as_ref().unwrap().header)
             .unwrap();
         process.call(p.image.entry, &args);
-        let err = p.drive(&mut process, Some(CALL_RETURN)).unwrap_err();
+        let err = p
+            .drive(&mut process, Some(CALL_RETURN), &mut None)
+            .unwrap_err();
         (process.cpu, process.memory, process.out[0].clone(), err)
     }
     fn dealloc(image: &Image) -> u64 {
