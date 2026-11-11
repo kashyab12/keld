@@ -45,7 +45,7 @@ jobs:
         run: bash scripts/check-initializers.sh
       - name: Rebuild and execute scalar thread-local variables
         run: bash scripts/check-tls.sh
-      - name: Rebuild and execute scalar Objective-C dispatch
+      - name: Rebuild and execute absolute/compact Objective-C dispatch
         run: bash scripts/check-objc.sh
       - name: Check app oracle scripts and inventory graphics exposure
         run: |

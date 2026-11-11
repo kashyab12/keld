@@ -47,7 +47,7 @@ def main():
         if options.chained:expected.update({"chained/dynamic-8":(0x38afd5bab).to_bytes(8,"little"),"chained/dynamic-2000":(0xefe1edd5865163fb).to_bytes(8,"little"),"chained/dynamic-200000":(0xa7151818301809c9).to_bytes(8,"little"),"chained/chained-addend":(51).to_bytes(8,"little")})
         if options.initializers:expected.update({f"initializers/{mode}/initialize":b"INIT leaf 1\nINIT leaf 2\nINIT parent\nINIT sibling\nINIT executable\nARGS\nMAIN\n" for mode in ["offsets","pointers"]})
         if options.tls:expected.update({f"tls/{mode}/tls-{ctor}":b"TLV scalar ABI, templates, two images, stable addresses OK\n" for mode in ['chained','legacy'] for ctor in [0,1]})
-        if options.objc:expected.update({f"objc/{mode}/objc-{ctor}":b"ObjC root class, scalar instance/class dispatch, nil and selectors OK\n" for mode in ['chained','legacy'] for ctor in [0,1]})
+        if options.objc:expected.update({f"{profile}/{mode}/objc-{ctor}":b"ObjC root class, scalar instance/class dispatch, nil and selectors OK\n" for profile in ['objc','objc-compact'] for mode in ['chained','legacy'] for ctor in [0,1]})
         for name in expected:
             result = sim("spawn", device, str(ROOT / "modules/sable/fixtures/bin" / (name + ".macho")), owned_set=owned_set, check=False, text=False)
             receipt["runs"].append({"fixture": name, "exit": result.returncode, "stdout_hex": result.stdout.hex(), "stderr": result.stderr.decode(errors="replace")})

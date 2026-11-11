@@ -51,6 +51,8 @@ At this checkpoint, the original UIKit app reached a missing UIKit dependency in
 previous unsupported-command rejection. This is a startup diagnostic, **not an
 app pass**: dependency resolution still stops before its chained pointers are
 applied or its code executes. A later [bounded scalar ObjC2 runtime](objc.md)
-executes original console classes, but rejects the app's unsupported method-list
-metadata before dependency resolution. UIKit, rendering and input remain absent. See the
+executes original console classes. Compact method lists now work too; the
+[current app attempt](../evidence/objc-compact/app-still-unsupported.json) rejects
+unsupported protocol-list metadata before dependency resolution. UIKit, rendering
+and input remain absent. See the
 [execution receipts](../evidence/chained/RESULTS.md).

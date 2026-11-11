@@ -16,8 +16,7 @@ The original library exports `objc_getClass`, `objc_msgSend` and a zero data wor
 named `_objc_empty_cache`; no Apple cache algorithm is implemented.
 
 The initial profile accepts imageinfo version 0/flags 0x40, 40-byte root class
-and metaclass records, 72-byte class RO records, and 24-byte absolute method
-entries. A root class has no superclass; its metaclass points to itself and has
+and metaclass records, 72-byte class RO records, and either 24-byte absolute or 12-byte on-disk relative method entries. A root class has no superclass; its metaclass points to itself and has
 the ordinary class as superclass. Names must agree, cache/vtable fields must
 match the supplied profile, and methods must name aligned code in their owning
 image. Instances have one raw eight-byte isa word. An optional single explicit
@@ -36,13 +35,44 @@ without ObjC metadata retain the existing image limit; the ObjC cap is not
 applied to their string sections.
 
 The compiler profile pins `-fno-objc-arc`, `-fno-objc-exceptions`,
-`-fno-objc-relative-method-lists` and linker `-no_objc_relative_method_lists`.
+`-fno-objc-relative-method-lists`. Paired links request either
+`-no_objc_relative_method_lists` or `-objc_relative_method_lists`; the final
+metadata, rather than frontend flags, determines the format.
 The build probes the frontend switch: older Clang emits absolute records by
 default and lacks that option. Final metadata is checked rather than trusting
-flags or a presumed default. The linker switch is always required. LLVM LLD places class
+flags or a presumed default. An explicit linker switch is always required. LLVM LLD places class
 names/type encodings in `__cstring`; the loader retains that original owning
 section as well as dedicated ObjC string sections. Selector stubs are ordinary
 immutable checked guest code. Unsupported ObjC sections reject explicitly.
+
+## Compact on-disk method records
+
+The checked compact profile uses header `0x8000000c` in the owning image's
+`__objc_methlist` section. That section is regular file-backed RX metadata,
+4-byte aligned, included in the metadata cap/snapshot, and excluded from guest
+instruction ranges. Executable-section flags are rejected. A list header plus
+`count × 12` bytes must fit entirely inside it; lists may be aligned to four
+bytes without eight-byte alignment. Absolute lists still require header 24 and
+owning `__objc_const` storage with eight-byte alignment.
+
+Each compact entry has three signed 32-bit displacements. Each uses its own
+field address after image placement, with checked signed addition and no extra
+slide. The name displacement must target an exact eight-byte slot in the same
+image's `__objc_selrefs`; dereferencing that slot gives an owning method-name
+string. The other displacements target the owning type string and aligned
+owning code IMP. Existing scalar encoding/selector/class rules still apply.
+Direct-selector/shared-cache flags, signed/PAC lists and other strides reject.
+
+Canonicalization patches the selector slot, never a compact relative field.
+Compact bytes remain identical to the file after both fixups and execution.
+The same dispatch plan accepts mixed absolute/compact images; no new service,
+CPU instruction or fake runtime initialization was added. An aligned alternate
+address inside owning code is permitted metadata: the loader does not infer
+source-level function boundaries. Behavioral assertions must still verify that
+the intended method ran and returned the correct value.
+
+The [compact execution receipts](../evidence/objc-compact/RESULTS.md) retain the
+paired formats, field targets, native reference and cross-architecture tests.
 
 ## Message boundary
 
@@ -102,7 +132,7 @@ instruction-budget edge in a lookup/tail-call/return sequence.
 
 Inheritance/super, categories/protocols, +load/+initialize, ARC/retain-release,
 allocation, forwarding, dynamic class changes, caches, tagged/nonpointer isa,
-relative/signed method lists, PAC, exceptions, vector/FP/aggregate returns,
+shared-cache direct/signed method lists, PAC, exceptions, vector/FP/aggregate returns,
 pthreads and destructors remain unsupported. These console checks do not prove
 Foundation/UIKit startup, GPU-free app interactions or any competitor advantage.
 

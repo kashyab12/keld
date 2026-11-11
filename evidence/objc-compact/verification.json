@@ -1,0 +1,25 @@
+{
+  "final_run": "aws-02",
+  "remote_exit": 0,
+  "rust_tests_passed": 56,
+  "positive_cli_runs": 16,
+  "unknown_message_rejections": 8,
+  "oracle_cases": 47610,
+  "full_state_equal": true,
+  "runtime_hashes_match": true,
+  "cleanup": {
+    "aws-01": {
+      "active_instances": 0,
+      "volumes": 0,
+      "security_groups": 0,
+      "key_pairs": 0
+    },
+    "aws-02": {
+      "active_instances": 0,
+      "volumes": 0,
+      "security_groups": 0,
+      "key_pairs": 0
+    }
+  },
+  "sable_ui_interactions": 0
+}

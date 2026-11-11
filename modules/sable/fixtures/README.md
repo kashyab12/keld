@@ -88,3 +88,10 @@ programs/libraries only. No Apple SDK, implementation or framework is included
 or needed to execute them in Sable. The native Apple reference resolves the
 absolute System/libobjc identities to Apple's installed local runtime; its
 reference result is separate from Linux. See [the exact contract](../../../docs/objc.md).
+
+`bin/objc-compact` is the same original source linked with 12-byte on-disk
+relative method lists. The paired `bin/objc` control retains 24-byte absolute
+lists. `check-objc-format.py` independently asserts the final emitted format,
+field-relative targets and negative IMP displacements. All built fixtures run
+through the same output/ABI/constructor tests; format acceptance is not counted
+as execution. Compact RX bytes must remain unchanged after linking/execution.

@@ -55,6 +55,7 @@ impl Sections {
                 | "__objc_classrefs"
                 | "__objc_selrefs"
                 | "__objc_const"
+                | "__objc_methlist"
                 | "__objc_data"
                 | "__objc_methname"
                 | "__objc_methtype"
@@ -79,7 +80,8 @@ impl Sections {
         );
         if exponent > 12
             || (name != "__cstring" && length > CAP as u64)
-            || (protection & 1 == 0 || (!is_string && protection & 4 != 0))
+            || (protection & 1 == 0
+                || (!is_string && name != "__objc_methlist" && protection & 4 != 0))
             || address < base
             || end > base.checked_add(file_size).ok_or("ObjC segment overflow")?
             || address % (1u64 << exponent) != 0
@@ -97,6 +99,11 @@ impl Sections {
                 }
             || (pointer_array
                 && (!address.is_multiple_of(8) || length % 8 != 0 || length / 8 > 1024))
+            || (name == "__objc_methlist"
+                && (protection != 5
+                    || u32_at(s, 64)? & 0x80000400 != 0
+                    || !address.is_multiple_of(4)
+                    || length % 4 != 0))
             || (name == "__objc_imageinfo" && (length != 8 || address % 4 != 0))
         {
             return Err("invalid ObjC section bounds/alignment/type/protection".into());
@@ -249,6 +256,11 @@ fn patch(image: &mut Image, address: u64, value: u64) -> Result<()> {
     }
     Err("ObjC patch outside data".into())
 }
+fn relative(field: u64, encoded: u32) -> Result<u64> {
+    field
+        .checked_add_signed(i64::from(encoded as i32))
+        .ok_or("ObjC relative target overflow".into())
+}
 fn methods(
     object: &Object,
     slide: u64,
@@ -259,19 +271,67 @@ fn methods(
     if address == 0 {
         return Ok(Vec::new());
     }
-    let header = record(object, slide, "__objc_const", address, 8)?;
+    let compact = object
+        .objc_sections
+        .contains("__objc_methlist", slide, address, 8)
+        .is_ok();
+    let section = if compact {
+        "__objc_methlist"
+    } else {
+        "__objc_const"
+    };
+    let alignment = if compact { 4 } else { 8 };
+    if !address.is_multiple_of(alignment) {
+        return Err("unaligned ObjC method list".into());
+    }
+    object.objc_sections.contains(section, slide, address, 8)?;
+    let header = object.image.read(address, 8, 1)?;
     let count = u32_at(header, 4)? as usize;
-    if u32_at(header, 0)? != 24 || count > 128 {
+    if u32_at(header, 0)? != if compact { 0x8000000c } else { 24 } || count > 128 {
         return Err("unsupported ObjC method list flags/count".into());
     }
-    let data = record(object, slide, "__objc_const", address, 8 + count * 24)?;
+    let stride = if compact { 12 } else { 24 };
+    let length = 8 + count * stride;
+    object
+        .objc_sections
+        .contains(section, slide, address, length)?;
+    let data = object.image.read(address, length, 1)?;
     let mut result = Vec::new();
     let mut seen = BTreeSet::new();
     for n in 0..count {
-        let at = 8 + n * 24;
-        let name_address = u64_at(data, at)?;
+        let at = 8 + n * stride;
+        let entry = address + at as u64;
+        let (slot, name_address, types, imp) = if compact {
+            let slot = relative(entry, u32_at(data, at)?)?;
+            if !slot.is_multiple_of(8) {
+                return Err("unaligned ObjC relative selector slot".into());
+            }
+            object
+                .objc_sections
+                .contains("__objc_selrefs", slide, slot, 8)?;
+            let (base, _) = object
+                .objc_sections
+                .section("__objc_selrefs", slide)?
+                .unwrap();
+            if !(slot - base).is_multiple_of(8) {
+                return Err("ObjC relative selector not a complete slot".into());
+            }
+            (
+                slot,
+                u64_at(object.image.read(slot, 8, 1)?, 0)?,
+                relative(entry + 4, u32_at(data, at + 4)?)?,
+                relative(entry + 8, u32_at(data, at + 8)?)?,
+            )
+        } else {
+            (
+                entry,
+                u64_at(data, at)?,
+                u64_at(data, at + 8)?,
+                u64_at(data, at + 16)?,
+            )
+        };
         let name = owned_string(object, slide, "__objc_methname", name_address)?;
-        let encoding = owned_string(object, slide, "__objc_methtype", u64_at(data, at + 8)?)?;
+        let encoding = owned_string(object, slide, "__objc_methtype", types)?;
         let args = name.bytes().filter(|&b| b == b':').count();
         let expected = format!(
             "Q{}@0:8{}",
@@ -287,7 +347,6 @@ fn methods(
         {
             return Err("unsupported/duplicate ObjC scalar method".into());
         }
-        let imp = u64_at(data, at + 16)?;
         if !object.image.contains_pc(imp) {
             return Err("ObjC IMP outside owning image code".into());
         }
@@ -295,7 +354,7 @@ fn methods(
             .entry(name.clone())
             .and_modify(|v| *v = (*v).min(name_address))
             .or_insert(name_address);
-        patches.push((address + at as u64, name.clone()));
+        patches.push((slot, name.clone()));
         result.push((name, imp));
     }
     Ok(result)
@@ -622,8 +681,13 @@ impl Plan {
 mod tests {
     use super::*;
     fn loaded() -> (Object, Runtime) {
-        let root =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/bin/objc/chained");
+        loaded_profile("objc")
+    }
+    fn loaded_profile(profile: &str) -> (Object, Runtime) {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures/bin")
+            .join(profile)
+            .join("chained");
         let raw = std::fs::read(root.join("objc-0.macho")).unwrap();
         let libs = [
             "libsable_other.dylib",
@@ -772,5 +836,131 @@ mod tests {
         );
         let (bad, _) = loaded();
         assert!(register(&mut [bad], &[0], &[0], None).is_err());
+    }
+    fn overwrite(object: &mut Object, address: u64, bytes: &[u8]) {
+        for s in &mut object.image.segments {
+            if let Some(at) = address
+                .checked_sub(s.address)
+                .and_then(|a| usize::try_from(a).ok())
+                && at
+                    .checked_add(bytes.len())
+                    .is_some_and(|end| end <= s.bytes.len())
+            {
+                std::sync::Arc::make_mut(&mut s.bytes)[at..at + bytes.len()].copy_from_slice(bytes);
+                return;
+            }
+        }
+        panic!("test write out of range");
+    }
+    #[test]
+    fn compact_field_relative_math_and_malformed_real_records_reject() {
+        assert_eq!(relative(0x1000, (-4i32) as u32).unwrap(), 0xffc);
+        assert_eq!(relative(0x1000, 0).unwrap(), 0x1000);
+        assert!(relative(0, (-1i32) as u32).is_err());
+        assert!(relative(u64::MAX, 1).is_err());
+        let (mut original, runtime) = loaded_profile("objc-compact");
+        assert!(
+            register(
+                std::slice::from_mut(&mut original),
+                &[0],
+                &[0],
+                Some(runtime)
+            )
+            .unwrap()
+            .is_some()
+        );
+        let classlist = original
+            .objc_sections
+            .section("__objc_classlist", 0)
+            .unwrap()
+            .unwrap()
+            .0;
+        let class = word(&original, classlist);
+        let ro = word(&original, class + 32);
+        let methods = word(&original, ro + 32);
+        let (slots, _) = original
+            .objc_sections
+            .section("__objc_selrefs", 0)
+            .unwrap()
+            .unwrap();
+        let entry = methods + 8;
+        let target = |field: u64, at: u64| (at as i64 - field as i64) as i32 as u32;
+        let mut changes = vec![
+            (methods, 24),
+            (methods, 0xc000000c),
+            (methods, 0x80000018),
+            (methods, 0x8001000c),
+            (methods + 4, 129),
+            (methods + 4, u32::MAX),
+        ];
+        for field in [entry, entry + 4, entry + 8] {
+            for value in [0, i32::MAX as u32, i32::MIN as u32] {
+                changes.push((field, value));
+            }
+        }
+        for slot in [slots + 1, slots + 4, methods, runtime.empty_cache] {
+            changes.push((entry, target(entry, slot)));
+        }
+        for imp in [runtime.get_class, methods, original.image.entry + 1] {
+            changes.push((entry + 8, target(entry + 8, imp)));
+        }
+        // Treating the entry base as all fields' base must not accidentally succeed.
+        let types = relative(
+            entry + 4,
+            u32_at(original.image.read(entry + 4, 4, 1).unwrap(), 0).unwrap(),
+        )
+        .unwrap();
+        let imp = relative(
+            entry + 8,
+            u32_at(original.image.read(entry + 8, 4, 1).unwrap(), 0).unwrap(),
+        )
+        .unwrap();
+        changes.push((entry + 4, target(entry, types)));
+        let mut selectors = BTreeMap::new();
+        let mut patches = Vec::new();
+        assert_eq!(
+            super::methods(&original, 0, methods, &mut selectors, &mut patches).unwrap()[0].1,
+            imp
+        );
+        // A wrong source-level target may still be aligned owning code. Decode
+        // its actual field-relative meaning, rather than rejecting valid code.
+        let (mut alternate, _) = loaded_profile("objc-compact");
+        overwrite(&mut alternate, entry + 8, &target(entry, imp).to_le_bytes());
+        assert_eq!(
+            super::methods(
+                &alternate,
+                0,
+                methods,
+                &mut BTreeMap::new(),
+                &mut Vec::new()
+            )
+            .unwrap()[0]
+                .1,
+            imp + 8
+        );
+        for (address, value) in changes {
+            let (mut object, runtime) = loaded_profile("objc-compact");
+            overwrite(&mut object, address, &value.to_le_bytes());
+            assert!(
+                register(&mut [object], &[0], &[0], Some(runtime)).is_err(),
+                "accepted compact mutation {address:#x}={value:#x}"
+            );
+        }
+        for delta in [1, 2, 3] {
+            let (mut object, runtime) = loaded_profile("objc-compact");
+            overwrite(&mut object, ro + 32, &(methods + delta).to_le_bytes());
+            assert!(register(&mut [object], &[0], &[0], Some(runtime)).is_err());
+        }
+        for length in [4, 8, 19] {
+            let (mut object, runtime) = loaded_profile("objc-compact");
+            object
+                .objc_sections
+                .parts
+                .iter_mut()
+                .find(|s| s.name == "__objc_methlist")
+                .unwrap()
+                .length = length;
+            assert!(register(&mut [object], &[0], &[0], Some(runtime)).is_err());
+        }
     }
 }

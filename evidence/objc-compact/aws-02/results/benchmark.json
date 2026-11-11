@@ -1,0 +1,104 @@
+{
+  "protocol": "process_startup_load_translate_execute",
+  "blocks": 31,
+  "seed": 12648430,
+  "host": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "release": "7.0.0-1014-aws"
+  },
+  "qemu_version": "qemu-aarch64 version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+  "fingerprints": {
+    "target/release/sable": "18a064bc36e548227eab1e391ccd207a68d3404f9a82b284762d43216bb2c3ae",
+    "modules/sable/fixtures/bin/checksum.macho": "295aa066e680e77490220c38ccfa564f943d7f470ea9f8cde0ca714fde4d8a19",
+    "modules/sable/fixtures/bin/workload.macho": "b67e1318144f45e51e23154e22c14e789583a856151e3d521cb64b01224263f9",
+    "artifacts/checksum.elf": "bfb4fa51469d2c1e7ae7f6a8fdd8a077925eda9694d194db0a00209285738c2a",
+    "artifacts/workload.elf": "4bdcef375ae5bbedb8bb8199f066f8a563e991e0a096cc7e3177e1be4c22421d"
+  },
+  "samples": 186,
+  "failures": 0,
+  "summaries": {
+    "checksum": {
+      "interp": {
+        "median_seconds": 0.48487396,
+        "p95_seconds": 0.490146013,
+        "min_seconds": 0.474836155,
+        "max_seconds": 0.491090788,
+        "median_max_rss_kib": 2488
+      },
+      "jit": {
+        "median_seconds": 0.008390732,
+        "p95_seconds": 0.008683197,
+        "min_seconds": 0.007736348,
+        "max_seconds": 0.008704098,
+        "median_max_rss_kib": 2492
+      },
+      "qemu": {
+        "median_seconds": 0.011356382,
+        "p95_seconds": 0.01285936,
+        "min_seconds": 0.010067569,
+        "max_seconds": 0.012879917,
+        "median_max_rss_kib": 8744
+      },
+      "interp_over_jit": {
+        "ratio_of_medians": 57.78684863251502,
+        "paired_bootstrap_95_percent": [
+          56.9093049406431,
+          58.93247849609656
+        ]
+      },
+      "qemu_over_jit": {
+        "ratio_of_medians": 1.3534435374649076,
+        "paired_bootstrap_95_percent": [
+          1.3162624346115381,
+          1.3987439205797494
+        ]
+      }
+    },
+    "workload": {
+      "interp": {
+        "median_seconds": 0.021815214,
+        "p95_seconds": 0.022165639,
+        "min_seconds": 0.021566139,
+        "max_seconds": 0.022427118,
+        "median_max_rss_kib": 2488
+      },
+      "jit": {
+        "median_seconds": 0.003030467,
+        "p95_seconds": 0.003254442,
+        "min_seconds": 0.002939328,
+        "max_seconds": 0.003366063,
+        "median_max_rss_kib": 2484
+      },
+      "qemu": {
+        "median_seconds": 0.004519485,
+        "p95_seconds": 0.004794797,
+        "min_seconds": 0.004287429,
+        "max_seconds": 0.004973053,
+        "median_max_rss_kib": 8764
+      },
+      "interp_over_jit": {
+        "ratio_of_medians": 7.198631102071067,
+        "paired_bootstrap_95_percent": [
+          7.113734742641414,
+          7.287919007737375
+        ]
+      },
+      "qemu_over_jit": {
+        "ratio_of_medians": 1.4913493530865047,
+        "paired_bootstrap_95_percent": [
+          1.466954833321135,
+          1.5443267159593168
+        ]
+      }
+    }
+  },
+  "limitations": [
+    "original freestanding fixtures, no Apple frameworks or UI",
+    "ELF adaptation changes only fixed syscall protocol instructions",
+    "process-level wall time includes startup, file loading and translation",
+    "confidence intervals resample paired blocks within one host; not fleet-wide estimates",
+    "GNU time CPU durations have 10 ms resolution",
+    "max RSS is per-process peak, not total host memory or achievable density"
+  ]
+}

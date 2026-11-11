@@ -4,8 +4,12 @@ use sable::{
     objc::{GET_CLASS, LOOKUP},
 };
 fn fixtures(mode: &str, variant: u8) -> (Vec<u8>, Vec<Vec<u8>>) {
+    fixtures_profile("objc", mode, variant)
+}
+fn fixtures_profile(profile: &str, mode: &str, variant: u8) -> (Vec<u8>, Vec<Vec<u8>>) {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("fixtures/bin/objc")
+        .join("fixtures/bin")
+        .join(profile)
         .join(mode);
     (
         std::fs::read(root.join(format!("objc-{variant}.macho"))).unwrap(),
@@ -36,46 +40,97 @@ fn compare(image: &Image, budget: u64) -> sable::Result<Outcome> {
     }
     outcome
 }
+// Native guards intentionally have different diagnostic text. For guard
+// failures compare the rejection and full fault state, not presentation strings.
+fn compare_guard_fault(image: &Image, budget: u64) -> String {
+    use sable::{
+        engine::{Cpu, step_memory},
+        memory::Memory,
+    };
+    Prepared::new(image, false).unwrap();
+    let mut cpu = Cpu::new(image.entry, budget);
+    let mut memory = Memory::new(image).unwrap();
+    let error = loop {
+        match step_memory(&mut cpu, image, &mut memory) {
+            Ok(false) => {}
+            Ok(true) => panic!("guard probe reached unexpected service"),
+            Err(error) => break error,
+        }
+    };
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    for dispatch in [false, true] {
+        let code = sable::jit::Compiled::new_with_dispatch(image, dispatch).unwrap();
+        let mut native_cpu = Cpu::new(image.entry, budget);
+        let mut native_memory = Memory::new(image).unwrap();
+        assert!(
+            code.execute_memory(&mut native_cpu, image, &mut native_memory)
+                .is_err()
+        );
+        assert_eq!(cpu, native_cpu);
+        assert_eq!(memory, native_memory);
+    }
+    error
+}
 #[test]
 fn compiled_methods_nested_messages_cross_image_selectors_abi_ctor_and_reset() {
-    for mode in ["chained", "legacy"] {
-        for variant in [0, 1] {
-            let image = linked(mode, variant);
-            assert!(image.objc.is_some());
-            assert_eq!(image.startup.is_some(), variant == 1);
-            let first = compare(&image, 10000).unwrap();
-            assert_eq!(first.exit, 0);
-            assert_eq!(
-                first.stdout,
-                b"ObjC root class, scalar instance/class dispatch, nil and selectors OK\n"
-            );
-            assert_eq!(first.syscalls, 2);
-            let prepared = Prepared::new(&image, false).unwrap();
-            for _ in 0..3 {
-                assert_eq!(prepared.run(10000).unwrap(), first);
-            }
-            #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-            for dispatch in [false, true] {
-                let prepared = Prepared::new_with_dispatch(&image, dispatch).unwrap();
+    for profile in ["objc", "objc-compact"] {
+        for mode in ["chained", "legacy"] {
+            for variant in [0, 1] {
+                let (main, libs) = fixtures_profile(profile, mode, variant);
+                let image = Image::link(&main, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>())
+                    .unwrap();
+                if profile == "objc-compact" {
+                    assert_compact(&image, &main);
+                }
+                assert!(image.objc.is_some());
+                assert_eq!(image.startup.is_some(), variant == 1);
+                let first = compare(&image, 10000).unwrap();
+                assert_eq!(first.exit, 0);
+                assert_eq!(
+                    first.stdout,
+                    b"ObjC root class, scalar instance/class dispatch, nil and selectors OK\n"
+                );
+                assert_eq!(first.syscalls, 2);
+                if profile == "objc-compact" {
+                    let (base, len, _) = section(&main, "__objc_methlist");
+                    assert_eq!(
+                        first.memory.read(base, len).unwrap(),
+                        image.read(base, len, 1).unwrap()
+                    );
+                }
+                let prepared = Prepared::new(&image, false).unwrap();
                 for _ in 0..3 {
                     assert_eq!(prepared.run(10000).unwrap(), first);
                 }
+                #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+                for dispatch in [false, true] {
+                    let prepared = Prepared::new_with_dispatch(&image, dispatch).unwrap();
+                    for _ in 0..3 {
+                        assert_eq!(prepared.run(10000).unwrap(), first);
+                    }
+                }
+                let (main, mut libs) = fixtures_profile(profile, mode, variant);
+                libs.reverse();
+                let reordered =
+                    Image::link(&main, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>())
+                        .unwrap();
+                assert_eq!(compare(&reordered, 10000).unwrap(), first);
             }
-            let (main, mut libs) = fixtures(mode, variant);
-            libs.reverse();
-            let reordered =
-                Image::link(&main, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()).unwrap();
-            assert_eq!(compare(&reordered, 10000).unwrap(), first);
         }
     }
 }
 #[test]
 fn unknown_nonnil_selector_fails_explicitly() {
-    for mode in ["chained", "legacy"] {
-        assert_eq!(
-            compare(&linked(mode, 2), 10000).unwrap_err(),
-            "unknown ObjC selector for receiver"
-        );
+    for profile in ["objc", "objc-compact"] {
+        for mode in ["chained", "legacy"] {
+            let (main, libs) = fixtures_profile(profile, mode, 2);
+            let image =
+                Image::link(&main, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()).unwrap();
+            assert_eq!(
+                compare(&image, 10000).unwrap_err(),
+                "unknown ObjC selector for receiver"
+            );
+        }
     }
 }
 fn write(image: &mut Image, address: u64, data: &[u8]) {
@@ -171,41 +226,43 @@ fn trap_address(image: &Image, word: u32) -> u64 {
 }
 #[test]
 fn exact_budget_lookup_tail_branch_imp_ret_and_nil() {
-    let image = linked("chained", 0);
-    let (raw, _) = fixtures("chained", 0);
-    let class = word(&image, section(&raw, "__objc_classlist").0);
-    let sel = selector(&image, &raw, "classValue:");
-    let runtime = trap_address(&image, LOOKUP) - 4;
-    let mut words = Vec::new();
-    load(&mut words, 0, class);
-    load(&mut words, 1, sel);
-    load(&mut words, 17, runtime);
-    words.extend([0xd28004a2, 0xd63f0220]); // value37; BLR x17, returns through the guest IMP.
-    finish(&mut words);
-    let test = synthetic(image.clone(), &words, vec![0; 8]);
-    let count = 1000 - compare(&test, 1000).unwrap().cpu.remaining;
-    // Includes the final successful exit; check every edge, especially the private trap and RET.
-    for budget in 0..=count + 1 {
-        let outcome = compare(&test, budget);
-        if budget < count {
-            assert!(outcome.unwrap_err().contains("budget"));
-        } else {
-            assert_eq!(outcome.unwrap().exit, 0);
+    for profile in ["objc", "objc-compact"] {
+        let (raw, libs) = fixtures_profile(profile, "chained", 0);
+        let image = Image::link(&raw, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()).unwrap();
+        let class = word(&image, section(&raw, "__objc_classlist").0);
+        let sel = selector(&image, &raw, "classValue:");
+        let runtime = trap_address(&image, LOOKUP) - 4;
+        let mut words = Vec::new();
+        load(&mut words, 0, class);
+        load(&mut words, 1, sel);
+        load(&mut words, 17, runtime);
+        words.extend([0xd28004a2, 0xd63f0220]); // value37; BLR x17, returns through the guest IMP.
+        finish(&mut words);
+        let test = synthetic(image.clone(), &words, vec![0; 8]);
+        let count = 1000 - compare(&test, 1000).unwrap().cpu.remaining;
+        // Includes the final successful exit; check every edge, especially the private trap and RET.
+        for budget in 0..=count + 1 {
+            let outcome = compare(&test, budget);
+            if budget < count {
+                assert!(outcome.unwrap_err().contains("budget"));
+            } else {
+                assert_eq!(outcome.unwrap().exit, 0);
+            }
         }
+        let mut words = Vec::new();
+        load(&mut words, 0, 0);
+        load(&mut words, 1, u64::MAX);
+        load(&mut words, 17, runtime);
+        words.extend([0xd63f0220, 0xaa0003e9]);
+        finish(&mut words);
+        assert_eq!(
+            compare(&synthetic(image, &words, vec![0; 8]), 100)
+                .unwrap()
+                .cpu
+                .x[9],
+            0
+        );
     }
-    let mut words = Vec::new();
-    load(&mut words, 0, 0);
-    load(&mut words, 1, u64::MAX);
-    load(&mut words, 17, runtime);
-    words.extend([0xd63f0220, 0xaa0003e9]);
-    finish(&mut words);
-    assert_eq!(
-        compare(&synthetic(image, &words, vec![0; 8]), 100)
-            .unwrap()
-            .cpu
-            .x[9],
-        0
-    );
 }
 #[test]
 fn foreign_traps_bad_receiver_selector_and_mutated_runtime_metadata_reject() {
@@ -308,6 +365,120 @@ fn malformed_sections_flags_metadata_and_missing_dependencies_reject() {
             Image::link(&bad, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>())
                 .unwrap_err()
                 .contains("unsupported ObjC section")
+        );
+    }
+}
+
+fn assert_compact(image: &Image, raw: &[u8]) {
+    let (base, len, s) = section(raw, "__objc_methlist");
+    let offset = u32::from_le_bytes(raw[s + 48..s + 52].try_into().unwrap()) as usize;
+    assert_eq!(
+        image.read(base, len, 1).unwrap(),
+        &raw[offset..offset + len]
+    );
+    for at in (base..base + len as u64).step_by(4) {
+        assert!(!image.contains_pc(at));
+    }
+    let class = word(image, section(raw, "__objc_classlist").0);
+    let mut four_aligned = false;
+    for object in [class, word(image, class)] {
+        let ro = word(image, object + 32);
+        let methods = word(image, ro + 32);
+        assert!(methods >= base && methods + 8 <= base + len as u64);
+        assert_eq!(
+            image.read(methods, 4, 1).unwrap(),
+            0x8000000cu32.to_le_bytes()
+        );
+        four_aligned |= methods % 8 == 4;
+    }
+    assert!(
+        four_aligned,
+        "fixture must exercise a 4-byte-only-aligned list"
+    );
+}
+#[test]
+fn mixed_formats_and_compact_metadata_are_immutable_noncode() {
+    for mode in ["chained", "legacy"] {
+        for (main_profile, lib_profile) in [("objc", "objc-compact"), ("objc-compact", "objc")] {
+            let (main, _) = fixtures_profile(main_profile, mode, 1);
+            let (_, libs) = fixtures_profile(lib_profile, mode, 1);
+            let image =
+                Image::link(&main, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()).unwrap();
+            assert_eq!(compare(&image, 10000).unwrap().exit, 0);
+        }
+    }
+    let (raw, libs) = fixtures_profile("objc-compact", "chained", 0);
+    let image = Image::link(&raw, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()).unwrap();
+    let (table, _, _) = section(&raw, "__objc_methlist");
+    let (slots, _, _) = section(&raw, "__objc_selrefs");
+    for address in [table, table + 8, slots] {
+        let mut modified = image.clone();
+        write(&mut modified, address, &[0; 4]);
+        assert!(Prepared::new(&modified, false).is_err());
+    }
+    for (address, message) in [
+        (table, "permission 2"),
+        (slots, "mutated ObjC metadata unsupported"),
+    ] {
+        let mut words = Vec::new();
+        load(&mut words, 9, address);
+        load(&mut words, 10, 0);
+        words.push(0xf900012a); // STR x10,[x9]. RX compact entries must fault before mutation.
+        load(&mut words, 0, slots);
+        load(&mut words, 17, trap_address(&image, GET_CLASS));
+        words.push(0xd63f0220);
+        let probe = synthetic(image.clone(), &words, vec![0; 8]);
+        let error = if address == table {
+            compare_guard_fault(&probe, 100)
+        } else {
+            compare(&probe, 100).unwrap_err()
+        };
+        assert!(error.contains(message), "{error}");
+    }
+}
+
+#[test]
+fn compact_section_shape_code_flags_and_mixed_malformed_list_reject() {
+    for mode in ["chained", "legacy"] {
+        let (raw, libs) = fixtures_profile("objc-compact", mode, 0);
+        for (field, bytes) in [
+            (32, 1u64.to_le_bytes().to_vec()),
+            (40, 3u64.to_le_bytes().to_vec()),
+            (48, 1u32.to_le_bytes().to_vec()),
+            (52, 32u32.to_le_bytes().to_vec()),
+            (64, 0x90000400u32.to_le_bytes().to_vec()),
+        ] {
+            let mut modified = raw.clone();
+            let (_, _, s) = section(&modified, "__objc_methlist");
+            modified[s + field..s + field + bytes.len()].copy_from_slice(&bytes);
+            assert!(
+                Image::link(
+                    &modified,
+                    &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()
+                )
+                .is_err()
+            );
+        }
+        let mut modified = raw.clone();
+        let (_, _, s) = section(&modified, "__objc_methlist");
+        let off = u32::from_le_bytes(modified[s + 48..s + 52].try_into().unwrap()) as usize;
+        modified[off..off + 4].copy_from_slice(&0xc000000cu32.to_le_bytes());
+        let (_, absolute) = fixtures_profile("objc", mode, 0);
+        assert!(
+            Image::link(
+                &modified,
+                &absolute.iter().map(Vec::as_slice).collect::<Vec<_>>()
+            )
+            .unwrap_err()
+            .contains("method list flags")
+        );
+        let image = Image::link(&raw, &libs.iter().map(Vec::as_slice).collect::<Vec<_>>()).unwrap();
+        let mut words = Vec::new();
+        load(&mut words, 17, section(&raw, "__objc_methlist").0);
+        words.push(0xd61f0220);
+        assert!(
+            compare_guard_fault(&synthetic(image, &words, vec![0; 8]), 100)
+                .contains("PC outside __text")
         );
     }
 }

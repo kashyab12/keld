@@ -32,8 +32,8 @@ Foundation program still stops at its unsupplied framework dependency.
 The [Notes app reference](../modules/sable/fixtures/apps/Notes) now exercises
 external taps/typing, scroll/navigation, persisted state/reset and real Metal
 readback plus presented pixels on native Simulator. Sable rejects its ARM64
-executable at unsupported ObjC method-list metadata and completes zero app
-interactions ([current attempt](../evidence/objc/app-still-unsupported.json)).
+executable at unsupported ObjC protocol-list metadata and completes zero app
+interactions ([current attempt](../evidence/objc-compact/app-still-unsupported.json)).
 UIKit itself remains unsupplied.
 Restricted chained pointer linking now works on original LLVM fixtures, with
 matching Apple-native outputs; [format coverage](chained-fixups.md) and

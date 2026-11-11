@@ -17,7 +17,8 @@ shared guest instruction budget; see [startup behavior](docs/initializers.md).
 Plain C [thread-local variables](docs/tls.md) support private scalar storage for
 one logical context per run, including constructor access and fresh-run reset.
 A bounded [Objective-C2 root-class runtime](docs/objc.md) registers original
-metadata and dispatches scalar class/instance messages to guest ARM64 methods.
+metadata in absolute/compact formats and dispatches scalar class/instance
+messages to guest ARM64 methods.
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 

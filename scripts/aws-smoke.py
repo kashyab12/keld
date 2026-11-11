@@ -170,9 +170,11 @@ cargo test --release
 bash scripts/check-initializers.sh
 bash scripts/check-tls.sh
 bash scripts/check-objc.sh
-for mode in chained legacy; do
-  mkdir -p "results/objc/$mode"
-  cp artifacts/objc/"$mode"/interp-*.txt artifacts/objc/"$mode"/jit-*.txt artifacts/objc/"$mode"/*-unknown.stderr "results/objc/$mode/"
+for profile in objc objc-compact; do
+  for mode in chained legacy; do
+    mkdir -p "results/$profile/$mode"
+    cp artifacts/"$profile"/"$mode"/interp-*.txt artifacts/"$profile"/"$mode"/jit-*.txt artifacts/"$profile"/"$mode"/*-unknown.stderr artifacts/"$profile"/"$mode"/format-records.json "results/$profile/$mode/"
+  done
 done
 for mode in chained legacy; do
   mkdir -p "results/tls/$mode"
