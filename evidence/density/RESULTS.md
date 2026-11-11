@@ -147,3 +147,20 @@ them; then add longer resident/continuous-load tests and pool-level admission.
 Snapshot/worker reuse must prove fresh writable state and identity. Real UIKit,
 graphics, streaming and external app input remain prerequisites for claiming
 iPhone sandbox density or better completed workflows per dollar than Limrun.
+
+## Subsequent cleanup correction
+
+Independent review reproduced a failure path in the archived driver: a guest
+can exit during a buffered serial release, causing both `flush()` and the
+cleanup `close()` to raise BrokenPipeError. The latter interrupted cleanup of
+later jobs. No such interruption was recorded in the passing waves above.
+
+The current harness visits every independent resource even when another
+cleanup operation fails. A broken serial close is tolerated, other cleanup
+errors are aggregated and reject the wave, and the original release failure
+remains visible. An unprivileged regression uses an exited reader with a
+failed buffered write, a later live owned child, private jail directories and
+fake namespace/cgroup operations. It verifies process reaping, jail removal,
+all namespace cleanup attempts and error aggregation. The recorded benchmark
+sources and results remain unchanged. This correction was checked locally;
+no additional AWS/KVM benchmark was run for it.

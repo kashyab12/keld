@@ -75,3 +75,42 @@ with tempfile.TemporaryDirectory(prefix='sable-pool-check-') as folder:
     assert (output/'cleanup.json').exists(), 'rollback receipt missing'
     assert len(calls)==1, calls
 print('Pool rollback: namespace-add failure removed the simulated owned parent and wrote cleanup; no privileged operations')
+
+# A failed buffered release is flushed again by close(). It must not skip the
+# later live child or any independent jail/namespace cleanup operation.
+for inject_failure in [False,True]:
+    with tempfile.TemporaryDirectory(prefix='sable-pipe-check-') as folder:
+        owned=Path(folder);children=[];jobs=[];deletions=[];original_command=bench.command
+        def absent_cgroup():return False
+        def inaccessible_cgroup():raise PermissionError('injected cgroup failure')
+        def fake_namespace_delete(args,**kwargs):
+            assert args[:3]==['ip','netns','delete']
+            deletions.append(args[-1])
+            if inject_failure and args[-1]=='owned-0':raise OSError('injected namespace cleanup failure')
+        try:
+            dead=subprocess.Popen([sys.executable,'-c','pass'],stdin=subprocess.PIPE,start_new_session=True)
+            children.append(dead);dead.wait(timeout=5)
+            live=subprocess.Popen([sys.executable,'-c','import sys;sys.stdin.read()'],stdin=subprocess.PIPE,start_new_session=True)
+            children.append(live)
+            for i,proc in enumerate(children):
+                jail=owned/f'job-{i}'/'root';jail.mkdir(parents=True)
+                jobs.append(dict(id=f'owned-{i}',process=proc,jail=jail,namespace=f'owned-{i}',namespace_created=True,
+                                 cgroup=SimpleNamespace(exists=inaccessible_cgroup if inject_failure and i==0 else absent_cgroup)))
+            bench.command=fake_namespace_delete
+            try:
+                try:dead.stdin.write(b'RUN\n');dead.stdin.flush()
+                finally:errors=bench.cleanup_density_jobs(jobs)
+            except BrokenPipeError:pass  # The original release failure survives cleanup.
+            else:raise AssertionError('original failed release was suppressed')
+            assert all(proc.poll() is not None and proc.stdin.closed for proc in children)
+            assert all(not job['jail'].parent.exists() for job in jobs)
+            assert deletions==['owned-0','owned-1'], deletions
+            assert [error['resource'] for error in errors]==(['cgroup','network_namespace'] if inject_failure else []),errors
+        finally:
+            bench.command=original_command
+            for proc in children:
+                if proc.poll() is None:proc.kill();proc.wait(timeout=5)
+                if proc.stdin:
+                    try:proc.stdin.close()
+                    except BrokenPipeError:pass
+print('Broken release: all owned children reaped, jails removed, namespace cleanup visited; independent errors aggregated')

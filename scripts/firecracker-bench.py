@@ -82,6 +82,44 @@ def published_pid(launcher, path):
     return int(value)
 
 
+def cleanup_density_jobs(jobs):
+    """Visit every owned resource even if another cleanup action fails."""
+    errors=[]
+    def attempt(job, resource, action):
+        try:action()
+        except Exception as error:
+            errors.append(dict(job=job['id'],resource=resource,error=type(error).__name__+': '+str(error)))
+    for job in jobs:
+        def stop_cgroup():
+            cg=job['cgroup']
+            if not cg.exists():return
+            if (cg/'cgroup.procs').read_text().strip():(cg/'cgroup.kill').write_text('1')
+            for _ in range(300):
+                if not (cg/'cgroup.procs').read_text().strip():break
+                time.sleep(.01)
+            cg.rmdir()
+        attempt(job,'cgroup',stop_cgroup)
+        proc=job.get('process')
+        if proc:
+            def stop_launcher():
+                if proc.poll() is None:
+                    try:os.killpg(proc.pid,signal.SIGKILL)
+                    except ProcessLookupError:pass
+                proc.wait(timeout=3)
+            attempt(job,'launcher',stop_launcher)
+            def close_input():
+                if proc.stdin:
+                    try:proc.stdin.close()
+                    except BrokenPipeError:pass  # Guest exit can leave a failed buffered release.
+            attempt(job,'serial_input',close_input)
+        def remove_jail():
+            if job['jail'].parent.exists():shutil.rmtree(job['jail'].parent)
+        attempt(job,'jail',remove_jail)
+        if job['namespace_created']:
+            attempt(job,'network_namespace',lambda:command(['ip','netns','delete',job['namespace']]))
+    return errors
+
+
 def density(base, output, firecracker, jailer, parent, host_ns, levels, guest_mib, repetitions, pin_cpus):
     """Serial input gates prove simultaneous residency, then release real work."""
     events = (output/'events.jsonl').open('a')
@@ -207,23 +245,10 @@ def density(base, output, firecracker, jailer, parent, host_ns, levels, guest_mi
                 (output/f'wave-{wave:02}-host-kernel.log').write_bytes(command(['dmesg','--ctime']))
                 event('wave_failed',wave=wave,error=str(error));raise
             finally:
-                for job in jobs:
-                    cg=job['cgroup']
-                    if cg.exists():
-                        if (cg/'cgroup.procs').read_text().strip():(cg/'cgroup.kill').write_text('1')
-                        for _ in range(300):
-                            if not (cg/'cgroup.procs').read_text().strip():break
-                            time.sleep(.01)
-                        cg.rmdir()
-                    proc=job.get('process')
-                    if proc:
-                        proc.stdin.close()
-                        if proc.poll() is None:
-                            try:os.killpg(proc.pid,signal.SIGKILL)
-                            except ProcessLookupError:pass
-                        proc.wait(timeout=3)
-                    if job['jail'].parent.exists():shutil.rmtree(job['jail'].parent)
-                    if job['namespace_created']:command(['ip','netns','delete',job['namespace']])
+                cleanup_errors=cleanup_density_jobs(jobs)
+                if cleanup_errors:
+                    save(output/f'wave-{wave:02}-cleanup-failure.json',dict(errors=cleanup_errors))
+                    raise RuntimeError('owned wave cleanup incomplete: '+json.dumps(cleanup_errors))
             result['full_wave_seconds']=(time.perf_counter_ns()-requested)/1e9
             save(output/f'wave-{wave:02}.json',result);waves.append(result)
             event('wave_cleaned',wave=wave,count=count,full_wave_seconds=result['full_wave_seconds'])
