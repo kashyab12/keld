@@ -1,0 +1,6 @@
+{
+  "remaining_owned_cgroups": 0,
+  "owned_netns_remaining": false,
+  "remaining_owned_network_namespaces": 0,
+  "remaining_owned_jails": 0
+}

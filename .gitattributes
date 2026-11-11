@@ -1,2 +1,4 @@
 # Keep captured serial-console bytes and terminal EOFs unchanged.
 evidence/sandbox/** -text whitespace=cr-at-eol,-blank-at-eof
+evidence/density/** -text whitespace=cr-at-eol,-blank-at-eof
+evidence/density/**/*.log -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol

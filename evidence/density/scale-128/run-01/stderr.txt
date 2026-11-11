@@ -1,0 +1,23 @@
+    Checking sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.46s
+   Compiling sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `release` profile [optimized] target(s) in 13.07s
+     Running unittests src/lib.rs (target/release/deps/sable-9c10c40c90400f90)
+     Running unittests src/main.rs (target/release/deps/sable-1f3c31c5b2d26a07)
+     Running tests/chained.rs (target/release/deps/chained-6d31c58e6ada34a3)
+     Running tests/dynamic.rs (target/release/deps/dynamic-218520b832dc3168)
+     Running tests/execution.rs (target/release/deps/execution-bd0edd34097ab69e)
+     Running tests/initializers.rs (target/release/deps/initializers-613fdf5bfb83d17e)
+     Running tests/memory_flags.rs (target/release/deps/memory_flags-75bf359028419102)
+   Doc-tests sable
+   Compiling sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `release` profile [optimized] target(s) in 3.69s
+Traceback (most recent call last):
+  File "/home/ubuntu/sable/scripts/firecracker-bench.py", line 460, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/ubuntu/sable/scripts/firecracker-bench.py", line 339, in main
+    density(base,output,firecracker,jailer,parent,host_ns,options.concurrency,options.guest_mib)
+  File "/home/ubuntu/sable/scripts/firecracker-bench.py", line 148, in density
+    raise RuntimeError('guest exited before release: '+job['id'])
+RuntimeError: guest exited before release: density-5-29

@@ -1,0 +1,67 @@
+[
+  {
+    "observed_at": "2026-11-11T00:08:00.562145+00:00",
+    "sku": "9KEKRSWSE7G6M3S2",
+    "attributes": {
+      "enhancedNetworkingSupported": "Yes",
+      "intelTurboAvailable": "Yes",
+      "memory": "16 GiB",
+      "dedicatedEbsThroughput": "Up to 10000 Mbps",
+      "vcpu": "8",
+      "classicnetworkingsupport": "false",
+      "capacitystatus": "Used",
+      "locationType": "AWS Region",
+      "storage": "EBS only",
+      "instanceFamily": "Compute optimized",
+      "operatingSystem": "Linux",
+      "intelAvx2Available": "Yes",
+      "instanceFamilyCategory": "Compute Optimized",
+      "regionCode": "us-east-1",
+      "physicalProcessor": "Intel Xeon Scalable (Granite Rapids)",
+      "clockSpeed": "3.9 GHz",
+      "ecu": "NA",
+      "networkPerformance": "Up to 15000 Megabit",
+      "servicename": "Amazon Elastic Compute Cloud",
+      "gpuMemory": "NA",
+      "dedicatedEbsThroughputDescription": "2500 Mbps",
+      "vpcnetworkingsupport": "true",
+      "instanceType": "c8i.2xlarge",
+      "tenancy": "Shared",
+      "usagetype": "BoxUsage:c8i.2xlarge",
+      "normalizationSizeFactor": "16",
+      "intelAvxAvailable": "Yes",
+      "processorFeatures": "Intel AVX; Intel AVX2; Intel AVX512; Intel Turbo; Intel AMX",
+      "servicecode": "AmazonEC2",
+      "licenseModel": "No License required",
+      "currentGeneration": "Yes",
+      "preInstalledSw": "NA",
+      "location": "US East (N. Virginia)",
+      "processorArchitecture": "64-bit",
+      "marketoption": "OnDemand",
+      "operation": "RunInstances",
+      "availabilityzone": "NA"
+    },
+    "terms": {
+      "9KEKRSWSE7G6M3S2.JRTCKXETXF": {
+        "priceDimensions": {
+          "9KEKRSWSE7G6M3S2.JRTCKXETXF.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "$0.37484 per On Demand Linux c8i.2xlarge Instance Hour",
+            "appliesTo": [],
+            "rateCode": "9KEKRSWSE7G6M3S2.JRTCKXETXF.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3748400000"
+            }
+          }
+        },
+        "sku": "9KEKRSWSE7G6M3S2",
+        "effectiveDate": "2026-11-01T00:00:00Z",
+        "offerTermCode": "JRTCKXETXF",
+        "termAttributes": {}
+      }
+    },
+    "scope": "Compute only, not an invoice or complete workflow cost"
+  }
+]

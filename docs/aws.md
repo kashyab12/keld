@@ -65,3 +65,31 @@ inspect the private state and finish cleanup before starting another run.
 AWS CLI's live pricing response on 2026-11-10 quoted **$0.08925/hour** for this
 Linux On-Demand instance in us-east-1. That is a rate, not an observed invoice;
 disk, IPv4, transfer and taxes are extra. Confirm your own rate before rerunning.
+
+## Gated concurrency experiments
+
+`--firecracker --concurrency 1 4 16 32 64 96 150` selects one owned
+`c8i.2xlarge` (8 vCPUs / 16 GiB), not 150 EC2 instances. Each microVM receives a
+distinct network namespace, UID, jail and cgroup. Guests wait on serial input
+until the controller observes every requested guest simultaneously ready.
+They remain resident for three seconds, execute checked original Sable CPU
+workloads together, wait for a second release, and exit. No guest network or
+host filesystem share is added. This tests CPU session density, not iPhone UI
+capacity. A guest failure rejects the wave and preserves its logs.
+
+```sh
+python3 scripts/aws-smoke.py run --firecracker --concurrency 1 16 64 150 \
+  --work-repetitions 20 --memory-sweep --pin-cpus \
+  --output evidence/density-new
+```
+
+The optional memory sweep runs 128 MiB then 64 MiB profiles on the same host;
+the first failure stops subsequent profiles. CPU pinning is an experimental
+round-robin single-host-CPU assignment per VMM. It is not a documented fix for
+all nested-KVM failures. `--work-repetitions` repeats the fully checked CPU
+workload, not a UI loop. Peak guest charge, aggregate VMM PSS, host available
+memory, CPU counters, timing events and cleanup receipts are retained. The
+[density report](../evidence/density/RESULTS.md) distinguishes passing waves
+from failed launches and the native [video reference](../evidence/recordings/README.md).
+Run `python3 scripts/density-report.py` to re-audit saved passing waves and
+generate the timestamped event replay. It creates no cloud resources.

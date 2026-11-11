@@ -1,0 +1,58 @@
+{
+  "wave": 0,
+  "requested_concurrency": 1,
+  "all_correct": true,
+  "guest_mib": 128,
+  "metrics": {
+    "min_host_available_bytes": 15503409152,
+    "peak_parent_current_bytes": 57880576,
+    "peak_sampled_aggregate_vmm_pss_kib": 57844,
+    "max_simultaneously_ready": 1,
+    "max_simultaneously_work_complete": 1,
+    "ready_parent_current_bytes": 57880576,
+    "ready_aggregate_vmm_pss_kib": 57776,
+    "all_ready_seconds": 0.286724843,
+    "idle_cpu_before": "usage_usec 271273\nuser_usec 238141\nsystem_usec 33132\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "idle_cpu_after": "usage_usec 274467\nuser_usec 240028\nsystem_usec 34438\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "ready_hold_seconds": 3.0238185259999995,
+    "all_work_correct_seconds": 0.025179537,
+    "host_cpu_before": "cpu  12346 177 1319 45663 2099 0 11 47 0 0",
+    "host_cpu_after": "cpu  12379 177 1333 49135 2099 0 11 47 24 0",
+    "parent_memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n",
+    "parent_cpu_stat": "usage_usec 303479\nuser_usec 259828\nsystem_usec 43651\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1\n"
+  },
+  "jobs": [
+    {
+      "id": "density-0-0",
+      "uid": 20000,
+      "status": {
+        "Uid": "20000\t20000\t20000\t20000",
+        "Gid": "20000\t20000\t20000\t20000",
+        "CapEff": "0000000000000000",
+        "NoNewPrivs": "1",
+        "Seccomp": "2",
+        "NSpid": "4439\t1",
+        "VmRSS": "57820 kB",
+        "Threads": "1",
+        "State": "D (disk sleep)",
+        "namespaces": {
+          "pid": "pid:[4026532795]",
+          "mnt": "mnt:[4026532794]",
+          "net": "net:[4026532735]"
+        },
+        "pss_kib": 57812
+      },
+      "cgroup": {
+        "memory.peak": "57618432",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+        "cpu.stat": "usage_usec 303479\nuser_usec 259828\nsystem_usec 43651\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 13\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+        "cpu.max": "100000 100000",
+        "pids.events": "max 0"
+      },
+      "ready_from_wave_seconds": 0.286724843,
+      "work_after_gate_seconds": 0.025179537
+    }
+  ],
+  "full_wave_seconds": 4.407708649
+}

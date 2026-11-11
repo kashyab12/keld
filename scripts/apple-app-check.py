@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import signal
 import subprocess
 import uuid
 
@@ -96,6 +97,7 @@ def sim(*args, check=True):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path, help="New private artifact directory, outside tracked source")
+    parser.add_argument("--record", action="store_true", help="Record this owned native reference device during external UI tests")
     options = parser.parse_args()
     folder = options.output.resolve()
     # xcresult bundles include Apple test support and diagnostics; never publish them wholesale.
@@ -108,6 +110,7 @@ def main():
                    native_oracle_passed=False, sable_app_support_proven=False, simulator_window_requested=False,
                    gpu_mode="native host graphics; not a no-GPU test", devices_created=[])
     device = None
+    recorder = None
     try:
         receipt["xcode"] = command(["xcodebuild", "-version"]).decode().strip()
         receipt["host_arch"] = command(["uname", "-m"]).decode().strip()
@@ -148,6 +151,11 @@ def main():
         with (folder / "boot.log").open("w") as log:
             boot = subprocess.run(["xcrun", "simctl", "bootstatus", device, "-b"], env=ENV, stdout=log, stderr=subprocess.STDOUT, timeout=180)
         boot.check_returncode()
+        if options.record:
+            video = folder / "native-reference.mp4"
+            with (folder / "recording.log").open("wb") as log:
+                recorder = subprocess.Popen(["xcrun", "simctl", "io", device, "recordVideo", "--codec=h264", str(video)],
+                                            env=ENV, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
         with (folder / "test.log").open("w") as log:
             tested = subprocess.run(base + ["-destination", "platform=iOS Simulator,id=" + device, "-destination-timeout", "30",
                                             "-resultBundlePath", str(folder / "tests.xcresult"), "test-without-building"],
@@ -162,6 +170,17 @@ def main():
     except Exception as error:
         receipt["error"] = type(error).__name__ + ": " + str(error)
     finally:
+        if recorder:
+            recorder.send_signal(signal.SIGINT)
+            try:
+                recorder.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                recorder.kill(); recorder.wait()
+                receipt["recording_error"] = "recorder did not finalize within 30 seconds"
+            video = folder / "native-reference.mp4"
+            receipt["recording"] = dict(kind="native_apple_reference_not_sable", exit=recorder.returncode,
+                                        bytes=video.stat().st_size if video.exists() else 0,
+                                        sha256=hashlib.sha256(video.read_bytes()).hexdigest() if video.exists() else None)
         if device:
             sim("shutdown", device, check=False)
             deleted = sim("delete", device, check=False)
@@ -170,6 +189,8 @@ def main():
         (folder / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
     print(json.dumps(receipt, indent=2))
     if not receipt["native_oracle_passed"] or receipt.get("cleanup", {}).get("owned_device_remaining", True) or receipt.get("cleanup", {}).get("delete_exit") != 0:
+        raise SystemExit(1)
+    if options.record and (receipt.get("recording_error") or receipt.get("recording", {}).get("bytes", 0) == 0):
         raise SystemExit(1)
 
 

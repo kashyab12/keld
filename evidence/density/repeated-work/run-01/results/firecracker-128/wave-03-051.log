@@ -1,0 +1,7 @@
+2026-11-11T00:06:10.159019605 [density-3-51:main] Running Firecracker v1.18.0
+2026-11-11T00:06:10.269862406 [density-3-51:main] Artificially kick devices
+2026-11-11T00:06:10.269904242 [density-3-51:fc_vcpu 0] Received a VcpuEvent::Resume message with immediate_exit enabled. immediate_exit was disabled before proceeding
+2026-11-11T00:06:10.269913318 [density-3-51:main] Successfully started microvm that was configured from one single json
+2026-11-11T00:06:10.829537610 [density-3-51:fc_vcpu 0] vcpu: IO write @ 0xcf8:0x4 failed: Failed to find address range.
+2026-11-11T00:06:10.829595191 [density-3-51:fc_vcpu 0] vcpu: IO read @ 0xcfc:0x2 failed: Failed to find address range.
+2026-11-11T00:06:12.962557678 [density-3-51:fc_vcpu 0] vcpu: IO read @ 0x87:0x1 failed: Failed to find address range.

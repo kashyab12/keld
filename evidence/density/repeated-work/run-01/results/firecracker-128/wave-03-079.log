@@ -1,0 +1,11 @@
+2026-11-11T00:06:10.983133759 [density-3-79:main] Running Firecracker v1.18.0
+2026-11-11T00:06:11.309794587 [density-3-79:main] Artificially kick devices
+2026-11-11T00:06:11.310939738 [density-3-79:fc_vcpu 0] Received a VcpuEvent::Resume message with immediate_exit enabled. immediate_exit was disabled before proceeding
+2026-11-11T00:06:11.310959570 [density-3-79:main] Successfully started microvm that was configured from one single json
+2026-11-11T00:06:11.607438941 [density-3-79:fc_vcpu 0] vcpu: IO write @ 0xcf8:0x4 failed: Failed to find address range.
+2026-11-11T00:06:11.607500095 [density-3-79:fc_vcpu 0] vcpu: IO read @ 0xcfc:0x2 failed: Failed to find address range.
+2026-11-11T00:06:13.695992395 [density-3-79:fc_vcpu 0] Received KVM_EXIT_FAIL_ENTRY signal: 7 on cpu 5
+2026-11-11T00:06:13.696037048 [density-3-79:main] Vmm is stopping.
+2026-11-11T00:06:13.696049746 [density-3-79:main] Killing vCPU threads
+2026-11-11T00:06:13.696078827 [density-3-79:main] Discarding unexpected vCPU response during teardown: VcpuResponse::Exited(GenericError)
+2026-11-11T00:06:13.781787339 [density-3-79:main] Firecracker exiting successfully. exit_code=0

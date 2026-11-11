@@ -1,0 +1,22 @@
+2026-11-11T00:03:07.284651454 [density-4-47:main] Running Firecracker v1.18.0
+2026-11-11T00:03:07.451376079 [density-4-47:main] Artificially kick devices
+2026-11-11T00:03:07.451416683 [density-4-47:fc_vcpu 0] Received a VcpuEvent::Resume message with immediate_exit enabled. immediate_exit was disabled before proceeding
+2026-11-11T00:03:07.451425638 [density-4-47:main] Successfully started microvm that was configured from one single json
+2026-11-11T00:03:07.530739956 [density-4-47:fc_vcpu 0] vcpu: IO write @ 0xcf8:0x4 failed: Failed to find address range.
+2026-11-11T00:03:07.530800150 [density-4-47:fc_vcpu 0] vcpu: IO read @ 0xcfc:0x2 failed: Failed to find address range.
+2026-11-11T00:03:08.097850627 [density-4-47:fc_vcpu 0] vcpu: IO read @ 0x87:0x1 failed: Failed to find address range.
+SABLE_VM_READY
+RUN
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+SABLE_VM_IDLE
+EXIT
+SABLE_VM_OK
+[    6.388281] reboot: Restarting system
+2026-11-11T00:03:14.409835084 [density-4-47:fc_vcpu 0] vcpu: IO write @ 0x70:0x1 failed: Failed to find address range.
+2026-11-11T00:03:14.409869355 [density-4-47:fc_vcpu 0] vcpu: IO write @ 0x71:0x1 failed: Failed to find address range.
+2026-11-11T00:03:14.420644910 [density-4-47:main] Vmm is stopping.
+2026-11-11T00:03:14.420667596 [density-4-47:main] Killing vCPU threads
+2026-11-11T00:03:14.509624957 [density-4-47:main] Firecracker exiting successfully. exit_code=0

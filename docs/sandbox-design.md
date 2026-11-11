@@ -7,7 +7,10 @@ compatibility, UIKit, graphics and input remain separate
 
 The first [two-host execution baseline](../evidence/sandbox/RESULTS.md) completed
 124 fresh VM jobs with verified results and teardown. It measures current
-CPU/runtime fixtures; application performance and density remain unproved.
+CPU/runtime fixtures. The [concurrency follow-up](../evidence/density/RESULTS.md)
+completed six 150-guest CPU bursts on one 8-vCPU/16-GiB host with explicit CPU
+placement, after retaining higher-load nested-KVM failures without pinning.
+Application performance and application density remain unproved.
 
 ## The current experiment
 
@@ -27,8 +30,10 @@ namespaces, default seccomp, zero effective capabilities and no-new-privileges. 
 a separate cgroup CPU quota, memory cap and PID limit. The guest workload drops
 to UID/GID 1000 with no-new-privileges. The configuration includes no network or
 block device, MMDS, vsock, host filesystem share or remote renderer. An isolated
-network namespace is shared across sequential samples; this does not establish
-concurrent per-tenant network isolation. Jailer settings are not an escape audit.
+network namespace is shared across sequential samples. The gated concurrency
+experiment instead gives each guest a distinct empty network namespace and
+verifies the recorded namespace identities. Neither test exercises guest
+network traffic or establishes an escape audit.
 [Jailer contract](https://github.com/firecracker-microvm/firecracker/blob/v1.18.0/docs/jailer.md).
 
 The outer AWS controller creates one tagged host, no instance role, IMDSv2,
@@ -45,6 +50,15 @@ reference, not equivalent isolation. Record launch through verified output and
 VMM exit, readiness observation, sampled VMM PSS, cgroup memory/events/CPU use
 and host available memory. Setup/download/build time is outside each sample but
 inside the outer run duration. Keep failed attempts and partial journals.
+
+The concurrency experiment gates all guests on serial input, observes three
+seconds of simultaneous readiness, then releases repeated checked CPU work.
+Round-robin host CPU affinity passed six 150-guest bursts; unpinned experiments
+failed at 96/150 guests with KVM VM-entry errors. Different hosts were used, so
+a same-host placement control remains necessary. The 64/128 MiB comparison
+saved less than 1% of measured aggregate charge at 150 guests. Memory labels
+are not physical working-set measurements or admission guarantees. The
+8.1-GiB parent cgroup result excludes parts of the host and the future renderer.
 
 These are trusted CPU/runtime jobs. After UIKit correctness, compare complete
 app workflows across suitable isolation backends at concurrency 1/2/4/8 and

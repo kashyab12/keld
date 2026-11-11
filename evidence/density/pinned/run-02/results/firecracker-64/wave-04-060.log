@@ -1,0 +1,98 @@
+2026-11-11T00:13:10.642637362 [density-4-60:main] Running Firecracker v1.18.0
+2026-11-11T00:13:10.764040728 [density-4-60:main] Artificially kick devices
+2026-11-11T00:13:10.764185882 [density-4-60:fc_vcpu 0] Received a VcpuEvent::Resume message with immediate_exit enabled. immediate_exit was disabled before proceeding
+2026-11-11T00:13:10.764196991 [density-4-60:main] Successfully started microvm that was configured from one single json
+2026-11-11T00:13:11.073327982 [density-4-60:fc_vcpu 0] vcpu: IO write @ 0xcf8:0x4 failed: Failed to find address range.
+2026-11-11T00:13:11.073389915 [density-4-60:fc_vcpu 0] vcpu: IO read @ 0xcfc:0x2 failed: Failed to find address range.
+2026-11-11T00:13:12.746021892 [density-4-60:fc_vcpu 0] vcpu: IO read @ 0x87:0x1 failed: Failed to find address range.
+SABLE_VM_READY
+RUN
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=251 syscalls=8 exit=0 x9=0
+instructions=3600029 syscalls=2 exit=0 x9=200000
+SABLE_WORK_OK
+SABLE_REPETITIONS_OK
+SABLE_VM_IDLE
+EXIT
+SABLE_VM_OK
+[   24.203771] reboot: Restarting system
+2026-11-11T00:13:36.476943660 [density-4-60:main] Vmm is stopping.
+2026-11-11T00:13:36.476963103 [density-4-60:main] Killing vCPU threads
+2026-11-11T00:13:36.476980124 [density-4-60:fc_vcpu 0] Requested a vCPU run with immediate_exit enabled. The operation was skipped
+2026-11-11T00:13:36.581237742 [density-4-60:main] Firecracker exiting successfully. exit_code=0

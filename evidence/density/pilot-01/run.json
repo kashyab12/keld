@@ -1,0 +1,13 @@
+{
+  "region": "us-east-1",
+  "instance_type": "c8i.2xlarge",
+  "cpu_options": {
+    "CoreCount": 4,
+    "ThreadsPerCore": 2,
+    "NestedVirtualization": "enabled"
+  },
+  "image_name": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20261108",
+  "started_at": "2026-11-10T23:58:05.647897+00:00",
+  "remote_elapsed_seconds": 29.916622332762927,
+  "remote_exit": 0
+}

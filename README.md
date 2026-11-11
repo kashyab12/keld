@@ -35,6 +35,8 @@ to build Sable or run these probes. See [fixture provenance](modules/sable/fixtu
 - [Milestones and benchmark gates](docs/roadmap.md)
 - [Real app interaction and GPU benchmark gates](docs/app-benchmarks.md)
 - [Sandbox containment and efficiency design](docs/sandbox-design.md)
+- [150 concurrent CPU microVMs, resource measurements and failed attempts](evidence/density/RESULTS.md)
+- [Recorded native app reference, explicitly separate from Sable](evidence/recordings/README.md)
 - [First native app tests and AWS graphics observations](evidence/app-readiness/RESULTS.md)
 - [Reproduce the AWS Linux check](docs/aws.md)
 - [Observed Linux and native Apple execution](evidence/README.md)

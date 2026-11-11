@@ -1,0 +1,12 @@
+{
+  "scope": "trusted CPU jobs, serial-gated resident guests, not iPhone apps",
+  "all_correct": true,
+  "concurrency_levels": [
+    1,
+    4
+  ],
+  "guest_mib": 128,
+  "max_verified_concurrency": 4,
+  "app_workflows": 0,
+  "competitive_speedup_claim": false
+}

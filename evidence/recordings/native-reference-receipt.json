@@ -1,0 +1,55 @@
+{
+  "started_at": "2026-11-10T23:55:48.970255+00:00",
+  "kind": "native_apple_app_oracle",
+  "source_sha256": {
+    "InteractionTests.swift": "453199f4bf91028885e1c9e544821b64726ec3139e2c539237891f9a7ebfb74f",
+    "README.md": "307dbe356b6add59e3c90f642773072fadbb458169c47568b80c0bff3201f86a",
+    "main.m": "b2c341a8d2df3a150d809464671a32e699c5945b9459a863233956442c9c99cf"
+  },
+  "driver_sha256": "5d7adaa5827bc180e02ff8006316a62a7437d57371e8486ca1f61d769073bfd8",
+  "native_oracle_passed": true,
+  "sable_app_support_proven": false,
+  "simulator_window_requested": false,
+  "gpu_mode": "native host graphics; not a no-GPU test",
+  "devices_created": [
+    "05087367-A504-4026-8E21-3B9C976F836C"
+  ],
+  "xcode": "Xcode 27.2\nBuild version 27B52",
+  "host_arch": "arm64",
+  "build_exit": 0,
+  "executable_sha256": "8f51c4110a7789ee9339db270ab181608c5b28a48b9ae9a42dba5bbd39a23216",
+  "arm64_executable_sha256": "4088686070bc0a5dbb2b647732e2304a732d2e763cde411a52ec548099206393",
+  "sable_probe": {
+    "exit": 125,
+    "stderr": "sable: required dylib not supplied: /System/Library/Frameworks/UIKit.framework/UIKit\n",
+    "stdout_hex": "",
+    "binary_sha256": "3343295c7a78f6e2014782a22fb05ca155d480b532b84118bd5c0be80d024307",
+    "completed_interactions": 0,
+    "app_workflow_status": "unsupported",
+    "scope": "actual app executable attempted; no UI driver in Sable"
+  },
+  "runtime": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+    "version": "27.2",
+    "buildversion": "24B8117"
+  },
+  "test_exit": 0,
+  "tests": {
+    "passedTests": 3,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 3,
+    "finishTime": 1794355110.561,
+    "startTime": 1794354994.57
+  },
+  "recording": {
+    "kind": "native_apple_reference_not_sable",
+    "exit": 0,
+    "bytes": 34576770,
+    "sha256": "0ce111d7540635debd079a9810f54929d23e3809d04a273ae2f838a88c5fb26c"
+  },
+  "cleanup": {
+    "delete_exit": 0,
+    "owned_device_remaining": false
+  }
+}

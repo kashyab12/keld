@@ -71,8 +71,10 @@ Artifacts include [final inputs](run-05/results/firecracker/inputs.json),
 [all final VM/control logs](run-05/results/firecracker),
 [Run 04 exact driver source](run-04/driver-source.txt), and
 [Run 05 exact driver source](run-05/driver-source.txt). Archived driver hashes
-match the input receipts. The [current harness](../../scripts/firecracker-bench.py)
-is the final tested driver. The initial RAM filesystem includes third-party
+match the input receipts. Run 05 archives the exact driver used for those
+measurements. The [current harness](../../scripts/firecracker-bench.py) also
+contains subsequent supervisor fixes and a separate concurrency experiment;
+its newer behavior must be assessed using its own receipts. The initial RAM filesystem includes third-party
 Linux/BusyBox components locally; binaries are not published in this repository.
 
 ## Failed attempts are retained

@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-10T23:59:24.692976+00:00",
+  "host": {
+    "os": "Linux",
+    "kernel": "7.0.0-1014-aws",
+    "arch": "x86_64"
+  },
+  "pci_inventory_available": true,
+  "pci_graphics": [
+    {
+      "pci_address": "0000:00:03.0",
+      "pci_class": "0x030000",
+      "vendor": "0x1d0f",
+      "device": "0x1111",
+      "driver": null
+    }
+  ],
+  "pci_errors": [],
+  "exposed_gpu_nodes": [],
+  "graphics_commands": {
+    "vulkaninfo": {
+      "status": "not_installed"
+    },
+    "nvidia-smi": {
+      "status": "not_installed"
+    }
+  },
+  "software_renderer_overrides": {},
+  "display_environment_present": {
+    "DISPLAY": false,
+    "WAYLAND_DISPLAY": false
+  },
+  "interpretation": "Exposure inventory only. Headless does not mean GPU-free. A software Vulkan device is not a hardware GPU. App rendering is a separate correctness gate."
+}

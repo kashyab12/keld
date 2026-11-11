@@ -47,4 +47,6 @@ jobs:
         run: |
           python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py scripts/firecracker-bench.py
           bash -n scripts/firecracker-workload.sh
+          python3 scripts/check-firecracker-supervisor.py
+          python3 scripts/density-report.py
           python3 scripts/graphics-inventory.py --output artifacts/graphics-inventory.json

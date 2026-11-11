@@ -72,8 +72,8 @@ def cleanup(path):
     return receipt
 
 
-def run(output=None, extended=False, dynamic=False, firecracker=False):
-    instance_type = "c8i.large" if firecracker else "c7i.large"
+def run(output=None, extended=False, dynamic=False, firecracker=False, concurrency=None, guest_mib=128, memory_sweep=False, work_repetitions=1, pin_cpus=False):
+    instance_type = "c8i.2xlarge" if concurrency else ("c8i.large" if firecracker else "c7i.large")
     token = str(uuid.uuid4())
     name = "keld-sable-" + token[:12]
     base = Path(os.environ.get("MAKO_THREAD_DATA_DIR", str(Path.home() / ".cache/keld-sable")))
@@ -118,7 +118,7 @@ touch /tmp/sable-ready
 """
         if firecracker:
             bootstrap = bootstrap.replace("qemu-user time", "qemu-user time musl-tools busybox-static cpio iproute2")
-            bootstrap = bootstrap.replace("touch /tmp/sable-ready", "sudo -iu ubuntu /home/ubuntu/.cargo/bin/rustup target add x86_64-unknown-linux-musl\nmodprobe kvm_intel\ntouch /tmp/sable-ready")
+            bootstrap = bootstrap.replace("touch /tmp/sable-ready", "sudo -iu ubuntu /home/ubuntu/.cargo/bin/rustup target add x86_64-unknown-linux-musl\nmodprobe kvm_intel\nif [ -f /sys/module/kvm_intel/parameters/dump_invalid_vmcs ]; then echo 1 > /sys/module/kvm_intel/parameters/dump_invalid_vmcs; fi\ntouch /tmp/sable-ready")
         user_data.write_text(bootstrap)
         tags = json.dumps([{"ResourceType": kind, "Tags": [{"Key": "Name", "Value": name}, {"Key": "KeldRun", "Value": token}]} for kind in ["instance", "volume"]])
         cpu_options = ["--cpu-options", "NestedVirtualization=enabled"] if firecracker else []
@@ -131,7 +131,16 @@ touch /tmp/sable-ready
         while True:
             if time.monotonic() > deadline:
                 raise TimeoutError("host bootstrap exceeded 12 minutes")
-            current = aws("ec2", "describe-instances", "--instance-ids", state["instance"])["Reservations"][0]["Instances"][0]
+            # Retry only this idempotent read within the bootstrap deadline.
+            # Never repeat RunInstances after an uncertain response.
+            try:
+                current = aws("ec2", "describe-instances", "--instance-ids", state["instance"])["Reservations"][0]["Instances"][0]
+            except subprocess.CalledProcessError as error:
+                with (evidence / "bootstrap-read-errors.jsonl").open('a') as log:
+                    log.write(json.dumps({'operation':'DescribeInstances','exit':error.returncode,
+                                          'stderr':error.stderr.decode(errors='replace')})+'\n')
+                time.sleep(5)
+                continue
             address = current.get("PublicIpAddress")
             if address:
                 ready = subprocess.run(ssh_base + ["ubuntu@" + address, "test -f /tmp/sable-ready"], capture_output=True)
@@ -218,6 +227,15 @@ cargo test --release
 cargo build --release --target x86_64-unknown-linux-musl
 sudo python3 scripts/firecracker-bench.py --output results/firecracker --blocks 31
 """
+            if concurrency:
+                levels = ' '.join(str(n) for n in concurrency)
+                remote = remote.replace('--blocks 31', '--concurrency '+levels+' --guest-mib '+str(guest_mib))
+                remote = remote.replace('--guest-mib '+str(guest_mib), '--guest-mib '+str(guest_mib)+' --work-repetitions '+str(work_repetitions))
+                if pin_cpus:remote=remote.replace('--work-repetitions '+str(work_repetitions),'--work-repetitions '+str(work_repetitions)+' --pin-cpus')
+                if memory_sweep:
+                    original=remote.splitlines()[-1]
+                    remote=remote.replace(original,original.replace('results/firecracker','results/firecracker-128').replace('--guest-mib '+str(guest_mib),'--guest-mib 128')+'\n'+
+                                          original.replace('results/firecracker','results/firecracker-64').replace('--guest-mib '+str(guest_mib),'--guest-mib 64'))
         started = time.monotonic()
         result = subprocess.run(ssh + ["bash -s"], input=remote.encode(), capture_output=True, timeout=720)
         (evidence / "stdout.txt").write_bytes(result.stdout)
@@ -251,10 +269,20 @@ if __name__ == "__main__":
     parser.add_argument("--extended", action="store_true")
     parser.add_argument("--dynamic", action="store_true")
     parser.add_argument("--firecracker", action="store_true", help="owned C8i nested-KVM Firecracker experiment")
+    parser.add_argument("--concurrency", type=int, nargs='+', help="Separate gated density experiment on one owned 8-vCPU/16-GiB host")
+    parser.add_argument("--guest-mib", type=int, choices=[64,128,256], default=128)
+    parser.add_argument("--memory-sweep", action='store_true', help="Compare 128 then 64 MiB guests on the same owned density host")
+    parser.add_argument("--work-repetitions", type=int, default=1)
+    parser.add_argument("--pin-cpus", action='store_true')
     options = parser.parse_args()
     if options.operation == "run":
+        if options.concurrency and (not options.firecracker or any(n<1 or n>150 for n in options.concurrency)):
+            parser.error('--concurrency requires --firecracker and levels 1..150')
+        if (options.memory_sweep or options.work_repetitions!=1 or options.pin_cpus) and not options.concurrency:
+            parser.error('memory sweep and repeated work require --concurrency')
+        if not 1<=options.work_repetitions<=100:parser.error('work repetitions must be 1..100')
         if options.firecracker and (options.extended or options.dynamic): parser.error("--firecracker is a separate experiment")
-        run(options.output, options.extended or options.dynamic, options.dynamic, options.firecracker)
+        run(options.output, options.extended or options.dynamic, options.dynamic, options.firecracker, options.concurrency, options.guest_mib, options.memory_sweep, options.work_repetitions, options.pin_cpus)
     elif options.state:
         cleanup(options.state)
     else:

@@ -1,0 +1,11 @@
+{
+  "error": "guest exited before release: density-5-29",
+  "concurrency": 96,
+  "metrics": {
+    "min_host_available_bytes": 11527225344,
+    "peak_parent_current_bytes": 4135616512,
+    "peak_sampled_aggregate_vmm_pss_kib": 4191336,
+    "max_simultaneously_ready": 6,
+    "max_simultaneously_work_complete": 0
+  }
+}

@@ -1,0 +1,13 @@
+2026-11-11T00:06:09.677818078 [density-3-34:main] Running Firecracker v1.18.0
+2026-11-11T00:06:09.784824391 [density-3-34:main] Artificially kick devices
+2026-11-11T00:06:09.784900864 [density-3-34:fc_vcpu 0] Received a VcpuEvent::Resume message with immediate_exit enabled. immediate_exit was disabled before proceeding
+2026-11-11T00:06:09.784936799 [density-3-34:main] Successfully started microvm that was configured from one single json
+2026-11-11T00:06:09.978378269 [density-3-34:fc_vcpu 0] vcpu: IO write @ 0xcf8:0x4 failed: Failed to find address range.
+2026-11-11T00:06:09.978432900 [density-3-34:fc_vcpu 0] vcpu: IO read @ 0xcfc:0x2 failed: Failed to find address range.
+2026-11-11T00:06:11.079538719 [density-3-34:fc_vcpu 0] vcpu: IO read @ 0x87:0x1 failed: Failed to find address range.
+2026-11-11T00:06:13.693189806 [density-3-34:fc_vcpu 0] Received KVM_EXIT_FAIL_ENTRY signal: 7 on cpu 5
+2026-11-11T00:06:13.733716231 [density-3-34:main] Vmm is stopping.
+2026-11-11T00:06:13.733740749 [density-3-34:main] Killing vCPU threads
+2026-11-11T00:06:13.857981094 [density-3-34:main] RunWithoutApiError error: MicroVMStopped without an error: GenericError
+Error: RunWithoutApiError(Shutdown(GenericError))
+2026-11-11T00:06:13.858014544 [density-3-34:main] Firecracker exiting with error. exit_code=1

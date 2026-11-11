@@ -1,0 +1,149 @@
+{
+  "wave": 1,
+  "requested_concurrency": 4,
+  "all_correct": true,
+  "guest_mib": 128,
+  "metrics": {
+    "min_host_available_bytes": 15456178176,
+    "peak_parent_current_bytes": 234070016,
+    "peak_sampled_aggregate_vmm_pss_kib": 232240,
+    "max_simultaneously_ready": 4,
+    "max_simultaneously_work_complete": 4,
+    "ready_parent_current_bytes": 233963520,
+    "ready_aggregate_vmm_pss_kib": 232032,
+    "all_ready_seconds": 0.311451059,
+    "idle_cpu_before": "usage_usec 1361797\nuser_usec 1179874\nsystem_usec 181922\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "idle_cpu_after": "usage_usec 1372348\nuser_usec 1189290\nsystem_usec 183058\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "ready_hold_seconds": 3.019844274999997,
+    "all_work_correct_seconds": 0.025266809,
+    "work_cpu_after": "usage_usec 1435616\nuser_usec 1244531\nsystem_usec 191085\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "host_cpu_before": "cpu  12327 98 1227 48872 2942 0 11 48 24 0",
+    "host_cpu_after": "cpu  12439 98 1269 52244 2959 0 11 48 123 0",
+    "parent_memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n",
+    "parent_cpu_stat": "usage_usec 1494525\nuser_usec 1275152\nsystem_usec 219372\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1\n"
+  },
+  "jobs": [
+    {
+      "id": "density-1-0",
+      "uid": 20200,
+      "status": {
+        "Uid": "20200\t20200\t20200\t20200",
+        "Gid": "20200\t20200\t20200\t20200",
+        "CapEff": "0000000000000000",
+        "NoNewPrivs": "1",
+        "Seccomp": "2",
+        "NSpid": "4371\t1",
+        "VmRSS": "29064 kB",
+        "Threads": "1",
+        "State": "R (running)",
+        "namespaces": {
+          "pid": "pid:[4026533026]",
+          "mnt": "mnt:[4026533025]",
+          "net": "net:[4026532793]"
+        },
+        "pss_kib": 2772
+      },
+      "cgroup": {
+        "memory.peak": "57876480",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+        "cpu.stat": "usage_usec 299366\nuser_usec 256451\nsystem_usec 42915\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 12\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+        "cpu.max": "100000 100000",
+        "pids.events": "max 0"
+      },
+      "ready_from_wave_seconds": 0.284126939,
+      "work_after_gate_seconds": 0.025266809
+    },
+    {
+      "id": "density-1-1",
+      "uid": 20201,
+      "status": {
+        "Uid": "20201\t20201\t20201\t20201",
+        "Gid": "20201\t20201\t20201\t20201",
+        "CapEff": "0000000000000000",
+        "NoNewPrivs": "1",
+        "Seccomp": "2",
+        "NSpid": "4374\t1",
+        "VmRSS": "58156 kB",
+        "Threads": "1",
+        "State": "D (disk sleep)",
+        "namespaces": {
+          "pid": "pid:[4026532736]",
+          "mnt": "mnt:[4026533027]",
+          "net": "net:[4026532851]"
+        },
+        "pss_kib": 58148
+      },
+      "cgroup": {
+        "memory.peak": "58519552",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+        "cpu.stat": "usage_usec 296136\nuser_usec 252672\nsystem_usec 43464\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 12\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+        "cpu.max": "100000 100000",
+        "pids.events": "max 0"
+      },
+      "ready_from_wave_seconds": 0.311451059,
+      "work_after_gate_seconds": 0.025266809
+    },
+    {
+      "id": "density-1-2",
+      "uid": 20202,
+      "status": {
+        "Uid": "20202\t20202\t20202\t20202",
+        "Gid": "20202\t20202\t20202\t20202",
+        "CapEff": "0000000000000000",
+        "NoNewPrivs": "1",
+        "Seccomp": "2",
+        "NSpid": "4375\t1",
+        "VmRSS": "58100 kB",
+        "Threads": "1",
+        "State": "D (disk sleep)",
+        "namespaces": {
+          "pid": "pid:[4026532738]",
+          "mnt": "mnt:[4026533028]",
+          "net": "net:[4026532909]"
+        },
+        "pss_kib": 58092
+      },
+      "cgroup": {
+        "memory.peak": "58408960",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+        "cpu.stat": "usage_usec 295930\nuser_usec 256882\nsystem_usec 39048\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 11\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+        "cpu.max": "100000 100000",
+        "pids.events": "max 0"
+      },
+      "ready_from_wave_seconds": 0.284126939,
+      "work_after_gate_seconds": 0.025266809
+    },
+    {
+      "id": "density-1-3",
+      "uid": 20203,
+      "status": {
+        "Uid": "20203\t20203\t20203\t20203",
+        "Gid": "20203\t20203\t20203\t20203",
+        "CapEff": "0000000000000000",
+        "NoNewPrivs": "1",
+        "Seccomp": "2",
+        "NSpid": "4373\t1",
+        "VmRSS": "58088 kB",
+        "Threads": "1",
+        "State": "D (disk sleep)",
+        "namespaces": {
+          "pid": "pid:[4026532735]",
+          "mnt": "mnt:[4026533029]",
+          "net": "net:[4026532967]"
+        },
+        "pss_kib": 58080
+      },
+      "cgroup": {
+        "memory.peak": "58671104",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+        "cpu.stat": "usage_usec 300208\nuser_usec 254411\nsystem_usec 45797\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 14\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+        "cpu.max": "100000 100000",
+        "pids.events": "max 0"
+      },
+      "ready_from_wave_seconds": 0.311451059,
+      "work_after_gate_seconds": 0.025266809
+    }
+  ],
+  "full_wave_seconds": 4.443376018
+}

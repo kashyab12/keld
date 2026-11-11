@@ -1,0 +1,25 @@
+{
+  "kind": "native_apple_reference_not_sable",
+  "source_video_sha256": "0ce111d7540635debd079a9810f54929d23e3809d04a273ae2f838a88c5fb26c",
+  "source_duration_seconds": 124.495,
+  "excerpt_start_seconds": 50,
+  "excerpt_requested_duration_seconds": 74.495,
+  "playback_speed": 1,
+  "transformation": "Trim, 480-pixel width, 24fps H.264 CRF26; black caption bar states Native Apple reference - NOT Sable on Linux. No synthetic app frames.",
+  "sha256": "7e7a7d85cccfd1a3d905254e54753d08850407c1158dd29267adca6eb7a049cd",
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 480,
+        "height": 1084
+      }
+    ],
+    "format": {
+      "duration": "73.333333",
+      "size": "856231"
+    }
+  }
+}

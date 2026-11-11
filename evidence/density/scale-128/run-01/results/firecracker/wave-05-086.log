@@ -1,0 +1,10 @@
+2026-11-11T00:03:16.217678174 [density-5-86:main] Running Firecracker v1.18.0
+2026-11-11T00:03:16.558389608 [density-5-86:main] Artificially kick devices
+2026-11-11T00:03:16.558431890 [density-5-86:fc_vcpu 0] Received a VcpuEvent::Resume message with immediate_exit enabled. immediate_exit was disabled before proceeding
+2026-11-11T00:03:16.558441500 [density-5-86:main] Successfully started microvm that was configured from one single json
+2026-11-11T00:03:16.860924644 [density-5-86:fc_vcpu 0] Received KVM_EXIT_FAIL_ENTRY signal: 7 on cpu 5
+2026-11-11T00:03:16.860986828 [density-5-86:main] Vmm is stopping.
+2026-11-11T00:03:16.861016379 [density-5-86:main] Killing vCPU threads
+2026-11-11T00:03:16.876133611 [density-5-86:main] RunWithoutApiError error: MicroVMStopped without an error: GenericError
+Error: RunWithoutApiError(Shutdown(GenericError))
+2026-11-11T00:03:16.876164000 [density-5-86:main] Firecracker exiting with error. exit_code=1
