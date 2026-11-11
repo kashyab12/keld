@@ -169,6 +169,11 @@ cargo clippy --all-targets -- -D warnings
 cargo test --release
 bash scripts/check-initializers.sh
 bash scripts/check-tls.sh
+bash scripts/check-objc.sh
+for mode in chained legacy; do
+  mkdir -p "results/objc/$mode"
+  cp artifacts/objc/"$mode"/interp-*.txt artifacts/objc/"$mode"/jit-*.txt artifacts/objc/"$mode"/*-unknown.stderr "results/objc/$mode/"
+done
 for mode in chained legacy; do
   mkdir -p "results/tls/$mode"
   cp artifacts/tls/"$mode"/interp-*.txt artifacts/tls/"$mode"/jit-*.txt "results/tls/$mode/"

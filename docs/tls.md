@@ -3,7 +3,8 @@
 Sable supports a bounded plain C Mach-O TLV contract in explicitly linked
 original images. The same original console fixtures run on Apple's iOS
 Simulator and in Sable; [receipts and limits](../evidence/tls/RESULTS.md) identify
-each path. This does not supply Foundation, Objective-C, UIKit or graphics.
+each path. TLS does not supply Foundation, UIKit or graphics. A separate bounded
+[scalar Objective-C2 implementation](objc.md) now handles original root classes.
 
 ## Metadata and linking
 

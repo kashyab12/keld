@@ -1,0 +1,113 @@
+# Static scalar Objective-C2
+
+Sable registers a bounded original Objective-C root-class profile and dispatches
+messages to the compiled ARM64 method bodies. This is an original MIT
+implementation, with an explicit original libobjc fixture. It supplies no Apple
+runtime, Foundation, UIKit, allocator or UI. [Execution receipts](../evidence/objc/RESULTS.md)
+separate Sable on Linux from the native Apple reference.
+
+## Registration and ownership
+
+After eager legacy/chained fixups, the linker checks ObjC metadata in each
+explicitly loaded image, canonicalizes selectors and publishes an immutable
+lookup plan before C constructors execute. Each ObjC image must declare the
+explicit `/usr/lib/libobjc.A.dylib` dependency. Missing imports remain errors.
+The original library exports `objc_getClass`, `objc_msgSend` and a zero data word
+named `_objc_empty_cache`; no Apple cache algorithm is implemented.
+
+The initial profile accepts imageinfo version 0/flags 0x40, 40-byte root class
+and metaclass records, 72-byte class RO records, and 24-byte absolute method
+entries. A root class has no superclass; its metaclass points to itself and has
+the ordinary class as superclass. Names must agree, cache/vtable fields must
+match the supplied profile, and methods must name aligned code in their owning
+image. Instances have one raw eight-byte isa word. An optional single explicit
+isa ivar must have offset 0, type `#`, alignment 8 and size 8.
+
+Supported method signatures return unsigned 64-bit scalars with zero through
+six unsigned 64-bit arguments. Encodings must exactly match the selector's
+colon count and argument positions. Classrefs name registered ordinary classes.
+Selectors are interned by byte name into deterministic guest SEL addresses;
+method name pointers and selref slots are patched together, including duplicate
+selectors across images. Names/encodings use bounded printable ASCII strings. Ranges, alignment, file
+correspondence and arithmetic are checked. Limits are 64 root classes, 1,024 selectors/methods,
+128 methods per list, 255-byte strings and 256 KiB aggregate registered metadata
+(including the participating images' C-string sections). Plain C images
+without ObjC metadata retain the existing image limit; the ObjC cap is not
+applied to their string sections.
+
+The compiler profile pins `-fno-objc-arc`, `-fno-objc-exceptions`,
+`-fno-objc-relative-method-lists` and linker `-no_objc_relative_method_lists`.
+The build probes the frontend switch: older Clang emits absolute records by
+default and lacks that option. Final metadata is checked rather than trusting
+flags or a presumed default. The linker switch is always required. LLVM LLD places class
+names/type encodings in `__cstring`; the loader retains that original owning
+section as well as dedicated ObjC string sections. Selector stubs are ordinary
+immutable checked guest code. Unsupported ObjC sections reject explicitly.
+
+## Message boundary
+
+`objc_getClass` uses private `svc #0x5ab2; ret`, bounds the guest name string and
+returns a registered guest class address, or zero for an absent valid name.
+The supplied messenger is:
+
+```asm
+objc_msgSend:
+    cbz x0, nil
+    svc #0x5ab3
+    br x16
+nil:
+    mov x0, #0
+    ret
+```
+
+The lookup trap is accepted only at the registered runtime instruction. It
+checks a canonical selector and either a registered class receiver or an
+aligned readable object whose raw isa names a registered class. A class message
+uses the metaclass method table. The trap returns the checked guest IMP in x16;
+self, _cmd, arguments, LR, SP, x18 and modeled flags survive the lookup. The
+guest tail branch leaves LR intact, so the actual IMP returns to the original
+caller. Nested messages use ordinary guest frames and links. No host pointer,
+host method, synthetic successful result or CPU reset substitutes for the IMP.
+Nil returns zero for this scalar profile. Unknown nonnil messages fail.
+
+Metadata snapshots and the empty-cache word are compared at each class/IMP
+lookup trap;
+mutation fails rather than using a stale method plan. This is deliberately
+bounded, uncached validation, not a tuned production messenger. The interpreter
+and both Linux x86 JIT indirect-dispatch modes share this boundary. Traps,
+branches and IMP instructions all consume the same run budget; private runtime
+traps do not count as Darwin syscalls. Writable object state is private per run.
+Conditional select instructions CSEL/CSINC/CSINV/CSNEG use the checked scalar
+instruction fallback in the JIT and have independent full-state Unicorn checks.
+
+## Reproduction and limits
+
+```sh
+bash scripts/check-objc.sh
+cargo test --release --test objc
+# Local native Apple reference; requires installed Xcode/iOS runtime:
+python3 scripts/apple-oracle.py --objc --output artifacts/objc-native.json
+```
+
+The two original classes exercise real instance/class method bodies, nested
+calls, cross-image selector equality, constructor-time access, nil and unknown
+class lookup, unknown-selector rejection, repeated prepared runs and an
+assembly caller/IMP checking ordered x2–x7 arguments, x8, self, _cmd, x18,
+frame pointer, SP and the actual return link. x16/x17 are scratch; x9–x15 are
+caller-clobbered and are not a native ABI promise. Registration tests reject
+malformed class graphs, RO layouts, ivars, strings, method encodings, relative
+lists, foreign IMPs, unsupported sections and missing dependencies. Runtime
+tests cover metadata mutation, foreign traps, bad receivers/selectors and every
+instruction-budget edge in a lookup/tail-call/return sequence.
+
+Inheritance/super, categories/protocols, +load/+initialize, ARC/retain-release,
+allocation, forwarding, dynamic class changes, caches, tagged/nonpointer isa,
+relative/signed method lists, PAC, exceptions, vector/FP/aggregate returns,
+pthreads and destructors remain unsupported. These console checks do not prove
+Foundation/UIKit startup, GPU-free app interactions or any competitor advantage.
+
+Format and behavior references: Apple's pinned
+[ObjC2 records](https://github.com/apple-oss-distributions/objc4/blob/fb265098298302243cd7eeaa1f63f0ba7786dd9a/runtime/objc-runtime-new.h)
+and [ARM64 messenger](https://github.com/apple-oss-distributions/objc4/blob/fb265098298302243cd7eeaa1f63f0ba7786dd9a/runtime/Messengers.subproj/objc-msg-arm64.s),
+and LLVM 21.1's [conditional-select encoding](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.0/llvm/lib/Target/AArch64/AArch64InstrFormats.td).
+Only published format/ABI facts were used; implementation and fixtures are original.

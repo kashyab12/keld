@@ -1,0 +1,9 @@
+{
+  "scope": "One local ARM64 Mac serialization comparison, mutable first; no Sable execution speed claim",
+  "cases": 7935,
+  "bytes": 39055736,
+  "identical": true,
+  "input_sha256": "679aff26069956f358f3d1c1f9ffe7093cb4e460ed84ef6718f95f9b5931a3cc",
+  "immutable_seconds": 12.749168416019529,
+  "mutable_seconds": 0.03227920923382044
+}

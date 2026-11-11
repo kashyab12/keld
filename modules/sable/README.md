@@ -37,8 +37,10 @@ compare all general registers, SP, PC, flags, instruction counts and tested memo
 
 This is **not a complete iOS Simulator**. The restricted eager linker does not
 execute Apple's dyld or implement shared caches,
-TLS, weak/re-export lookup or general dynamic-loader APIs. There is no
-Objective-C runtime, Foundation, UIKit, Swift runtime, Mach message transport,
+general/dynamic TLS, weak/re-export lookup or general dynamic-loader APIs.
+Bounded [plain-C TLS](../../docs/tls.md) and an original
+[static scalar Objective-C2 runtime](../../docs/objc.md) now execute the documented
+console profiles. There is no Foundation, UIKit, Swift runtime, Mach message transport,
 thread scheduler, atomics, NEON, PAC, graphics or app-bundle support. Ordinary
 compiler-generated programs will encounter unsupported instructions. ARM64e is
 rejected. Run only the trusted research fixtures; Sable has not been audited as a

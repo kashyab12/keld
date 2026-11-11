@@ -105,6 +105,7 @@ fn synthetic(prefix: &[u32], descriptor: u64, foreign_trap: bool) -> Image {
         extra_text: vec![],
         platform: 7,
         startup: None,
+        objc: None,
         tls: vec![Block {
             source: 0x2018,
             template: 17u64.to_le_bytes().to_vec().into(),

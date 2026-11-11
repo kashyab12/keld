@@ -1,0 +1,29 @@
+{
+  "host": "ARM64 macOS; Sable interpreter",
+  "runs": [
+    {
+      "mode": "chained",
+      "variant": 0,
+      "stdout": "ObjC root class, scalar instance/class dispatch, nil and selectors OK\n",
+      "exit": 0
+    },
+    {
+      "mode": "chained",
+      "variant": 1,
+      "stdout": "ObjC root class, scalar instance/class dispatch, nil and selectors OK\n",
+      "exit": 0
+    },
+    {
+      "mode": "legacy",
+      "variant": 0,
+      "stdout": "ObjC root class, scalar instance/class dispatch, nil and selectors OK\n",
+      "exit": 0
+    },
+    {
+      "mode": "legacy",
+      "variant": 1,
+      "stdout": "ObjC root class, scalar instance/class dispatch, nil and selectors OK\n",
+      "exit": 0
+    }
+  ]
+}

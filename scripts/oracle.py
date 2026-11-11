@@ -73,6 +73,15 @@ def corpus(seed, count):
                         rhs=rng.choice([0,1,15,31]);src=rng.choice([0,1,31])
                         case([0x3a400000|wide<<31|subtract<<30|rhs<<16|condition<<12|immediate<<11|src<<5|rng.randrange(16)],"conditional_compare_flags")
                         cases[-1]["nzcv"]=flags<<28
+    # CSEL/CSINC/CSINV/CSNEG, both widths, all conditions/flags, ZR and aliases.
+    for wide in [0,1]:
+        for invert in [0,1]:
+            for increment in [0,1]:
+                for flags in range(16):
+                    for condition in range(16):
+                        dst=rng.choice([0,1,31]);src=rng.choice([0,1,31]);rhs=rng.choice([0,1,31])
+                        case([0x1a800000|wide<<31|invert<<30|rhs<<16|condition<<12|increment<<10|src<<5|dst],"conditional_select_zr_aliases")
+                        cases[-1]["nzcv"]=flags<<28
     # Memory widths, offsets, unaligned data access, signed offsets and writeback.
     for size in range(4):
         for mode in range(4):
@@ -130,10 +139,12 @@ def oracle(case):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--binary',default='target/release/examples/oracle_batch');p.add_argument('--engine',choices=['interp','jit'],default='interp');p.add_argument('--cases',type=int,default=2000);p.add_argument('--seed',type=int,default=12648430);p.add_argument('--output',type=Path,default=Path('artifacts/oracle-summary.json'));o=p.parse_args()
+    input_started=time.monotonic()
     cases=corpus(o.seed,o.cases)
-    payload=b'SABLE001'+struct.pack('<I',len(cases))
+    payload=bytearray(b'SABLE001'+struct.pack('<I',len(cases)))
     for c in cases:
-        payload+=struct.pack('<I33Q',len(c['words']),*c['x'],c['sp'],c['nzcv'])+struct.pack('<'+'I'*len(c['words']),*c['words'])+c['data']+c['stack']
+        payload.extend(struct.pack('<I33Q',len(c['words']),*c['x'],c['sp'],c['nzcv'])+struct.pack('<'+'I'*len(c['words']),*c['words'])+c['data']+c['stack'])
+    input_elapsed=time.monotonic()-input_started
     start=time.monotonic();result=subprocess.run([o.binary,o.engine],input=payload,capture_output=True,timeout=180)
     o.output.parent.mkdir(parents=True,exist_ok=True)
     if result.returncode:
@@ -148,7 +159,7 @@ def main():
             o.output.with_suffix('.failure.json').write_text(json.dumps(failure,indent=2)+'\n')
             raise AssertionError(f"case {i}, {c['kind']}: differing fields {[k for k in expected if expected[k]!=received[k]]}")
         kinds[c['kind']]=kinds.get(c['kind'],0)+1
-    summary=dict(oracle='Unicorn',version=unicorn.__version__,engine=o.engine,seed=o.seed,cases=len(cases),kinds=kinds,input_sha256=hashlib.sha256(payload).hexdigest(),elapsed_seconds=time.monotonic()-start,full_registers_flags_memory_equal=True)
+    summary=dict(oracle='Unicorn',version=unicorn.__version__,engine=o.engine,seed=o.seed,cases=len(cases),kinds=kinds,input_sha256=hashlib.sha256(payload).hexdigest(),elapsed_seconds=time.monotonic()-start,input_build_elapsed_seconds=input_elapsed,full_registers_flags_memory_equal=True)
     o.output.write_text(json.dumps(summary,indent=2)+'\n');print(json.dumps(summary))
 
 

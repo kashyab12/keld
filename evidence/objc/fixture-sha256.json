@@ -1,0 +1,22 @@
+{
+  "modules/sable/fixtures/bin/objc/chained/libsable_objc.dylib": "5fca773e2c6f1458c45cf40910d686a4f58939e2924205fd63af41acce3da508",
+  "modules/sable/fixtures/bin/objc/chained/libsable_other.dylib": "c0c5852c260136912fbca648e34a08e6099cc69ced81f8c335000ae8420dd1c0",
+  "modules/sable/fixtures/bin/objc/chained/libsable_system.dylib": "a4397cd57f5bb3fa4154b8c8d5feda5efb062be71505f74d0ec41fef8580a234",
+  "modules/sable/fixtures/bin/objc/chained/objc-0.macho": "edb9411f87eaa1a172f06b63166ab6e9568169f811cbedbe87edaebae0f39391",
+  "modules/sable/fixtures/bin/objc/chained/objc-1.macho": "192d7f3a354238780774180a42e38842b21b975733c70efdaf496b06f8fbc5b5",
+  "modules/sable/fixtures/bin/objc/chained/objc-2.macho": "a4a6c445d17b7890a334a6abbd0b3585faa812783883ec34bc0d670a95a1c512",
+  "modules/sable/fixtures/bin/objc/legacy/libsable_objc.dylib": "a5b389a17216094e7cb519b23ea1ed1a3356455afce6ae25468d1ff37b0cbee9",
+  "modules/sable/fixtures/bin/objc/legacy/libsable_other.dylib": "fe1314ad14130d4233f5e68174796da700a049f9d841665ed38782337249b86b",
+  "modules/sable/fixtures/bin/objc/legacy/libsable_system.dylib": "03d0b0e7fad00a77fb655c33baad65fd02ce13887427d6dbe9dc657999f89bfe",
+  "modules/sable/fixtures/bin/objc/legacy/objc-0.macho": "f7eb584962d7faf8633dda2021228688d997f0eae1b0cf1c15b845eba3c40764",
+  "modules/sable/fixtures/bin/objc/legacy/objc-1.macho": "455a1742537aeac4e78e1f667c9a3b01bd6ae0276a2967a028f8d7761cf2aa1c",
+  "modules/sable/fixtures/bin/objc/legacy/objc-2.macho": "08a63ed76dbe8a624ffec6d80d03184d7b1891bdd6d0b027472e8a34c4ca020f",
+  "modules/sable/fixtures/objc-abi.s": "0647eb5ec4b7aa29d355c45add4ce488e01d648bdad6d74a3c02d0b62667ce7b",
+  "modules/sable/fixtures/objc-other.m": "ef3d5ad808aa535d7b8c632188d3eac042669905bee8898d0418b33cd219501b",
+  "modules/sable/fixtures/objc-root.m": "d23056066f04b0ee7ac037fd2542926b9fd4dfaddd560950769547edadf719c9",
+  "modules/sable/fixtures/objc-runtime.s": "801617cd017d5678dafb46c84d162227deeb34321940bd7569035951e414c925",
+  "modules/sable/fixtures/objc-start.s": "415ab225a5d04b175c8b6eeb89f6853f8849cefad9b48da47cb9a47e63ae9bbd",
+  "scripts/apple-oracle.py": "d1fe1b2b7123141e8327975476b2a066485e6a8c4fb5d37fc922d5b7c407d157",
+  "scripts/build-objc.sh": "7616797c3b9209554cb24201594a5ed08f0c7b8360029ef7496a8479be25522e",
+  "scripts/check-objc.sh": "acf8f382976366388f16f68e348eb40f5e7a4e978ca11572b854365037e521b1"
+}

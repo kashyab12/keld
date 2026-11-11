@@ -1,0 +1,60 @@
+{
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+  "version": "27.2",
+  "build": "24B8117",
+  "runs": [
+    {
+      "fixture": "hello",
+      "exit": 0,
+      "stdout_hex": "5341424c455f41524d36345f44415257494e5f4f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "compute",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": ""
+    },
+    {
+      "fixture": "workload",
+      "exit": 0,
+      "stdout_hex": "fa23b45693b4658e",
+      "stderr": ""
+    },
+    {
+      "fixture": "checksum",
+      "exit": 0,
+      "stdout_hex": "406b8988792d0000",
+      "stderr": ""
+    },
+    {
+      "fixture": "objc/chained/objc-0",
+      "exit": 0,
+      "stdout_hex": "4f626a4320726f6f7420636c6173732c207363616c617220696e7374616e63652f636c6173732064697370617463682c206e696c20616e642073656c6563746f7273204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "objc/chained/objc-1",
+      "exit": 0,
+      "stdout_hex": "4f626a4320726f6f7420636c6173732c207363616c617220696e7374616e63652f636c6173732064697370617463682c206e696c20616e642073656c6563746f7273204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "objc/legacy/objc-0",
+      "exit": 0,
+      "stdout_hex": "4f626a4320726f6f7420636c6173732c207363616c617220696e7374616e63652f636c6173732064697370617463682c206e696c20616e642073656c6563746f7273204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "objc/legacy/objc-1",
+      "exit": 0,
+      "stdout_hex": "4f626a4320726f6f7420636c6173732c207363616c617220696e7374616e63652f636c6173732064697370617463682c206e696c20616e642073656c6563746f7273204f4b0a",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  }
+}

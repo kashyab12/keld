@@ -529,7 +529,8 @@ impl Assembler {
             | Op::MemoryReg { .. }
             | Op::Literal { .. }
             | Op::Pair { .. }
-            | Op::CondCompare { .. } => {
+            | Op::CondCompare { .. }
+            | Op::CondSelect { .. } => {
                 unreachable!("memory operations use checked Rust transition")
             }
             Op::Address { dst, value } => {
@@ -666,7 +667,8 @@ impl Compiled {
                     | Op::MemoryReg { .. }
                     | Op::Literal { .. }
                     | Op::Pair { .. }
-                    | Op::CondCompare { .. } => {
+                    | Op::CondCompare { .. }
+                    | Op::CondSelect { .. } => {
                         boundaries.insert(pc);
                         boundaries.insert(pc + 4);
                     }
@@ -703,7 +705,7 @@ impl Compiled {
                     bodies.insert(*pc, a.bytes.len());
                     a.memory(*op)?;
                 }
-                Ok(Op::Pair { .. } | Op::CondCompare { .. }) => {
+                Ok(Op::Pair { .. } | Op::CondCompare { .. } | Op::CondSelect { .. }) => {
                     a.guard(*pc);
                     bodies.insert(*pc, a.bytes.len());
                     a.exit(4);

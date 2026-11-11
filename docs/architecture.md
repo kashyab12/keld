@@ -142,3 +142,15 @@ and 512 bytes of data plus 4 KiB of stack. Cases cover incoming flag combination
 32/64-bit arithmetic edges, shifted operands, addressing modes and BL/RET. This
 validates the tested scalar subset, not the full ISA, kernel behavior, threading,
 memory ordering or platform services. [Raw evidence](../evidence/s1/RESULTS.md).
+
+## Static scalar Objective-C2
+
+The linker validates original root-class/metaclass metadata after fixups and
+publishes a selector/method plan before constructors. An original explicit
+libobjc uses registered private traps for class lookup and checked guest IMP
+lookup. Guest tail dispatch preserves the original caller link; methods execute
+as ordinary checked ARM64 code. Writable object memory is private per run.
+Metadata mutation rejects rather than using stale dispatch information.
+[Supported records, limits and exclusions](objc.md) define this console profile;
+Foundation/UIKit remain unsupported. CSEL/CSINC/CSINV/CSNEG are scalar operations
+with checked JIT fallback and independent Unicorn validation.

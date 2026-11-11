@@ -73,6 +73,7 @@ fn synthetic(words: &[u32], entry: usize) -> Image {
         extra_text: vec![],
         platform: 7,
         tls: Vec::new(),
+        objc: None,
         startup: Some(Startup {
             header: 0x1000,
             initializers: vec![0x1000],

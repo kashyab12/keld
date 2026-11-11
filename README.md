@@ -16,6 +16,8 @@ Supported C initializers run before main in a checked dependency order with a
 shared guest instruction budget; see [startup behavior](docs/initializers.md).
 Plain C [thread-local variables](docs/tls.md) support private scalar storage for
 one logical context per run, including constructor access and fresh-run reset.
+A bounded [Objective-C2 root-class runtime](docs/objc.md) registers original
+metadata and dispatches scalar class/instance messages to guest ARM64 methods.
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 
@@ -29,13 +31,14 @@ cargo run --release -- bench modules/sable/fixtures/bin/compute.macho 9
 ```
 
 Requires Rust 1.93.1 or newer. The checked-in Mach-O files contain only our original
-assembly/C and linker metadata. Neither Apple SDKs nor runtime libraries are needed
+assembly/C/Objective-C and linker metadata. Neither Apple SDKs nor runtime libraries are needed
 to build Sable or run these probes. See [fixture provenance](modules/sable/fixtures/README.md).
 
 - [Technical premise and primary sources](docs/research.md)
 - [Loader, translation and Darwin design](docs/architecture.md)
 - [Milestones and benchmark gates](docs/roadmap.md)
 - [Real app interaction and GPU benchmark gates](docs/app-benchmarks.md)
+- [Static scalar Objective-C2 registration and method execution](docs/objc.md)
 - [Scalar Darwin TLS contract and runtime checks](docs/tls.md)
 - [Sandbox containment and efficiency design](docs/sandbox-design.md)
 - [150 concurrent CPU microVMs, resource measurements and failed attempts](evidence/density/RESULTS.md)

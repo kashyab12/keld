@@ -257,6 +257,23 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
             }
             cpu.set(dst, result, wide, kind != 3);
         }
+        Op::CondSelect {
+            dst,
+            lhs,
+            rhs,
+            condition,
+            invert,
+            increment,
+            wide,
+        } => {
+            let result = if condition_holds(cpu.nzcv, condition) {
+                cpu.reg(lhs, false)
+            } else {
+                let b = cpu.reg(rhs, false);
+                (if invert { !b } else { b }).wrapping_add(u64::from(increment))
+            };
+            cpu.set(dst, result, wide, false);
+        }
         Op::CondCompare {
             lhs,
             rhs,
@@ -433,6 +450,9 @@ const CALL_RETURN: u64 = u64::MAX - 3;
 
 fn validate_startup(image: &Image) -> Result<()> {
     crate::tls::layout(image)?;
+    if let Some(plan) = &image.objc {
+        plan.validate(image)?;
+    }
     if let Some(startup) = &image.startup {
         image.read(startup.header, 32, 1)?;
         if image.contains_pc(CALL_RETURN)
@@ -621,6 +641,17 @@ impl<'a> Prepared<'a> {
                 let trap = cpu.pc.checked_sub(4).ok_or("invalid trap PC")?;
                 if self.image.instruction(trap)? == crate::tls::SVC {
                     cpu.x[0] = memory.resolve_tlv(self.image, cpu.x[0], trap)?;
+                    continue;
+                }
+                let word = self.image.instruction(trap)?;
+                if word == crate::objc::GET_CLASS || word == crate::objc::LOOKUP {
+                    let plan = self.image.objc.as_ref().ok_or("unregistered ObjC trap")?;
+                    let result = plan.trap(memory, trap, word, cpu.x[0], cpu.x[1])?;
+                    if word == crate::objc::GET_CLASS {
+                        cpu.x[0] = result;
+                    } else {
+                        cpu.x[16] = result;
+                    }
                     continue;
                 }
                 *syscalls += 1;

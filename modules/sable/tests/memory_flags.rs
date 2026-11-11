@@ -28,6 +28,7 @@ fn program(words: &[u32]) -> Image {
         extra_text: Vec::new(),
         platform: 7,
         tls: Vec::new(),
+        objc: None,
         startup: None,
     }
 }

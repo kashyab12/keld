@@ -10,27 +10,31 @@ measurement. We do not infer product economics from it.
 | --- | --- | --- |
 | S0: first ARM64 execution on Linux | Original simulator-targeted Mach-O, checked loading, output/exit, instruction budget, x86 translation and raw cloud evidence | Implemented; see AWS evidence |
 | S1: independently validated CPU semantics | Native ARM64 or independent emulator comparison, flags, loads/stores, calls/stack, precise faults, atomics/NEON test corpus | Scalar subset implemented and independently tested; atomics, NEON, full fault/ISA coverage remain open |
-| S2: first dynamic Darwin process | A small first-party C/Objective-C program with dynamic symbols, TLS, memory mapping and required trap behavior | First-party dynamic C, eager/chained fixups and checked C initialization implemented; TLS, VM calls and broader runtime startup remain open |
+| S2: first dynamic Darwin process | A small first-party C/Objective-C program with dynamic symbols, TLS, memory mapping and required trap behavior | First-party dynamic C, eager/chained fixups, checked initialization, scalar TLS and static scalar ObjC2 root classes implemented; VM calls and broader runtime startup remain open |
 | S3: first framework path | Original Foundation program with real Mach port allocation/message semantics, multiple threads and teardown | Not implemented |
 | S4: first visible app | Original UIKit app, deterministic screenshot, tap/text flow, redraw and reset, no fake successful services | Original native reference app/tests pass; Sable execution and general screenshot equivalence not implemented |
 | S5: simulator service scope | Process/service inventory, framework/runtime availability, multiple concurrent app sessions and isolation checks | Not implemented |
 | S6: competitive benchmark | Same app/task/version and correctness checks on Sable, native Mac and pinned Macbox; matched cost and host accounting | Not implemented |
 
-The next work is the remaining S1 coverage plus an instrumented trace of a minimal
-native Foundation probe to identify S2/S3's first missing contracts. Do not add
+The next work is the remaining S1 coverage and the missing ObjC/object-lifecycle
+and Darwin service contracts needed by actual framework startup. Do not add
 orchestration APIs while framework execution is absent. Do not expand the ISA randomly: use independently
 checked semantics and actual traces to prioritize required operations.
 
 The [native Foundation investigation](foundation-contracts.md) now identifies
 checked image initialization and plain C TLV storage as bounded next contracts.
 [Initialization](initializers.md) is implemented and independently exercised;
-TLV resolution/storage and full guest pthread behavior remain open. The actual
+[Scalar TLV resolution/storage](tls.md) and bounded [ObjC2 root-class dispatch](objc.md)
+are also implemented. Full guest pthread behavior, general object lifecycle and
+framework execution remain open. The actual
 Foundation program still stops at its unsupplied framework dependency.
 
 The [Notes app reference](../modules/sable/fixtures/apps/Notes) now exercises
 external taps/typing, scroll/navigation, persisted state/reset and real Metal
 readback plus presented pixels on native Simulator. Sable rejects its ARM64
-executable at an unsupplied UIKit dependency and completes zero app interactions.
+executable at unsupported ObjC method-list metadata and completes zero app
+interactions ([current attempt](../evidence/objc/app-still-unsupported.json)).
+UIKit itself remains unsupplied.
 Restricted chained pointer linking now works on original LLVM fixtures, with
 matching Apple-native outputs; [format coverage](chained-fixups.md) and
 [execution evidence](../evidence/chained/RESULTS.md) describe the limits. A new AWS

@@ -69,6 +69,7 @@ fn main() {
             extra_text: Vec::new(),
             platform: 7,
             tls: Vec::new(),
+            objc: None,
             startup: None,
         };
         let mut memory = Memory::new(&image).unwrap();

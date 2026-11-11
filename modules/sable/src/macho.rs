@@ -17,6 +17,7 @@ pub struct Image {
     pub platform: u32,
     pub startup: Option<Startup>,
     pub tls: Vec<crate::tls::Block>,
+    pub objc: Option<crate::objc::Plan>,
 }
 
 #[derive(Clone, Debug)]
@@ -70,6 +71,7 @@ pub(crate) struct Object {
     pub chained: Option<Vec<u8>>,
     pub init_sections: Vec<InitSection>,
     pub tls_sections: crate::tls::Sections,
+    pub objc_sections: crate::objc::Sections,
 }
 
 fn command_string(command: &[u8], offset: usize) -> Result<String> {
@@ -120,6 +122,7 @@ impl Object {
         let mut exports_seen = false;
         let mut extra_text = Vec::new();
         let mut init_sections = Vec::new();
+        let mut objc_sections = crate::objc::Sections::default();
         let mut tls_sections = crate::tls::Sections::default();
         let mut cursor = 32;
         let mut segments: Vec<Segment> = Vec::new();
@@ -200,6 +203,11 @@ impl Object {
                         if u32_at(s, 60)? != 0 {
                             return Err("section relocations unsupported".into());
                         }
+                        objc_sections.push(
+                            s,
+                            (address, memory_size, file_size, file_offset, protection),
+                            dynamic,
+                        )?;
                         let section_type = u32_at(s, 64)? & 0xff;
                         if (section_type == 9 || section_type == 0x16) && u64_at(s, 40)? != 0 {
                             if !dynamic {
@@ -428,6 +436,7 @@ impl Object {
                 platform,
                 startup: None,
                 tls: Vec::new(),
+                objc: None,
             },
             kind,
             id,
@@ -441,6 +450,7 @@ impl Object {
             chained,
             init_sections,
             tls_sections,
+            objc_sections,
         })
     }
 }

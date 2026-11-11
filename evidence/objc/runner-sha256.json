@@ -1,0 +1,7 @@
+{
+  "scripts/build-objc.sh": "7616797c3b9209554cb24201594a5ed08f0c7b8360029ef7496a8479be25522e",
+  "scripts/check-objc.sh": "acf8f382976366388f16f68e348eb40f5e7a4e978ca11572b854365037e521b1",
+  "scripts/apple-oracle.py": "d1fe1b2b7123141e8327975476b2a066485e6a8c4fb5d37fc922d5b7c407d157",
+  "scripts/aws-smoke.py": "f19edaee00018c5bebd4bedb5bb40b60d192658be16a969fc059cecb2490510d",
+  "scripts/oracle.py": "c6bcb6f99fdfa23e829c47dbad2462f9e19d04eb9c1a970bf04516a26c2f1927"
+}

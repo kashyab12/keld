@@ -1,0 +1,12 @@
+{
+  "region": "us-east-1",
+  "instance_type": "c7i.large",
+  "cpu_options": {
+    "CoreCount": 1,
+    "ThreadsPerCore": 2
+  },
+  "image_name": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20261108",
+  "started_at": "2026-11-11T01:53:14.504717+00:00",
+  "remote_elapsed_seconds": 163.02492687525228,
+  "remote_exit": 0
+}

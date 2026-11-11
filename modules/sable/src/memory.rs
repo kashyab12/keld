@@ -183,6 +183,7 @@ mod tests {
             extra_text: Vec::new(),
             platform: 7,
             tls: Vec::new(),
+            objc: None,
             startup: None,
         };
         let mut a = Memory::new(&image).unwrap();

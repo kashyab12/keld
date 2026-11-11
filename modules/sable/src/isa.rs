@@ -68,6 +68,15 @@ pub enum Op {
         kind: u8,
         wide: bool,
     },
+    CondSelect {
+        dst: u8,
+        lhs: u8,
+        rhs: u8,
+        condition: u8,
+        invert: bool,
+        increment: bool,
+        wide: bool,
+    },
     CondCompare {
         lhs: u8,
         rhs: u8,
@@ -136,6 +145,17 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
             link: word & (1 << 21) != 0,
         });
     }
+    if word & 0x3fe0_0800 == 0x1a80_0000 {
+        return Ok(Op::CondSelect {
+            dst,
+            lhs: src,
+            rhs,
+            condition: ((word >> 12) & 15) as u8,
+            invert: word & (1 << 30) != 0,
+            increment: word & (1 << 10) != 0,
+            wide,
+        });
+    }
     if word & 0x3b000000 == 0x18000000 && word & (1 << 26) == 0 {
         let opc = word >> 30;
         if opc > 1 {
@@ -199,8 +219,12 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
         });
     }
     if word & 0xffe0001f == 0xd4000001 {
-        if (word >> 5) & 0xffff != 0x80 && word != crate::tls::SVC {
-            return Err("only Darwin svc #0x80 or checked Sable TLV trap supported".into());
+        if (word >> 5) & 0xffff != 0x80
+            && word != crate::tls::SVC
+            && word != crate::objc::GET_CLASS
+            && word != crate::objc::LOOKUP
+        {
+            return Err("only Darwin svc #0x80 or registered Sable runtime traps supported".into());
         }
         return Ok(Op::Svc);
     }

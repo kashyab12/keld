@@ -89,8 +89,10 @@ simulator executables. Its hash is in the startup summary:
 
 Neither executes guest Foundation instructions. Supplying Apple's frameworks was
 not attempted. Main's original chained-fixup fixtures already address the earlier
-format rejection. The actual Notes app now stops at missing UIKit before its own
-pointer patching or startup, as recorded in `evidence/chained/RESULTS.md`.
+format rejection. At that checkpoint, the actual Notes app stopped at missing UIKit before
+pointer patching or startup (`evidence/chained/RESULTS.md`). The later
+[scalar ObjC2 gate](objc.md) rejects its unsupported method-list metadata even
+earlier; the current attempt is in `evidence/objc/app-still-unsupported.json`.
 
 ## Gate 1: checked per-process image initialization
 

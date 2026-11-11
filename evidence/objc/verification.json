@@ -1,0 +1,36 @@
+{
+  "final_run": "aws-04",
+  "remote_exit": 0,
+  "rust_tests_passed": 53,
+  "oracle_receipts": 6,
+  "oracle_cases": 47610,
+  "all_full_state_equal": true,
+  "runtime_source_hashes_match": true,
+  "cleanup": {
+    "aws-01": {
+      "active_instances": 0,
+      "volumes": 0,
+      "security_groups": 0,
+      "key_pairs": 0
+    },
+    "aws-02": {
+      "active_instances": 0,
+      "volumes": 0,
+      "security_groups": 0,
+      "key_pairs": 0
+    },
+    "aws-03": {
+      "active_instances": 0,
+      "volumes": 0,
+      "security_groups": 0,
+      "key_pairs": 0
+    },
+    "aws-04": {
+      "active_instances": 0,
+      "volumes": 0,
+      "security_groups": 0,
+      "key_pairs": 0
+    }
+  },
+  "ui_interactions_completed": 0
+}

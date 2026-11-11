@@ -1,0 +1,6 @@
+{
+  "kind": "Capability fallback with original local Clang; not an actual Clang18 execution",
+  "exit": 0,
+  "stdout": "Compiler predates the relative-list switch; final absolute metadata will be checked.\nApple clang version 21.0.0 (clang-2100.1.1.101)\nStatic scalar ObjC2 dispatch, nesting, ABI, constructor access and explicit rejection passed.\n",
+  "stderr": "instructions=378 syscalls=2 exit=0 x9=4294970276\ninstructions=442 syscalls=2 exit=0 x9=4294970524\ninstructions=378 syscalls=2 exit=0 x9=4294970452\ninstructions=442 syscalls=2 exit=0 x9=4294970700\n"
+}

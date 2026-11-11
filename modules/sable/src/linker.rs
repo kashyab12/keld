@@ -600,7 +600,37 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
             }
         }
     }
+    let objc_runtime = if order.iter().any(|&i| !objects[i].objc_sections.is_empty()) {
+        let index = *ids
+            .get("/usr/lib/libobjc.A.dylib")
+            .ok_or("ObjC requires explicit libobjc runtime")?;
+        if !order.contains(&index) {
+            return Err("ObjC runtime not loaded".into());
+        }
+        let symbol = |name: &str| -> Result<u64> {
+            let s = all_exports[index]
+                .get(name)
+                .ok_or_else(|| format!("missing ObjC runtime export: {name}"))?;
+            if s.tls {
+                return Err("ObjC runtime export cannot be TLS".into());
+            }
+            // Runtime entry points/data must belong to this explicit library.
+            objects[index].image.read(s.address, 8, 1)?;
+            Ok(s.address)
+        };
+        let empty_cache = symbol("__objc_empty_cache")?;
+        objects[index].image.read(empty_cache, 8, 3)?;
+        Some(crate::objc::Runtime {
+            get_class: symbol("_objc_getClass")?,
+            msg_send: symbol("_objc_msgSend")?,
+            empty_cache,
+        })
+    } else {
+        None
+    };
+    let objc = crate::objc::register(&mut objects, &order, &slides, objc_runtime)?;
     let mut image = objects[0].image.clone();
+    image.objc = objc;
     for &index in &order {
         let object = &objects[index];
         if !object.tls_sections.is_empty() {
@@ -655,6 +685,9 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
     ranges.sort_unstable();
     image.segments.sort_by_key(|s| s.address);
     crate::tls::layout(&image)?;
+    if let Some(plan) = &image.objc {
+        plan.validate(&image)?;
+    }
     if image
         .segments
         .windows(2)

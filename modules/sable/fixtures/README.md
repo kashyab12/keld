@@ -77,3 +77,14 @@ fixup streams and eager binding in Sable; `init-binder.s` traps if an unsupporte
 lazy binder is actually invoked. Apple-native checks resolve real LibSystem.
 The four [Foundation research sources](foundation) are separate SDK-dependent
 native probes, not passing Linux fixtures.
+
+## Original Objective-C2 fixtures
+
+`objc-root.m`, `objc-other.m`, `objc-abi.s`, `objc-runtime.s` and `objc-start.s`
+are original headerless scalar probes and an original explicit libobjc bridge.
+Build with `scripts/build-objc.sh`; execute with `scripts/check-objc.sh`. The
+checked-in `bin/objc/{chained,legacy}` contains these original LLVM-linked
+programs/libraries only. No Apple SDK, implementation or framework is included
+or needed to execute them in Sable. The native Apple reference resolves the
+absolute System/libobjc identities to Apple's installed local runtime; its
+reference result is separate from Linux. See [the exact contract](../../../docs/objc.md).

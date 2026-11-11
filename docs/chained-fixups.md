@@ -47,9 +47,10 @@ metadata/slots and 2,000 deterministic metadata mutations exercise decoder
 rejection and bounds. Repeated runs check private state/reset; Linux tests compare
 full interpreter/native outcomes with both indirect dispatch modes.
 
-The original UIKit app now reaches a missing UIKit dependency instead of the
+At this checkpoint, the original UIKit app reached a missing UIKit dependency instead of the
 previous unsupported-command rejection. This is a startup diagnostic, **not an
 app pass**: dependency resolution still stops before its chained pointers are
-applied or its code executes. No UIKit implementation, Objective-C runtime,
-rendering backend or input service is supplied. See the
+applied or its code executes. A later [bounded scalar ObjC2 runtime](objc.md)
+executes original console classes, but rejects the app's unsupported method-list
+metadata before dependency resolution. UIKit, rendering and input remain absent. See the
 [execution receipts](../evidence/chained/RESULTS.md).

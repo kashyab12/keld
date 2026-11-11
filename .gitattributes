@@ -3,3 +3,4 @@ evidence/sandbox/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/density/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/density/**/*.log -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
 evidence/tls/** -text whitespace=cr-at-eol,-blank-at-eof
+evidence/objc/** -text whitespace=cr-at-eol,-blank-at-eof

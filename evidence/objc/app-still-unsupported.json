@@ -1,0 +1,7 @@
+{
+  "kind": "Actual UIKit executable attempted locally in Sable; no Apple binaries transferred",
+  "exit": 125,
+  "stdout": "",
+  "stderr": "sable: unsupported ObjC section: __objc_methlist\n",
+  "sable_interactions_completed": 0
+}
