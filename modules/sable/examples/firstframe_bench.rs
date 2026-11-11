@@ -73,6 +73,8 @@ fn main() {
     let budget = 1_000_000_000;
     let (startup, _, startup_seconds) = run(&interp, 0);
     let (outcome, frames, seconds) = run(&interp, taps);
+    // Red, then alternating blue/green taps: every presented frame changes.
+    assert!(frames.windows(2).all(|pair| pair[0] != pair[1]));
     let used = |o: &Outcome| budget - o.cpu.remaining;
     let per_frame = (used(&outcome) - used(&startup)) as f64 / taps as f64;
     println!(
