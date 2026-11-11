@@ -1,0 +1,157 @@
+[
+  {
+    "file": "strings-0.macho",
+    "sha256": "e3bf1b24199c3d9c0e01bb719cfccf253b420d7a63ea64d397836a3885aefc1a",
+    "dependencies": [
+      "@loader_path/libsable_literals.dylib",
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [
+      {
+        "address": 4294983688,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 4294983720,
+        "flags": 1992,
+        "length": 0,
+        "bytes": ""
+      },
+      {
+        "address": 4294983752,
+        "flags": 1992,
+        "length": 63,
+        "bytes": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"
+      }
+    ]
+  },
+  {
+    "file": "strings-1.macho",
+    "sha256": "6dc7c5d733be745a8be7b96741a0ee97e72a55ce580a49946ad1299be3d73ae7",
+    "dependencies": [
+      "@loader_path/libsable_literals.dylib",
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [
+      {
+        "address": 4294983688,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 4294983720,
+        "flags": 1992,
+        "length": 0,
+        "bytes": ""
+      },
+      {
+        "address": 4294983752,
+        "flags": 1992,
+        "length": 63,
+        "bytes": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"
+      }
+    ]
+  },
+  {
+    "file": "libsable_literals.dylib",
+    "sha256": "ebf0f0a3aabd55d148fda71335ab8d1730de6301a7fe85fe651b0aa4e7fb882e",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [
+      {
+        "address": 16384,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 16416,
+        "flags": 1992,
+        "length": 13,
+        "bytes": "dylib Alpha09"
+      }
+    ]
+  },
+  {
+    "file": "Foundation.dylib",
+    "sha256": "ae5cc571512ebf46b06c0a489a8bff34a98950268e42cec320e3220ee253264a",
+    "dependencies": [
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [],
+    "getter": {
+      "selector": "UTF8String",
+      "encoding": "r*16@0:8",
+      "imp": 1608
+    },
+    "method_format": {
+      "file": "Foundation.dylib",
+      "sha256": "ae5cc571512ebf46b06c0a489a8bff34a98950268e42cec320e3220ee253264a",
+      "format": "compact",
+      "lists": [
+        {
+          "address": 1648,
+          "header": 2147483660,
+          "count": 1,
+          "entries": [
+            {
+              "entry": 1656,
+              "offsets": [
+                31488,
+                -27,
+                -56
+              ],
+              "selector_slot": 33144,
+              "types": 1633,
+              "imp": 1608
+            }
+          ]
+        }
+      ],
+      "section": {
+        "address": 1648,
+        "length": 20,
+        "offset": 1648,
+        "protection": 5,
+        "flags": 268435456
+      }
+    },
+    "class_layout": {
+      "start": 0,
+      "size": 32
+    }
+  },
+  {
+    "file": "CoreFoundation.dylib",
+    "sha256": "561ba1bb75ba922e537e5b555952ce0b5a5fb4e8ba532fe6c87ddf6c4779fbc1",
+    "dependencies": [
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [],
+    "class_alias_address": 32952,
+    "class_layout": {
+      "start": 32,
+      "size": 32
+    }
+  }
+]

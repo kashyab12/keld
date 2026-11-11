@@ -155,7 +155,7 @@ lookup. Guest tail dispatch preserves the original caller link; methods execute
 as ordinary checked ARM64 code. Writable object memory is private per run.
 Metadata mutation rejects rather than using stale dispatch information.
 [Supported records, limits and exclusions](objc.md) define this console profile;
-Foundation/UIKit remain unsupported. CSEL/CSINC/CSINV/CSNEG are scalar operations
+General Foundation/UIKit remain unsupported. CSEL/CSINC/CSINV/CSNEG are scalar operations
 with checked JIT fallback and independent Unicorn validation.
 
 ## Static protocol introspection
@@ -193,3 +193,12 @@ is synthesized. Arena state is shared across constructors/main and reset per run
 fields, checks inherited prefixes and passes exact RO size to creation. Original
 getter and void-setter bodies access guest bytes; extras begin at class size,
 not slot padding. Both size and extra-byte caps are 64 within the existing slot.
+
+## Immutable constant-string reads
+
+The [original framework slice](strings.md) checks post-fixup ASCII constant
+records, exact provider-class aliases, per-record identities and immutable byte
+ranges. A genuine Foundation root owns the UTF8String guest IMP; its
+CoreFoundation child supplies the constant class. Original guest libc methods
+read/compare bytes. Preparation rejects metadata/code aliases and permission
+changes. This non-ARC path supplies no pools, ownership or uppercase result.

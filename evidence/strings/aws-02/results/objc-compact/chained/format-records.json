@@ -1,0 +1,250 @@
+[
+  {
+    "file": "objc-0.macho",
+    "sha256": "fd0bef792e54913811dd7cef56f6d07cb75d6d5c4f1be0b8163b8f635bdd302c",
+    "format": "compact",
+    "lists": [
+      {
+        "address": 4294970668,
+        "header": 2147483660,
+        "count": 1,
+        "entries": [
+          {
+            "entry": 4294970676,
+            "offsets": [
+              29420,
+              -83,
+              -1204
+            ],
+            "selector_slot": 4295000096,
+            "types": 4294970597,
+            "imp": 4294969480
+          }
+        ]
+      },
+      {
+        "address": 4294970688,
+        "header": 2147483660,
+        "count": 3,
+        "entries": [
+          {
+            "entry": 4294970696,
+            "offsets": [
+              29408,
+              -92,
+              -1168
+            ],
+            "selector_slot": 4295000104,
+            "types": 4294970608,
+            "imp": 4294969536
+          },
+          {
+            "entry": 4294970708,
+            "offsets": [
+              29404,
+              -115,
+              -1120
+            ],
+            "selector_slot": 4295000112,
+            "types": 4294970597,
+            "imp": 4294969596
+          },
+          {
+            "entry": 4294970720,
+            "offsets": [
+              29400,
+              -102,
+              -1080
+            ],
+            "selector_slot": 4295000120,
+            "types": 4294970622,
+            "imp": 4294969648
+          }
+        ]
+      }
+    ],
+    "section": {
+      "address": 4294970668,
+      "length": 64,
+      "offset": 3372,
+      "protection": 5,
+      "flags": 268435456
+    }
+  },
+  {
+    "file": "objc-1.macho",
+    "sha256": "b0cb06376ea7dba2c63a3ae8fa40eeec604ac322d40880376372e7ece2708e72",
+    "format": "compact",
+    "lists": [
+      {
+        "address": 4294970928,
+        "header": 2147483660,
+        "count": 1,
+        "entries": [
+          {
+            "entry": 4294970936,
+            "offsets": [
+              29160,
+              -83,
+              -1384
+            ],
+            "selector_slot": 4295000096,
+            "types": 4294970857,
+            "imp": 4294969560
+          }
+        ]
+      },
+      {
+        "address": 4294970948,
+        "header": 2147483660,
+        "count": 3,
+        "entries": [
+          {
+            "entry": 4294970956,
+            "offsets": [
+              29148,
+              -92,
+              -1348
+            ],
+            "selector_slot": 4295000104,
+            "types": 4294970868,
+            "imp": 4294969616
+          },
+          {
+            "entry": 4294970968,
+            "offsets": [
+              29144,
+              -115,
+              -1300
+            ],
+            "selector_slot": 4295000112,
+            "types": 4294970857,
+            "imp": 4294969676
+          },
+          {
+            "entry": 4294970980,
+            "offsets": [
+              29140,
+              -102,
+              -1260
+            ],
+            "selector_slot": 4295000120,
+            "types": 4294970882,
+            "imp": 4294969728
+          }
+        ]
+      }
+    ],
+    "section": {
+      "address": 4294970928,
+      "length": 64,
+      "offset": 3632,
+      "protection": 5,
+      "flags": 268435456
+    }
+  },
+  {
+    "file": "objc-2.macho",
+    "sha256": "8b11b628108891459bc640bd154d9e0b047cd40e70c0987a085147676e88f78e",
+    "format": "compact",
+    "lists": [
+      {
+        "address": 4294970588,
+        "header": 2147483660,
+        "count": 1,
+        "entries": [
+          {
+            "entry": 4294970596,
+            "offsets": [
+              29508,
+              -86,
+              -1204
+            ],
+            "selector_slot": 4295000104,
+            "types": 4294970514,
+            "imp": 4294969400
+          }
+        ]
+      },
+      {
+        "address": 4294970608,
+        "header": 2147483660,
+        "count": 3,
+        "entries": [
+          {
+            "entry": 4294970616,
+            "offsets": [
+              29496,
+              -95,
+              -1168
+            ],
+            "selector_slot": 4295000112,
+            "types": 4294970525,
+            "imp": 4294969456
+          },
+          {
+            "entry": 4294970628,
+            "offsets": [
+              29492,
+              -118,
+              -1120
+            ],
+            "selector_slot": 4295000120,
+            "types": 4294970514,
+            "imp": 4294969516
+          },
+          {
+            "entry": 4294970640,
+            "offsets": [
+              29488,
+              -105,
+              -1080
+            ],
+            "selector_slot": 4295000128,
+            "types": 4294970539,
+            "imp": 4294969568
+          }
+        ]
+      }
+    ],
+    "section": {
+      "address": 4294970588,
+      "length": 64,
+      "offset": 3292,
+      "protection": 5,
+      "flags": 268435456
+    }
+  },
+  {
+    "file": "libsable_other.dylib",
+    "sha256": "79eb565261c0aed1630349ecb61ff0d58cad8dc02a656802bd440b126b33480c",
+    "format": "compact",
+    "lists": [
+      {
+        "address": 2012,
+        "header": 2147483660,
+        "count": 1,
+        "entries": [
+          {
+            "entry": 2020,
+            "offsets": [
+              30756,
+              -41,
+              -220
+            ],
+            "selector_slot": 32776,
+            "types": 1983,
+            "imp": 1808
+          }
+        ]
+      }
+    ],
+    "section": {
+      "address": 2012,
+      "length": 20,
+      "offset": 2012,
+      "protection": 5,
+      "flags": 268435456
+    }
+  }
+]

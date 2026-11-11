@@ -1,5 +1,13 @@
 # Original fixtures
 
+`strings/` contains original narrow NSString/CoreFoundation classes, a literal-only
+helper without a direct libobjc dependency, guest strlen/strcmp and a non-ARC
+constant-read client. `build-strings.sh` emits both method/fixup formats and
+plain/constructor programs. Only original LLVM outputs enter `bin/strings`;
+native Apple reference runs resolve Apple frameworks locally and remain separate.
+The initial local output-banner vector-copy failure is retained; the fixed
+banner is now static so this scalar probe requires no SIMD.
+
 `payload-main.m` is an original Q-field/void-setter probe. `build-payload.sh`
 emits root/child sizes 16/24, 8/16, 64/64 and 16/64 with both method/fixup forms,
 same-image/dylib parents and constructors. Sixty-four positive programs check

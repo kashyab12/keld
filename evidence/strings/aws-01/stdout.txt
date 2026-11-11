@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-11T06:23:19.160932+00:00",
+  "host": {
+    "os": "Linux",
+    "kernel": "7.0.0-1014-aws",
+    "arch": "x86_64"
+  },
+  "pci_inventory_available": true,
+  "pci_graphics": [
+    {
+      "pci_address": "0000:00:03.0",
+      "pci_class": "0x030000",
+      "vendor": "0x1d0f",
+      "device": "0x1111",
+      "driver": null
+    }
+  ],
+  "pci_errors": [],
+  "exposed_gpu_nodes": [],
+  "graphics_commands": {
+    "vulkaninfo": {
+      "status": "not_installed"
+    },
+    "nvidia-smi": {
+      "status": "not_installed"
+    }
+  },
+  "software_renderer_overrides": {},
+  "display_environment_present": {
+    "DISPLAY": false,
+    "WAYLAND_DISPLAY": false
+  },
+  "interpretation": "Exposure inventory only. Headless does not mean GPU-free. A software Vulkan device is not a hardware GPU. App rendering is a separate correctness gate."
+}
+Linux x86_64
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  2
+On-line CPU(s) list:                     0,1
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Platinum 8488C
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      2
+Core(s) per socket:                      1
+Socket(s):                               1
+Stepping:                                8
+BogoMIPS:                                4800.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq monitor ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd ida arat avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq rdpid cldemote movdiri movdir64b md_clear serialize amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+L1d cache:                               48 KiB (1 instance)
+L1i cache:                               32 KiB (1 instance)
+L2 cache:                                2 MiB (1 instance)
+L3 cache:                                105 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0,1
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+rustc 1.93.1 (01f6ddf75 2026-02-11)
+
+running 24 tests
+test chained::tests::both_pointer_formats_import_addends_tags_and_slide ... ok
+test chained::tests::rejects_malformed_metadata_and_pointer_slots_without_mutating ... ok
+test chained::tests::tls_import_and_inline_addends_reject_before_patching ... ok
+test jit::tests::cpu_layout_matches_emitter ... ok
+test linker::tests::bounded_integer_and_trie_parsing ... ok
+test linker::tests::legacy_bind_backwards_deltas_keep_every_cursor_inside_selected_storage ... ok
+test linker::tests::malformed_binding_streams_never_patch_executable_storage ... ok
+test linker::tests::tls_export_kind_and_addend_contract ... ok
+test memory::tests::immutable_bytes_are_shared_and_writable_bytes_are_private ... ok
+test objc::constants::tests::post_fixup_constant_fields_and_owning_ascii_bytes_reject_malformed_records ... ok
+test chained::tests::malformed_chains_are_bounded_and_never_panic ... ok
+test objc::hierarchy_tests::subclass_layout_superrefs_and_owning_records_reject_unsupported_forms ... ok
+test objc::instances::tests::arena_layout_checks_images_reserved_ranges_and_total_cap ... ok
+test objc::hierarchy_tests::superclass_graph_collection_is_order_independent_and_malformed_edges_reject ... ok
+test objc::instances::tests::object_signature_subset_retains_exact_counts_offsets_and_unsigned_protocol_profile ... ok
+test objc::instances::tests::lifetime_capacity_zeroing_and_backing_addresses_are_private_and_stable ... ok
+test objc::payload::tests::layout_bounds_coverage_inherited_prefix_and_collection_order_are_checked ... ok
+test objc::payload::tests::exact_owner_cells_rows_types_ranges_and_unique_names_reject_malformed_layouts ... ok
+test objc::payload::tests::validated_class_sizes_drive_requested_span_without_allocator_rounding ... ok
+test objc::protocol::tests::ordinary_data_is_not_blanket_metadata_and_protocol_body_cannot_alias_sections ... ok
+test objc::protocol::tests::malformed_real_protocol_bodies_descriptions_types_and_refs_reject ... ok
+test objc::tests::compact_field_relative_math_and_malformed_real_records_reject ... ok
+test objc::tests::plain_c_string_section_keeps_the_existing_image_limit ... ok
+test objc::tests::malformed_real_root_graph_ro_methods_ivars_and_owning_imp_reject ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test llvm_chains_execute_with_rebases_transitive_imports_and_addends ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+
+running 5 tests
+test corrupted_import_and_version_are_not_silently_accepted ... ok
+test malformed_initializers_and_tls_metadata_are_rejected ... ok
+test missing_duplicate_and_wrong_kind_dependencies_fail_closed ... ok
+test supplied_order_does_not_change_two_level_resolution ... ok
+test transitive_binding_rebasing_and_private_state ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 11 tests
+test architecture_rejects_unimplemented_and_reserved_ops ... ok
+test exhausted_budget_precedes_faults_in_both_engines ... ok
+test finite_budget_and_unknown_trap_fail ... ok
+test loader_rejects_unimplemented_optional_commands ... ok
+test loader_rejects_wrong_arch_platform_permissions_and_entry ... ok
+test malformed_inputs_do_not_panic ... ok
+test memory_permissions_and_bounds ... ok
+test original_compute_checksum ... ok
+test original_linked_simulator_binary ... ok
+test wrapping_w_registers_sp_and_zero_register ... ok
+test differential_generated_programs_and_control_flow ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+
+running 4 tests
+test callback_exit_nonreturn_and_unbalanced_stack_stop_startup ... ok
+test constructor_return_at_exact_budget_and_main_return_status ... ok
+test malformed_arrays_and_targets_reject_before_execution ... ok
+test dependency_array_order_diamond_once_arguments_and_private_reset ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 5 tests
+test creation_and_disposal_preserve_scalar_state_and_each_svc_ret_budget_edge ... ok
+test invalid_classes_sizes_ownership_isa_and_stale_message_identities_reject ... ok
+test pointer_arguments_remain_guest_values_and_foreign_or_mutated_services_reject ... ok
+test saturation_returns_nil_without_reusing_retired_slots_or_resizing_memory ... ok
+test compiled_pointer_methods_instances_zeroing_isolation_tls_ctor_and_private_reset ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 11 tests
+test compiled_c_checksums_and_private_memory ... ok
+test discontiguous_images_do_not_allow_fallthrough_across_gaps ... ok
+test faults_preserve_cpu_and_memory_before_writeback ... ok
+test flags_have_arm_carry_and_signed_overflow_semantics ... ok
+test indirect_dispatch_checks_ranges_alignment_and_budget_before_jump ... ok
+test native_block_budgets_preserve_partial_state_and_mid_block_entries ... ok
+test pair_fault_does_not_partially_store_or_update_base ... ok
+test reject_vector_signed_unprivileged_and_overlap_encodings ... ok
+test signed_literal_word_values_zr_displacements_and_precise_faults ... ok
+test stack_alignment_and_region_collision ... ok
+test arithmetic_checksum_is_observable_by_external_runner ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.59s
+
+
+running 8 tests
+test compact_section_shape_code_flags_and_mixed_malformed_list_reject ... ok
+test compiled_methods_nested_messages_cross_image_selectors_abi_ctor_and_reset ... ok
+test foreign_traps_bad_receiver_selector_and_mutated_runtime_metadata_reject ... ok
+test malformed_sections_flags_metadata_and_missing_dependencies_reject ... ok
+test metadata_instruction_aliases_reject_before_registration_and_preparation ... ok
+test exact_budget_lookup_tail_branch_imp_ret_and_nil ... ok
+test unknown_nonnil_selector_fails_explicitly ... ok
+test mixed_formats_and_compact_metadata_are_immutable_noncode ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 3 tests
+test payload_cells_sizes_and_names_reject_prepared_live_changes_and_code_aliases ... ok
+test real_void_setter_side_effects_and_each_lookup_store_return_budget_edge ... ok
+test compiled_fields_setters_super_sums_all_sizes_extra_bounds_tls_ctor_and_reset ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+
+running 6 tests
+test null_missing_and_unknown_identities_and_foreign_services ... ok
+test prepared_and_live_protocol_record_ref_and_adoption_mutation_reject ... ok
+test compiled_protocol_identity_adoption_real_method_abi_ctor_and_fresh_data ... ok
+test test_bit_branch_decoding_covers_extreme_signed_displacements ... ok
+test unsigned_bitfield_rejects_reserved_widths_and_other_bitfield_operations ... ok
+test services_preserve_modeled_registers_flags_and_every_budget_edge ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+
+running 3 tests
+test constants_snapshot_permissions_code_aliases_and_actual_getter_are_enforced ... FAILED
+test malformed_constant_sections_missing_wrong_version_or_alias_frameworks_reject ... ok
+test original_framework_getter_libc_multi_image_constants_constructor_and_private_reset ... ok
+
+failures:
+
+---- constants_snapshot_permissions_code_aliases_and_actual_getter_are_enforced stdout ----
+
+thread 'constants_snapshot_permissions_code_aliases_and_actual_getter_are_enforced' (4352) panicked at modules/sable/tests/strings.rs:31:33:
+assertion `left == right` failed
+  left: "guest memory fault at 0x0, length 1, permission 1"
+ right: "guest memory/SP fault at PC 0x240000284"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    constants_snapshot_permissions_code_aliases_and_actual_getter_are_enforced
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+

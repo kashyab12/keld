@@ -1,0 +1,84 @@
+{
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+  "version": "27.2",
+  "build": "24B8117",
+  "runs": [
+    {
+      "fixture": "hello",
+      "exit": 0,
+      "stdout_hex": "5341424c455f41524d36345f44415257494e5f4f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "compute",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": ""
+    },
+    {
+      "fixture": "workload",
+      "exit": 0,
+      "stdout_hex": "fa23b45693b4658e",
+      "stderr": ""
+    },
+    {
+      "fixture": "checksum",
+      "exit": 0,
+      "stdout_hex": "406b8988792d0000",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/absolute/chained/strings-0",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/absolute/chained/strings-1",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/absolute/legacy/strings-0",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/absolute/legacy/strings-1",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/compact/chained/strings-0",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/compact/chained/strings-1",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/compact/legacy/strings-0",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "strings/compact/legacy/strings-1",
+      "exit": 0,
+      "stdout_hex": "436f6e7374616e7420737472696e67732c2067756573742055544638537472696e6720616e64206c69626320636865636b73204f4b0a",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  }
+}

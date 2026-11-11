@@ -5,6 +5,7 @@ use crate::{
     macho::{Image, Object, u32_at, u64_at},
     memory::Memory,
 };
+pub(crate) mod constants;
 #[cfg(test)]
 mod hierarchy_tests;
 pub(crate) mod instances;
@@ -76,7 +77,9 @@ impl Sections {
             }
             return Ok(());
         }
-        if (!name.starts_with("__objc_") && name != "__cstring") || u64_at(s, 40)? == 0 {
+        if (!name.starts_with("__objc_") && name != "__cstring" && name != "__cfstring")
+            || u64_at(s, 40)? == 0
+        {
             return Ok(());
         }
         if name == "__objc_stubs" {
@@ -108,6 +111,7 @@ impl Sections {
                 | "__objc_classname"
                 | "__objc_ivar"
                 | "__cstring"
+                | "__cfstring"
         ) {
             return Err(format!("unsupported ObjC section: {name}"));
         }
@@ -158,6 +162,8 @@ impl Sections {
                     || u32_at(s, 64)? & 0x80000400 != 0
                     || !address.is_multiple_of(4)
                     || length % 4 != 0))
+            || (name == "__cfstring"
+                && (!address.is_multiple_of(8) || length % 32 != 0 || length / 32 > 256))
             || (name == "__objc_imageinfo" && (length != 8 || address % 4 != 0))
         {
             return Err("invalid ObjC section bounds/alignment/type/protection".into());
@@ -187,6 +193,18 @@ impl Sections {
             length: length as usize,
         });
         Ok(())
+    }
+    pub(crate) fn has_constants(&self) -> bool {
+        self.parts.iter().any(|p| p.name == "__cfstring")
+    }
+    fn constant_consumer(&self) -> bool {
+        self.has_constants()
+            && self.parts.iter().all(|p| {
+                matches!(
+                    p.name.as_str(),
+                    "__cstring" | "__objc_imageinfo" | "__cfstring"
+                )
+            })
     }
     pub fn is_empty(&self) -> bool {
         self.parts.iter().all(|p| p.name == "__cstring")
@@ -237,6 +255,7 @@ pub struct Plan {
     classes: Vec<Class>,
     selectors: BTreeSet<u64>,
     snapshots: Vec<(u64, Vec<u8>)>,
+    constants: constants::Registry,
     runtime: Runtime,
     protocols: protocol::Plan,
 }
@@ -248,6 +267,7 @@ pub(crate) struct Runtime {
     pub super_send: Option<u64>,
     pub instances: Option<instances::Runtime>,
     pub protocols: Option<protocol::Runtime>,
+    pub constants: Option<constants::Provider>,
 }
 
 fn string(read: impl Fn(u64, usize) -> Result<Vec<u8>>, address: u64) -> Result<String> {
@@ -324,6 +344,13 @@ fn relative(field: u64, encoded: u32) -> Result<u64> {
 }
 fn scalar_signature(name: &str, encoding: &str, ordinary_method: bool) -> Result<()> {
     let args = name.bytes().filter(|&b| b == b':').count();
+    if ordinary_method
+        && args == 0
+        && encoding == "r*16@0:8"
+        && !matches!(name, "load" | "initialize")
+    {
+        return Ok(());
+    }
     let supported = |b| b == b'Q' || (ordinary_method && b == b'@');
     if args > 6
         || !encoding
@@ -498,11 +525,17 @@ pub(crate) fn register(
     for &index in &active {
         let object = &objects[index];
         let slide = slides[index];
-        if !object
+        let direct_runtime = object
             .dependencies
             .iter()
-            .any(|(n, _)| n == "/usr/lib/libobjc.A.dylib")
-        {
+            .any(|(n, _)| n == "/usr/lib/libobjc.A.dylib");
+        let constant_consumer = object.objc_sections.constant_consumer()
+            && runtime.constants.is_some()
+            && object
+                .dependencies
+                .iter()
+                .any(|(n, _)| n == constants::CORE_FOUNDATION);
+        if !direct_runtime && !constant_consumer {
             return Err("ObjC image lacks libobjc dependency".into());
         }
         let (info, len) = object
@@ -642,6 +675,7 @@ pub(crate) fn register(
             return Err("unsupported ObjC metaclass graph".into());
         }
     }
+    let constants = constants::validate(objects, &active, slides, runtime.constants, &pending)?;
     if selectors.len() > 1024
         || pending
             .iter()
@@ -724,6 +758,7 @@ pub(crate) fn register(
         classes,
         selectors: selectors.into_values().collect(),
         snapshots,
+        constants,
         runtime,
         protocols,
     }))
@@ -733,6 +768,12 @@ impl Plan {
         self.runtime.instances.is_some()
     }
     pub(crate) fn validate(&self, image: &Image) -> Result<()> {
+        for &(address, size) in &self.constants.readonly {
+            image.read(address, size, 1)?;
+            if image.read(address, size, 3).is_ok() {
+                return Err("prepared constant storage became writable".into());
+            }
+        }
         instances::validate_runtime(image, self.runtime.instances)?;
         self.protocols.validate(image)?;
         for (address, bytes) in &self.snapshots {
@@ -818,6 +859,13 @@ impl Plan {
                 .iter()
                 .find(|c| c.address == x0)
                 .ok_or("unregistered instance allocation class")?;
+            if self
+                .runtime
+                .constants
+                .is_some_and(|p| p.class == class.address)
+            {
+                return Err("constant-string class cannot be allocated".into());
+            }
             return memory.create_instance(class.address, class.size as usize, x1);
         }
         if word == instances::DISPOSE {
@@ -875,6 +923,11 @@ impl Plan {
             } else {
                 u64_at(memory.read(x0, 8)?, 0)?
             };
+            if self.runtime.constants.is_some_and(|p| p.class == isa)
+                && !self.constants.objects.contains(&x0)
+            {
+                return Err("unregistered constant-string object identity".into());
+            }
             (
                 self.classes
                     .iter()

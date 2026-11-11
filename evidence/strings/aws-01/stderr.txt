@@ -1,0 +1,17 @@
+    Checking sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.53s
+   Compiling sable v0.1.0 (/home/ubuntu/sable/modules/sable)
+    Finished `release` profile [optimized] target(s) in 2m 15s
+     Running unittests src/lib.rs (target/release/deps/sable-9c10c40c90400f90)
+     Running unittests src/main.rs (target/release/deps/sable-1f3c31c5b2d26a07)
+     Running tests/chained.rs (target/release/deps/chained-6d31c58e6ada34a3)
+     Running tests/dynamic.rs (target/release/deps/dynamic-218520b832dc3168)
+     Running tests/execution.rs (target/release/deps/execution-bd0edd34097ab69e)
+     Running tests/initializers.rs (target/release/deps/initializers-613fdf5bfb83d17e)
+     Running tests/instances.rs (target/release/deps/instances-1d28d4e5d255d28d)
+     Running tests/memory_flags.rs (target/release/deps/memory_flags-75bf359028419102)
+     Running tests/objc.rs (target/release/deps/objc-a512dfb3609abb5c)
+     Running tests/payload.rs (target/release/deps/payload-d3f0f7913ea0b4e9)
+     Running tests/protocols.rs (target/release/deps/protocols-d0e7173045d6ae6f)
+     Running tests/strings.rs (target/release/deps/strings-ca227878974963f7)
+error: test failed, to rerun pass `--test strings`

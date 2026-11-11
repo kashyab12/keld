@@ -30,15 +30,20 @@ and [static protocol introspection](protocols.md) are also implemented. Bounded
 guest superclass calls. [Fixed-layout instances](instances.md) add real bounded
 creation/disposal, pointer methods and lifetime checks. [Q payload fields](payload.md)
 add validated inherited storage, real setters/getters and exact extra-byte bounds.
-Full guest pthread behavior, general object lifecycle and
+An [original constant-string framework read path](strings.md) now executes
+non-ARC literals through a guest getter and libc. The retained ARC Foundation
+program still rejects a missing pool import after original framework resolution.
+Full guest pthread behavior, ARC/pool ownership, general object lifecycle and
 framework execution remain open. The actual
-Foundation program still stops at its unsupplied framework dependency.
+Foundation program still fails before executing its ARC workflow;
+[the latest attempt](../evidence/strings/arc-minimal-still-unsupported.json)
+records the pool import blocker.
 
 The [Notes app reference](../modules/sable/fixtures/apps/Notes) now exercises
 external taps/typing, scroll/navigation, persisted state/reset and real Metal
 readback plus presented pixels on native Simulator. Sable parses its ARM64
 executable's sections, then rejects the missing UIKit dependency and completes zero app
-interactions ([current attempt](../evidence/payload/app-still-unsupported.json)).
+interactions ([current attempt](../evidence/strings/app-still-unsupported.json)).
 UIKit itself remains unsupplied.
 Restricted chained pointer linking now works on original LLVM fixtures, with
 matching Apple-native outputs; [format coverage](chained-fixups.md) and

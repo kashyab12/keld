@@ -651,6 +651,33 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
         } else {
             None
         };
+        let constants = if order
+            .iter()
+            .any(|&i| objects[i].objc_sections.has_constants())
+        {
+            let provider = *ids
+                .get(crate::objc::constants::CORE_FOUNDATION)
+                .ok_or("constant strings require CoreFoundation provider")?;
+            let foundation = *ids
+                .get(crate::objc::constants::FOUNDATION)
+                .ok_or("constant strings require Foundation provider")?;
+            if !order.contains(&provider) || !order.contains(&foundation) {
+                return Err("constant framework provider not loaded".into());
+            }
+            let alias = all_exports[provider]
+                .get("___CFConstantStringClassReference")
+                .ok_or("missing constant-string class alias")?;
+            if alias.tls {
+                return Err("constant-string class alias cannot be TLS".into());
+            }
+            Some(crate::objc::constants::Provider {
+                index: provider,
+                foundation,
+                class: alias.address,
+            })
+        } else {
+            None
+        };
         Some(crate::objc::Runtime {
             get_class: symbol("_objc_getClass")?,
             msg_send: symbol("_objc_msgSend")?,
@@ -671,6 +698,7 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
                 .then(|| symbol("_objc_msgSendSuper2"))
                 .transpose()?,
             protocols,
+            constants,
         })
     } else {
         None

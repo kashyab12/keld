@@ -1,0 +1,7 @@
+{
+  "kind": "Retained unchanged-source ARC Foundation executable in local Sable with original framework providers; native binary not transferred",
+  "exit": 125,
+  "stdout": "",
+  "stderr": "sable: unresolved import _objc_autoreleasePoolPop (ordinal 2)\n",
+  "foundation_workflow_completed": false
+}

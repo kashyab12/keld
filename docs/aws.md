@@ -48,7 +48,10 @@ extra-byte zeroing/isolation, ABI and constructor/main/TLV state in both engines
 The payload matrix adds four root/child sizes through 64 bytes, guest Q getters
 and void setters, super sums, exact extra-byte boundaries and fresh-run state.
 Its 64 compiled variants execute in both engines; independent format reports
-inspect emitted ivar cells, layouts and signatures.
+inspect emitted ivar cells, layouts and signatures. The constant-string matrix
+executes eight non-ARC programs in both engines with original framework classes,
+an inherited guest getter and guest strlen/strcmp. Four format reports inspect
+twenty executable/library inputs; no Apple framework enters Linux.
 The `--extended` path runs three independent oracle seeds in interpreter/JIT modes.
 It also rebuilds and checks four original chained-fixup programs in both engines;
 the eight outputs and rebuilt binary hashes are retained under `results/chained`.

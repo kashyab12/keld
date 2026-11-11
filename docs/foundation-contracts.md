@@ -92,8 +92,11 @@ not attempted. Main's original chained-fixup fixtures already address the earlie
 format rejection. At that checkpoint, the actual Notes app stopped at missing UIKit before
 pointer patching or startup (`evidence/chained/RESULTS.md`). The later
 [scalar ObjC2 gate](objc.md) supports absolute and on-disk compact method lists.
-The current app attempt rejects protocol-list metadata even earlier; see
-`evidence/objc-compact/app-still-unsupported.json`.
+That historical app attempt rejected protocol-list metadata even earlier; see
+`evidence/objc-compact/app-still-unsupported.json`. The latest
+[constant-string slice](strings.md) resolves original Foundation/CoreFoundation
+providers for the retained minimal, then stops at an unresolved pool import.
+The complete ARC workflow and UIKit app remain unsupported.
 
 ## Gate 1: checked per-process image initialization
 

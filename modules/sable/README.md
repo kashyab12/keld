@@ -1,5 +1,9 @@
 # Sable
 
+The [original constant-string framework slice](../../docs/strings.md) executes
+ASCII literal reads through a guest NSString method and scalar guest libc.
+This covers no ARC pools, uppercase results or general Foundation behavior.
+
 [Q payload layouts](../../docs/payload.md) support validated instance fields up to
 64-byte class sizes, genuine void setters/getters and allocation spans derived
 from class metadata. Signed word literal loads cover emitted ivar-offset access.
@@ -56,7 +60,7 @@ Bounded [plain-C TLS](../../docs/tls.md) and an original
 non-shared-cache compact method lists, now execute the documented
 console profiles. [Static protocols](../../docs/protocols.md) support checked
 name lookup and direct conformance introspection without inventing method
-implementations. There is no Foundation, UIKit, Swift runtime, Mach message transport,
+implementations. There is no general Foundation, UIKit, Swift runtime, Mach message transport,
 thread scheduler, atomics, NEON, PAC, graphics or app-bundle support. Ordinary
 compiler-generated programs will encounter unsupported instructions. ARM64e is
 rejected. Run only the trusted research fixtures; Sable has not been audited as a

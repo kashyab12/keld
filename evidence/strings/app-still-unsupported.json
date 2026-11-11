@@ -1,0 +1,6 @@
+{
+  "exit": 125,
+  "stdout": "",
+  "stderr": "sable: required dylib not supplied: /System/Library/Frameworks/UIKit.framework/UIKit\n",
+  "sable_interactions_completed": 0
+}

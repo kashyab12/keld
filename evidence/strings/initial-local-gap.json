@@ -1,0 +1,8 @@
+{
+  "kind": "Initial original probe failure before scalar fixture correction",
+  "exit": 125,
+  "stderr": "sable: unsupported ARM64 instruction 0xad400500 at 0x10000076c\n",
+  "instruction": "LDP Q0,Q1 local output-banner copy",
+  "correction": "Make the fixed output banner static const; getter, constant data checks and libc execution unchanged",
+  "simd_implemented": false
+}

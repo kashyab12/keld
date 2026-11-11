@@ -4,6 +4,10 @@ These are raw receipts from bounded experiments, not a complete simulator or
 competitive benchmark. No Apple runtime, SDK, credentials, cloud account ID,
 instance IP or SSH key is distributed here.
 
+The [constant-string report](strings/RESULTS.md) adds original framework classes,
+validated ASCII literals and actual guest getter/libc execution. The retained
+ARC Foundation workflow still fails at its pool import.
+
 The [Q payload report](payload/RESULTS.md) adds original getters, void setters,
 inherited fields and exact class-size allocation bounds. Native Apple reference,
 Sable execution and the missing UIKit app path are recorded separately.

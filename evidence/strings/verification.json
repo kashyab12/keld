@@ -1,0 +1,51 @@
+{
+  "verified_at": "2026-11-11T06:34:41.466549+00:00",
+  "native_reference_programs": 12,
+  "native_string_programs": 8,
+  "native_cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  },
+  "local_rust_tests": 86,
+  "local_checks": "Recipe18 quick/full passed and published after manual hello verification",
+  "ec2_rust_tests": 92,
+  "ec2_string_cli_passes": 16,
+  "ec2_format_reports": 4,
+  "ec2_inspected_inputs": 20,
+  "ec2_previous_positive_cli": {
+    "payload": 128,
+    "instances": 32,
+    "super": 40,
+    "protocols": 16
+  },
+  "ec2_oracle_cases": 84702,
+  "ec2_runtime_hashes_matched": 427,
+  "source_fixture_hashes_matched": 46,
+  "cpu_only_benchmark_samples": 186,
+  "cpu_only_benchmark_failures": 0,
+  "cloud_cleanup": {
+    "active_instances": 0,
+    "volumes": 0,
+    "security_groups": 0,
+    "key_pairs": 0
+  },
+  "retained_arc_minimal": {
+    "kind": "Retained unchanged-source ARC Foundation executable in local Sable with original framework providers; native binary not transferred",
+    "exit": 125,
+    "stdout": "",
+    "stderr": "sable: unresolved import _objc_autoreleasePoolPop (ordinal 2)\n",
+    "foundation_workflow_completed": false
+  },
+  "actual_notes": {
+    "exit": 125,
+    "stdout": "",
+    "stderr": "sable: required dylib not supplied: /System/Library/Frameworks/UIKit.framework/UIKit\n",
+    "sable_interactions_completed": 0
+  },
+  "research_native_references": 6,
+  "limits": [
+    "Non-ARC ASCII immutable constants only; no uppercase/pool/lifetime implementation",
+    "No general Foundation/UIKit/Unicode/NSObject/ARC/thread support",
+    "No renderer, microVM, concurrency or competitor run"
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "kind": "curated original native reference summary",
+  "native_passes": 6,
+  "owned_uuid": "BC49B038-C7D0-4C5D-8F89-EC9611A1A78F",
+  "cleanup": {
+    "shutdown_exit": 0,
+    "delete_exit": 0,
+    "remaining_devices": 0,
+    "owned_uuid_present": false
+  },
+  "compiler": "Apple clang version 21.0.0 (clang-2100.4.1.1)",
+  "xcode": "Xcode 27.2\nBuild version 27B52",
+  "runtime": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+    "version": "27.2",
+    "buildversion": "24B8117"
+  },
+  "minimal_source_unchanged": true,
+  "source_sha256": {
+    "constants.m": "1dcc8a733780e81152161db6d454c8cf4fb9d38ef4949c28541b4f7f671fce5f",
+    "literal-image.m": "593fec597b63c0513f657b42fee5962609d118270ecfd9bc1038da7e7e5e812d",
+    "minimal.m": "93842ae2e34d37bda096a0ae278ae7be135b967b069fb51b283db434f861d5c9",
+    "ownership-abi.S": "02645b846a27d0548f186e05b0eca0380734825ca51a7176c2fced4613267fed",
+    "ownership.m": "fff87de0e0f562ef4df47a4e9c2751817b8220028fdd81f66ee108d98b9c4185"
+  },
+  "runs": [
+    {
+      "platform": "macosx",
+      "program": "minimal",
+      "exit": 0,
+      "stdout": "SABLE FOUNDATION\n"
+    },
+    {
+      "platform": "macosx",
+      "program": "constants",
+      "exit": 0,
+      "stdout": "{\"kind\":\"native string/constant observer\",\"error\":0,\"cfstring_size\":32,\"flags\":1992,\"length\":16,\"isa_is_class_reference_address\":1,\"class_is_class_reference_address\":1,\"same_literal_across_images\":0,\"uppercase_utf8_is_literal_bytes\":0,\"result_alive_after_strong_nil_inside_pool\":1,\"result_dead_after_pool\":1,\"literal_alive_after_pool\":1}\n"
+    },
+    {
+      "platform": "macosx",
+      "program": "ownership",
+      "exit": 0,
+      "stdout": "{\"kind\":\"native ownership observer\",\"error\":0,\"after_inner_mask\":8,\"final_dead_mask\":126,\"fallback_survived_pool\":1,\"candidate_dead_before_pop\":1,\"release_x20_preserved_mask\":\"fffc00f0\",\"release_x20_required_mask\":\"bffc0000\",\"order\":[3,2,4,5,6,1]}\n"
+    },
+    {
+      "platform": "iphonesimulator",
+      "program": "minimal",
+      "exit": 0,
+      "stdout": "SABLE FOUNDATION\n"
+    },
+    {
+      "platform": "iphonesimulator",
+      "program": "constants",
+      "exit": 0,
+      "stdout": "{\"kind\":\"native string/constant observer\",\"error\":0,\"cfstring_size\":32,\"flags\":1992,\"length\":16,\"isa_is_class_reference_address\":1,\"class_is_class_reference_address\":1,\"same_literal_across_images\":0,\"uppercase_utf8_is_literal_bytes\":0,\"result_alive_after_strong_nil_inside_pool\":1,\"result_dead_after_pool\":1,\"literal_alive_after_pool\":1}\n"
+    },
+    {
+      "platform": "iphonesimulator",
+      "program": "ownership",
+      "exit": 0,
+      "stdout": "{\"kind\":\"native ownership observer\",\"error\":0,\"after_inner_mask\":8,\"final_dead_mask\":126,\"fallback_survived_pool\":1,\"candidate_dead_before_pop\":1,\"release_x20_preserved_mask\":\"fffc00f0\",\"release_x20_required_mask\":\"bffc0000\",\"order\":[3,2,4,5,6,1]}\n"
+    }
+  ],
+  "sable_execution": false,
+  "ci_queried": false,
+  "failed_attempts": [
+    {
+      "attempt": "01",
+      "kind": "ARC cast compile error",
+      "native_runs": 0,
+      "devices_created": 0
+    },
+    {
+      "attempt": "02",
+      "kind": "incorrect release_x20 all-GPR preservation assertion",
+      "native_runs": 3,
+      "ownership_exit": 19,
+      "devices_created": 0
+    }
+  ],
+  "compile_only_kernel_executed": false
+}

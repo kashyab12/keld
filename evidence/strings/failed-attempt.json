@@ -1,0 +1,19 @@
+{
+  "attempt": "aws-01",
+  "remote_exit": 101,
+  "controller_exit": 1,
+  "observed": "Both engines rejected null guest byte access; new test incorrectly compared architecture-specific fault text",
+  "interpreter": "guest memory fault at 0x0, length 1, permission 1",
+  "jit": "guest memory/SP fault at PC 0x240000284",
+  "correction": "Keep full successful-outcome and runtime-error equality; separately assert expected memory rejection diagnostics and compare precise write-fault CPU/memory state in both JIT dispatch modes",
+  "runtime_implementation_changed": false,
+  "cleanup": {
+    "active_instances": 0,
+    "volumes": 0,
+    "security_groups": 0,
+    "key_pairs": 0
+  },
+  "only_runtime_manifest_change": [
+    "modules/sable/tests/strings.rs"
+  ]
+}

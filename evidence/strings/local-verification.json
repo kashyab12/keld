@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-11-11T06:27:58.612602+00:00",
+  "local_rust_tests": 86,
+  "recipe_quick": "passed",
+  "recipe_full": "passed",
+  "local_string_cli_passes": 8,
+  "local_format_reports": 4,
+  "inspected_inputs": 20,
+  "original_binaries_match_rebuild": 28,
+  "source_fixture_hashes": 46,
+  "local_oracle_cases": 14117,
+  "negative_fault_test_corrected": true,
+  "after_test_correction": "Recipe18 format/lint and full tests passed; no runtime, fixture, scripts or CPU ISA change"
+}

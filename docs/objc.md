@@ -3,7 +3,7 @@
 Sable registers a bounded original Objective-C root-class profile and dispatches
 messages to the compiled ARM64 method bodies. This is an original MIT
 implementation, with an explicit original libobjc fixture. It supplies no Apple
-runtime, Foundation, UIKit, general allocator or UI. [Execution receipts](../evidence/objc/RESULTS.md)
+runtime, general Foundation/UIKit, general allocator or UI. [Execution receipts](../evidence/objc/RESULTS.md)
 separate Sable on Linux from the native Apple reference.
 
 ## Registration and ownership
@@ -11,7 +11,10 @@ separate Sable on Linux from the native Apple reference.
 After eager legacy/chained fixups, the linker checks ObjC metadata in each
 explicitly loaded image, canonicalizes selectors and publishes an immutable
 lookup plan before C constructors execute. Each ObjC image must declare the
-explicit `/usr/lib/libobjc.A.dylib` dependency. Missing imports remain errors.
+explicit `/usr/lib/libobjc.A.dylib` dependency. A narrowly validated
+[constant-only consumer](strings.md) can instead depend on its loaded
+CoreFoundation class provider; actual class/protocol/messenger images retain the
+direct runtime requirement. Missing imports remain errors.
 The original library exports `objc_getClass`, `objc_msgSend` and a zero data word
 named `_objc_empty_cache`; no Apple cache algorithm is implemented.
 
@@ -25,7 +28,8 @@ explicit isa ivar has offset 0, type `#`, alignment 8 and size 8. Other fields
 require exact contiguous Q storage and owning four-byte offset cells.
 
 Supported class/instance method signatures return Q, @ or void with zero through
-six Q/@ arguments, using the same 64-bit scalar register channel. Protocol
+six Q/@ arguments, using the same 64-bit scalar register channel. The exact
+no-argument ordinary return `r*16@0:8` also transports a guest byte address. Protocol
 descriptions retain the unsigned-Q-only profile. Encodings exactly match the selector's
 colon count and argument positions. Classrefs name registered ordinary classes.
 Selectors are interned by byte name into deterministic guest SEL addresses;
@@ -158,7 +162,7 @@ Deeper/dynamic inheritance, categories, inherited/dynamic/optional protocol form
 general allocation/lifecycle, forwarding, dynamic class changes, caches, tagged/nonpointer isa,
 shared-cache direct/signed method lists, PAC, exceptions, vector/FP/aggregate returns,
 pthreads and destructors remain unsupported. These console checks do not prove
-Foundation/UIKit startup, GPU-free app interactions or any competitor advantage.
+general Foundation/UIKit startup, GPU-free app interactions or any competitor advantage.
 
 Format and behavior references: Apple's pinned
 [ObjC2 records](https://github.com/apple-oss-distributions/objc4/blob/fb265098298302243cd7eeaa1f63f0ba7786dd9a/runtime/objc-runtime-new.h)
