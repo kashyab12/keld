@@ -71,10 +71,29 @@ dispatch modes.
   HFAs with more than four members reject. Protocol descriptions keep the
   existing `Q`-only profile.
 
+## Integer forms added with this contract
+
+Real clang output for the fixture and the FirstFrame draft also needs integer
+forms the original subset lacked: LSRV, MUL (MADD), UDIV, SXTW (SBFM) and LDRSW.
+Their whole encoding groups are now supported and checked by the Unicorn oracle:
+
+- UDIV, SDIV (x/0 = 0, INT_MIN/-1 = INT_MIN), LSLV, LSRV, ASRV, RORV.
+- MADD, MSUB, SMADDL, SMSUBL, UMADDL, UMSUBL, SMULH, UMULH.
+- SBFM in every form (SXTB/SXTH/SXTW, ASR #imm, SBFX, SBFIZ) and EXTR/ROR #imm.
+- RBIT, REV16, REV32, REV, CLZ, CLS.
+- LDRSB, LDRSH and LDRSW: unsigned offset, unscaled, pre/post-index and
+  register offset.
+
+The JIT explicitly declines these forms to the checked Rust transition (exit
+reason 4), as it already does for pairs and conditional selects. BFM, CRC32 and
+the PAC forms still reject.
+
 ## Fixture
 
 `fixtures/fp/hfa.c` (MIT) passes and returns CGRect/CGPoint/CGSize and float
 HFAs, nests calls, keeps eight doubles live in d8-d15 across calls and `write`
-SVCs, and prints raw IEEE bits for edge arithmetic. `scripts/check-fp.sh`
+SVCs, and prints raw IEEE bits for edge arithmetic. Its integer helpers use ordinary
+C (variable shifts, 64-bit multiply, `%`, `int` indices), so it also covers the
+integer forms above. `scripts/check-fp.sh`
 rebuilds it with the host LLVM and compares it byte for byte with
 `fixtures/fp/hfa-expected.txt`.

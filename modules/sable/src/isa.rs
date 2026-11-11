@@ -145,15 +145,236 @@ pub enum Op {
     Nop,
     /// Bounded FP/SIMD subset; see `crate::fp`.
     Fp(crate::fp::FpOp),
+    /// UDIV/SDIV/LSLV/LSRV/ASRV/RORV (kind = opcode bits 15:10).
+    DataProc2 {
+        dst: u8,
+        lhs: u8,
+        rhs: u8,
+        kind: u8,
+        wide: bool,
+    },
+    /// RBIT/REV16/REV32/REV/CLZ/CLS (kind = opcode bits 15:10).
+    DataProc1 {
+        dst: u8,
+        src: u8,
+        kind: u8,
+        wide: bool,
+    },
+    /// MADD/MSUB (op31 = 0), SMADDL/SMSUBL (1), SMULH (2), UMADDL/UMSUBL (5), UMULH (6).
+    MulAdd {
+        dst: u8,
+        lhs: u8,
+        rhs: u8,
+        acc: u8,
+        op31: u8,
+        subtract: bool,
+        wide: bool,
+    },
+    /// SBFM (SXTB/SXTH/SXTW, ASR immediate, SBFX, SBFIZ).
+    SignedBitfield {
+        dst: u8,
+        src: u8,
+        right: u8,
+        left: u8,
+        bits: u8,
+        wide: bool,
+    },
+    /// EXTR (and ROR immediate).
+    Extract {
+        dst: u8,
+        lhs: u8,
+        rhs: u8,
+        lsb: u8,
+        wide: bool,
+    },
+    /// LDRSB/LDRSH/LDRSW: immediate (index = None) or register offset.
+    SignedLoad {
+        reg: u8,
+        base: u8,
+        offset: i64,
+        index: Option<(u8, u8, bool)>,
+        bytes: u8,
+        wide: bool,
+        writeback: bool,
+        post: bool,
+    },
 }
 
 fn signed(value: u32, bits: u32) -> i64 {
     ((value as i64) << (64 - bits)) >> (64 - bits)
 }
 
+/// Integer forms added for compiler output: 1/2/3-source data processing, SBFM,
+/// EXTR and sign-extending loads. `None` = not one of these groups.
+fn decode_integer_extensions(word: u32) -> Option<Result<Op>> {
+    let wide = word >> 31 != 0;
+    let dst = (word & 31) as u8;
+    let src = ((word >> 5) & 31) as u8;
+    let rhs = ((word >> 16) & 31) as u8;
+    let reject = |name: &str| {
+        Some(Err(format!(
+            "unsupported ARM64 instruction {name} {word:#010x}"
+        )))
+    };
+    // Data-processing (2 source).
+    if word & 0x7fe0_0000 == 0x1ac0_0000 {
+        let kind = ((word >> 10) & 63) as u8;
+        return match kind {
+            2 | 3 | 8..=11 => Some(Ok(Op::DataProc2 {
+                dst,
+                lhs: src,
+                rhs,
+                kind,
+                wide,
+            })),
+            _ => reject("data-processing 2-source (CRC32/PAC/other)"),
+        };
+    }
+    // Data-processing (1 source), opcode2 = 0.
+    if word & 0x7fff_0000 == 0x5ac0_0000 {
+        let kind = ((word >> 10) & 63) as u8;
+        return match (kind, wide) {
+            (0..=2 | 4 | 5, _) | (3, true) => Some(Ok(Op::DataProc1 {
+                dst,
+                src,
+                kind,
+                wide,
+            })),
+            _ => reject("data-processing 1-source (unallocated)"),
+        };
+    }
+    // Data-processing (3 source).
+    if word & 0x1f00_0000 == 0x1b00_0000 {
+        let op54 = (word >> 29) & 3;
+        let op31 = ((word >> 21) & 7) as u8;
+        let subtract = word & (1 << 15) != 0;
+        let acc = ((word >> 10) & 31) as u8;
+        let ok = op54 == 0
+            && match op31 {
+                0 => true,
+                1 | 5 => wide,
+                2 | 6 => wide && !subtract,
+                _ => false,
+            };
+        if !ok {
+            return reject("data-processing 3-source (unallocated)");
+        }
+        return Some(Ok(Op::MulAdd {
+            dst,
+            lhs: src,
+            rhs,
+            acc,
+            op31,
+            subtract,
+            wide,
+        }));
+    }
+    // SBFM.
+    if word & 0x7f80_0000 == 0x1300_0000 {
+        let n = word & (1 << 22) != 0;
+        let r = ((word >> 16) & 63) as u8;
+        let s = ((word >> 10) & 63) as u8;
+        if n != wide || (!wide && (r >= 32 || s >= 32)) {
+            return reject("SBFM (reserved encoding)");
+        }
+        let width = if wide { 64 } else { 32 };
+        let (right, left, bits) = if s >= r {
+            (r, 0, s - r + 1)
+        } else {
+            (0, width - r, s + 1)
+        };
+        return Some(Ok(Op::SignedBitfield {
+            dst,
+            src,
+            right,
+            left,
+            bits,
+            wide,
+        }));
+    }
+    // EXTR.
+    if word & 0x7fa0_0000 == 0x1380_0000 {
+        let n = word & (1 << 22) != 0;
+        let lsb = ((word >> 10) & 63) as u8;
+        if n != wide || (!wide && lsb >= 32) {
+            return reject("EXTR (reserved encoding)");
+        }
+        return Some(Ok(Op::Extract {
+            dst,
+            lhs: src,
+            rhs,
+            lsb,
+            wide,
+        }));
+    }
+    // Sign-extending loads (integer, V = 0): opc = 10 (to X) or 11 (to W).
+    let size = word >> 30;
+    let opc = (word >> 22) & 3;
+    let sign_load = word & (1 << 26) == 0 && opc >= 2 && (size < 2 || (size == 2 && opc == 2));
+    if !sign_load {
+        return None;
+    }
+    let bytes = 1u8 << size;
+    let wide = opc == 2;
+    if word & 0x3b00_0000 == 0x3900_0000 {
+        return Some(Ok(Op::SignedLoad {
+            reg: dst,
+            base: src,
+            offset: (((word >> 10) & 4095) as i64) << size,
+            index: None,
+            bytes,
+            wide,
+            writeback: false,
+            post: false,
+        }));
+    }
+    if word & 0x3b20_0000 == 0x3800_0000 {
+        let mode = (word >> 10) & 3;
+        if mode == 2 {
+            return reject("LDTRSB/LDTRSH/LDTRSW (unprivileged)");
+        }
+        let writeback = mode != 0;
+        if writeback && src != 31 && src == dst {
+            return Some(Err(
+                "constrained-unpredictable memory writeback overlap".into()
+            ));
+        }
+        return Some(Ok(Op::SignedLoad {
+            reg: dst,
+            base: src,
+            offset: signed((word >> 12) & 511, 9),
+            index: None,
+            bytes,
+            wide,
+            writeback,
+            post: mode == 1,
+        }));
+    }
+    if word & 0x3b20_0c00 == 0x3820_0800 {
+        let option = ((word >> 13) & 7) as u8;
+        if option & 2 == 0 {
+            return reject("sign-extending register-offset load (reserved extend)");
+        }
+        return Some(Ok(Op::SignedLoad {
+            reg: dst,
+            base: src,
+            offset: 0,
+            index: Some((rhs, option, word & (1 << 12) != 0)),
+            bytes,
+            wide,
+            writeback: false,
+            post: false,
+        }));
+    }
+    None
+}
+
 pub fn decode(word: u32, pc: u64) -> Result<Op> {
     if let Some(fp) = crate::fp::decode(word, pc) {
         return fp.map(Op::Fp);
+    }
+    if let Some(op) = decode_integer_extensions(word) {
+        return op;
     }
     let wide = word >> 31 != 0;
     let dst = (word & 31) as u8;

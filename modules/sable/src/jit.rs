@@ -557,6 +557,12 @@ impl Assembler {
             | Op::Pair { .. }
             | Op::CondCompare { .. }
             | Op::CondSelect { .. }
+            | Op::DataProc2 { .. }
+            | Op::DataProc1 { .. }
+            | Op::MulAdd { .. }
+            | Op::SignedBitfield { .. }
+            | Op::Extract { .. }
+            | Op::SignedLoad { .. }
             | Op::Fp(_) => {
                 unreachable!("memory and FP/SIMD operations use checked Rust transition")
             }
@@ -708,6 +714,12 @@ impl Compiled {
                     | Op::Pair { .. }
                     | Op::CondCompare { .. }
                     | Op::CondSelect { .. }
+                    | Op::DataProc2 { .. }
+                    | Op::DataProc1 { .. }
+                    | Op::MulAdd { .. }
+                    | Op::SignedBitfield { .. }
+                    | Op::Extract { .. }
+                    | Op::SignedLoad { .. }
                     | Op::Fp(_) => {
                         boundaries.insert(pc);
                         boundaries.insert(pc + 4);
@@ -746,7 +758,18 @@ impl Compiled {
                     bodies.insert(*pc, a.bytes.len());
                     a.memory(*op)?;
                 }
-                Ok(Op::Pair { .. } | Op::CondCompare { .. } | Op::CondSelect { .. }) => {
+                // Explicitly declined to the checked Rust transition (exit reason 4).
+                Ok(
+                    Op::Pair { .. }
+                    | Op::CondCompare { .. }
+                    | Op::CondSelect { .. }
+                    | Op::DataProc2 { .. }
+                    | Op::DataProc1 { .. }
+                    | Op::MulAdd { .. }
+                    | Op::SignedBitfield { .. }
+                    | Op::Extract { .. }
+                    | Op::SignedLoad { .. },
+                ) => {
                     a.guard(*pc);
                     bodies.insert(*pc, a.bytes.len());
                     a.exit(4);

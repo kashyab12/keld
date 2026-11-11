@@ -120,7 +120,7 @@ fn pair_fault_does_not_partially_store_or_update_base() {
 #[test]
 fn reject_vector_signed_unprivileged_and_overlap_encodings() {
     for word in [
-        0x4c407000, 0x39800000, 0xb8400800, 0xf8408400, 0xa9bf0000, 0xa9400000,
+        0x4c407000, 0xf9800000, 0xb8400800, 0xf8408400, 0xa9bf0000, 0xa9400000,
     ] {
         assert!(decode(word, 0x1000).is_err(), "{word:x}");
     }
@@ -326,7 +326,7 @@ fn signed_literal_word_values_zr_displacements_and_precise_faults() {
             }
         }
     }
-    for word in [0xd8000000, 0xdc000000, 0xb9800000, 0xb8a00800] {
+    for word in [0xd8000000, 0xdc000000, 0xb9c00000, 0xb8a00800] {
         assert!(decode(word, 0x1000).is_err());
     }
 }

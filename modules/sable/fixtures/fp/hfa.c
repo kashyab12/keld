@@ -14,7 +14,8 @@ typedef struct Color4f { float r, g, b, a; } Color4f;
 typedef unsigned long long u64;
 typedef unsigned int u32;
 
-// Clang may lower the zeroed CGRect array to memset; volatile keeps this byte loop scalar.
+// Clang may lower the zeroed CGRect array to memset; volatile keeps this byte loop scalar
+// (and keeps the compiler from turning it back into a memset call).
 __attribute__((no_builtin("memset"))) void *memset(void *dst, int value, unsigned long n) {
     volatile unsigned char *p = dst;
     while (n--) *p++ = (unsigned char)value;
@@ -23,24 +24,18 @@ __attribute__((no_builtin("memset"))) void *memset(void *dst, int value, unsigne
 
 static char line[256];
 static unsigned used;
-static u64 digest = 5381;
+static u64 digest = 0xcbf29ce484222325ull;
 
 static void put(const char *s) {
     while (*s) line[used++] = *s++;
 }
-// Only constant shifts: Sable's integer subset has no variable shifts or MUL.
-static void hex(u64 v, unsigned digits) {
+static void hex(u64 v, int digits) {
     static const char x[] = "0123456789abcdef";
-    char text[16];
-    for (unsigned i = digits; i-- > 0;) {
-        text[i] = x[v & 15];
-        v >>= 4;
-    }
-    for (unsigned i = 0; i < digits; i++) line[used++] = text[i];
+    for (int i = digits - 1; i >= 0; i--) line[used++] = x[(v >> (i * 4)) & 15];
 }
 static void flush(void) {
     line[used++] = '\n';
-    for (unsigned i = 0; i < used; i++) digest = (digest << 5) + digest + (unsigned char)line[i];
+    for (unsigned i = 0; i < used; i++) digest = (digest ^ (unsigned char)line[i]) * 0x100000001b3ull;
     write(1, line, used);
     used = 0;
 }
@@ -122,7 +117,7 @@ __attribute__((noinline)) CGRect union_rect(CGRect a, CGRect b) {
 __attribute__((noinline)) CGRect offset_by(int count, CGRect r, long scale, CGPoint delta, float bias) {
     return make_rect(r.origin.x + delta.x * count, r.origin.y + delta.y * scale, r.size.width + bias, r.size.height);
 }
-__attribute__((noinline)) unsigned contains(CGRect r, CGPoint p) {
+__attribute__((noinline)) int contains(CGRect r, CGPoint p) {
     return p.x >= r.origin.x && p.y >= r.origin.y && p.x < r.origin.x + r.size.width &&
            p.y < r.origin.y + r.size.height;
 }
@@ -185,7 +180,7 @@ __attribute__((noinline)) void arithmetic_edges(void) {
             put(",");
             hex(bits(__builtin_sqrt(x)), 16);
             put(",");
-            hex(x < y ? 1u : x == y ? 2u : x > y ? 3u : 4u, 1);
+            hex(x < y ? 1 : x == y ? 2 : x > y ? 3 : 4, 1);
             put(",");
             hex(bits(__builtin_fmin(x, y)), 16);
             put(",");
@@ -194,7 +189,7 @@ __attribute__((noinline)) void arithmetic_edges(void) {
         }
     }
     for (unsigned i = 0; i < sizeof fedge / sizeof fedge[0]; i++) {
-        float x = ffrom(fedge[i]), y = ffrom(fedge[i + 1 < 6 ? i + 1 : 0]);
+        float x = ffrom(fedge[i]), y = ffrom(fedge[(i + 1) % 6]);
         put("fedge.");
         hex(i, 2);
         put("=");

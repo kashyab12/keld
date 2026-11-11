@@ -441,6 +441,179 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
         Op::Svc => trapped = true,
         Op::Nop => {}
         Op::Fp(op) => crate::fp::execute(cpu, op, memory, cpu.pc)?,
+        Op::DataProc2 {
+            dst,
+            lhs,
+            rhs,
+            kind,
+            wide,
+        } => {
+            let width = if wide { 64 } else { 32 };
+            let mask = if wide { u64::MAX } else { u32::MAX as u64 };
+            let a = cpu.reg(lhs, false) & mask;
+            let b = cpu.reg(rhs, false) & mask;
+            let amount = (b % width) as u32;
+            let result = match kind {
+                2 => a.checked_div(b).unwrap_or(0),
+                3 => {
+                    let (x, y) = if wide {
+                        (a as i64, b as i64)
+                    } else {
+                        (a as u32 as i32 as i64, b as u32 as i32 as i64)
+                    };
+                    if y == 0 {
+                        0
+                    } else if wide {
+                        x.wrapping_div(y) as u64
+                    } else {
+                        (x as i32).wrapping_div(y as i32) as u32 as u64
+                    }
+                }
+                8 => a << amount,
+                9 => a >> amount,
+                10 => {
+                    if wide {
+                        ((a as i64) >> amount) as u64
+                    } else {
+                        ((a as u32 as i32) >> amount) as u32 as u64
+                    }
+                }
+                _ => {
+                    if wide {
+                        a.rotate_right(amount)
+                    } else {
+                        (a as u32).rotate_right(amount) as u64
+                    }
+                }
+            };
+            cpu.set(dst, result, wide, false);
+        }
+        Op::DataProc1 {
+            dst,
+            src,
+            kind,
+            wide,
+        } => {
+            let a = cpu.reg(src, false);
+            let w = a as u32;
+            let result = match (kind, wide) {
+                (0, true) => a.reverse_bits(),
+                (0, false) => w.reverse_bits() as u64,
+                (1, _) => {
+                    let swapped =
+                        ((a & 0x00ff_00ff_00ff_00ff) << 8) | ((a >> 8) & 0x00ff_00ff_00ff_00ff);
+                    if wide { swapped } else { swapped as u32 as u64 }
+                }
+                (2, true) => {
+                    ((a as u32).swap_bytes() as u64)
+                        | (((a >> 32) as u32).swap_bytes() as u64) << 32
+                }
+                (2, false) => w.swap_bytes() as u64,
+                (3, _) => a.swap_bytes(),
+                (4, true) => u64::from(a.leading_zeros()),
+                (4, false) => u64::from(w.leading_zeros()),
+                (_, true) => u64::from((a ^ (a << 1) | 1).leading_zeros()),
+                (_, false) => u64::from((w ^ (w << 1) | 1).leading_zeros()),
+            };
+            cpu.set(dst, result, wide, false);
+        }
+        Op::MulAdd {
+            dst,
+            lhs,
+            rhs,
+            acc,
+            op31,
+            subtract,
+            wide,
+        } => {
+            let a = cpu.reg(lhs, false);
+            let b = cpu.reg(rhs, false);
+            let c = cpu.reg(acc, false);
+            let product = match op31 {
+                0 => a.wrapping_mul(b),
+                1 => (a as u32 as i32 as i64).wrapping_mul(b as u32 as i32 as i64) as u64,
+                5 => (a as u32 as u64).wrapping_mul(b as u32 as u64),
+                2 => ((i128::from(a as i64) * i128::from(b as i64)) >> 64) as u64,
+                _ => ((u128::from(a) * u128::from(b)) >> 64) as u64,
+            };
+            let result = match op31 {
+                2 | 6 => product,
+                _ if subtract => c.wrapping_sub(product),
+                _ => c.wrapping_add(product),
+            };
+            cpu.set(dst, result, wide, false);
+        }
+        Op::SignedBitfield {
+            dst,
+            src,
+            right,
+            left,
+            bits,
+            wide,
+        } => {
+            let value = cpu.reg(src, false);
+            let value = if wide { value } else { value as u32 as u64 };
+            let field = (value >> right) & (u64::MAX >> (64 - bits));
+            let shift = 64 - u32::from(bits);
+            let extended = (((field << shift) as i64) >> shift) as u64;
+            cpu.set(dst, extended << left, wide, false);
+        }
+        Op::Extract {
+            dst,
+            lhs,
+            rhs,
+            lsb,
+            wide,
+        } => {
+            let high = cpu.reg(lhs, false);
+            let low = cpu.reg(rhs, false);
+            let result = if wide {
+                ((u128::from(high) << 64 | u128::from(low)) >> lsb) as u64
+            } else {
+                ((u64::from(high as u32) << 32 | u64::from(low as u32)) >> lsb) as u32 as u64
+            };
+            cpu.set(dst, result, wide, false);
+        }
+        Op::SignedLoad {
+            reg,
+            base,
+            offset,
+            index,
+            bytes,
+            wide,
+            writeback,
+            post,
+        } => {
+            let memory = memory
+                .as_mut()
+                .ok_or("memory operation requires per-run memory")?;
+            let original = cpu.reg(base, true);
+            if base == 31 && !original.is_multiple_of(16) {
+                return Err("unaligned guest SP".into());
+            }
+            let offset = match index {
+                Some((index, option, scaled)) => {
+                    let raw = cpu.reg(index, false);
+                    let extended = match option {
+                        2 => raw as u32 as u64,
+                        6 => raw as i32 as i64 as u64,
+                        _ => raw,
+                    };
+                    extended.wrapping_shl(if scaled { bytes.trailing_zeros() } else { 0 }) as i64
+                }
+                None => offset,
+            };
+            let adjusted = original.wrapping_add_signed(offset);
+            let address = if post { original } else { adjusted };
+            let mut value = [0; 8];
+            value[..bytes as usize].copy_from_slice(memory.read(address, bytes as usize)?);
+            let shift = 64 - 8 * u32::from(bytes);
+            let extended = ((u64::from_le_bytes(value) << shift) as i64 >> shift) as u64;
+            cpu.set(reg, extended, wide, false);
+            if writeback {
+                cpu.set(base, adjusted, true, true);
+            }
+        }
     }
     cpu.remaining -= 1;
     cpu.pc = next;

@@ -157,7 +157,46 @@ def corpus(seed, count):
     case([0xd61f0120,0xd503201f,0x91000400],"indirect_branch")
     cases[-1]["x"][9]=BASE+8
     fp_corpus(rng,case,cases)
+    int_corpus(rng,case,cases)
     return cases
+
+
+def int_corpus(rng,case,cases):
+    """Integer forms clang emits beyond the original subset (division, variable
+    shifts, multiplies, SBFM, EXTR, 1-source bit ops, sign-extending loads)."""
+    r=lambda:rng.randrange(32)
+    for wide in [0,1]:
+        for kind in [2,3,8,9,10,11]:
+            for _ in range(200):case([0x1ac00000|wide<<31|r()<<16|kind<<10|r()<<5|r()],'int_dp2_%d'%kind)
+            # Signed division corner: INT_MIN / -1 and division by zero.
+            for a,b in [(1<<63 if wide else 1<<31,(1<<64)-1),(5,0),(0,0)]:
+                case([0x1ac00000|wide<<31|2<<16|kind<<10|1<<5|0],'int_dp2_edges');cases[-1]['x'][1]=a;cases[-1]['x'][2]=b
+        for kind in [0,1,2,3,4,5]:
+            if kind==3 and not wide:continue
+            for _ in range(150):case([0x5ac00000|wide<<31|kind<<10|r()<<5|r()],'int_dp1_%d'%kind)
+        for op31,o0s in [(0,[0,1])]+([(1,[0,1]),(5,[0,1]),(2,[0]),(6,[0])] if wide else []):
+            for o0 in o0s:
+                for _ in range(200):
+                    ra=31 if op31 in (2,6) else r()
+                    case([0x1b000000|wide<<31|op31<<21|r()<<16|o0<<15|ra<<10|r()<<5|r()],'int_madd_family')
+        for imm_r in range(64 if wide else 32):
+            for imm_s in range(64 if wide else 32):
+                dst,src=[(0,1),(0,0),(31,1),(0,31)][(imm_r+imm_s)%4]
+                case([0x13000000|wide<<31|wide<<22|imm_r<<16|imm_s<<10|src<<5|dst],'int_sbfm_all_immediates')
+        for lsb in range(64 if wide else 32):
+            case([0x13800000|wide<<31|wide<<22|r()<<16|lsb<<10|r()<<5|r()],'int_extr')
+    for size,opc in [(0,2),(0,3),(1,2),(1,3),(2,2)]:
+        for base in [20,31]:
+            case([0x39000000|size<<30|opc<<22|5<<10|base<<5|r()],'int_signed_load_unsigned');cases[-1]['x'][20]=DATA+128
+            for mode in [0,1,3]:
+                for off in [-16,-3,0,5,16]:
+                    if base==31 and off%16:continue
+                    t=rng.choice([0,7,31]) if mode else r()
+                    case([0x38000000|size<<30|opc<<22|(off&511)<<12|mode<<10|base<<5|t],'int_signed_load_unscaled_pre_post');cases[-1]['x'][20]=DATA+128
+        for option in [2,3,6,7]:
+            for scaled in [0,1]:
+                case([0x38200800|size<<30|opc<<22|21<<16|option<<13|scaled<<12|20<<5|r()],'int_signed_load_register')
+                cases[-1]['x'][20]=DATA+128;cases[-1]['x'][21]=rng.choice([0,1,3,0xffffffffffffffff]) if option in [6,7] else 3
 
 
 def fp_corpus(rng,case,cases):

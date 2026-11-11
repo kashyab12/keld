@@ -390,7 +390,7 @@ fn unsigned_bitfield_rejects_reserved_widths_and_other_bitfield_operations() {
         }
     );
     for word in [
-        0x53400000, 0xd3000000, 0x53200000, 0x53008000, 0x13000000, 0x33000000,
+        0x53400000, 0xd3000000, 0x53200000, 0x53008000, 0x13400000, 0x33000000,
     ] {
         assert!(decode(word, 0x1000).is_err(), "accepted {word:#x}");
     }
