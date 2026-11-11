@@ -23,7 +23,31 @@ struct Section {
 pub(crate) struct Sections {
     parts: Vec<Section>,
 }
+fn metadata_not_code(
+    address: u64,
+    length: usize,
+    ranges: impl Iterator<Item = (u64, u64)>,
+) -> Result<()> {
+    let end = address
+        .checked_add(length as u64)
+        .ok_or("ObjC metadata range overflow")?;
+    for (code, size) in ranges {
+        let code_end = code
+            .checked_add(size)
+            .ok_or("ObjC instruction range overflow")?;
+        if length != 0 && size != 0 && address < code_end && code < end {
+            return Err("ObjC metadata overlaps guest instruction range".into());
+        }
+    }
+    Ok(())
+}
 impl Sections {
+    pub(crate) fn validate_code_ranges(&self, ranges: &[(u64, u64)]) -> Result<()> {
+        for part in &self.parts {
+            metadata_not_code(part.address, part.length, ranges.iter().copied())?;
+        }
+        Ok(())
+    }
     pub fn push(
         &mut self,
         s: &[u8],
@@ -586,6 +610,7 @@ pub(crate) fn register(
 impl Plan {
     pub(crate) fn validate(&self, image: &Image) -> Result<()> {
         for (address, bytes) in &self.snapshots {
+            metadata_not_code(*address, bytes.len(), image.code_ranges())?;
             if image.read(*address, bytes.len(), 1)? != bytes {
                 return Err("prepared ObjC metadata mismatch".into());
             }

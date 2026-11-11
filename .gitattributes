@@ -5,3 +5,4 @@ evidence/density/**/*.log -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
 evidence/tls/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/objc/** -text whitespace=cr-at-eol,-blank-at-eof
 evidence/objc-compact/** -text whitespace=cr-at-eol,-blank-at-eof
+evidence/objc-boundary/** -text whitespace=cr-at-eol,-blank-at-eof

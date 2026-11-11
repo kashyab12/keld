@@ -1,0 +1,18 @@
+{
+  "rust_tests_passed": 57,
+  "malformed_file_variants_rejected": 16,
+  "public_image_aliases_rejected": true,
+  "positive_objc_cli_runs": 16,
+  "unknown_message_rejections": 8,
+  "oracle_cases": 47610,
+  "full_state_equal": true,
+  "source_hashes_match": true,
+  "cleanup": {
+    "active_instances": 0,
+    "volumes": 0,
+    "security_groups": 0,
+    "key_pairs": 0
+  },
+  "new_native_apple_execution": false,
+  "sable_ui_interactions": 0
+}

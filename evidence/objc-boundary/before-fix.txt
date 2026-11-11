@@ -1,0 +1,22 @@
+
+running 1 test
+test metadata_instruction_aliases_reject_before_registration_and_preparation ... FAILED
+
+failures:
+
+---- metadata_instruction_aliases_reject_before_registration_and_preparation stdout ----
+
+thread 'metadata_instruction_aliases_reject_before_registration_and_preparation' (556889306) panicked at modules/sable/tests/objc.rs:521:21:
+ObjC metadata/instruction alias was accepted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    metadata_instruction_aliases_reject_before_registration_and_preparation
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+   Compiling sable v0.1.0 (/Users/kashyab/keld/modules/sable)
+    Finished `release` profile [optimized] target(s) in 5.79s
+     Running tests/objc.rs (target/release/deps/objc-eb064329d31566cc)
+error: test failed, to rerun pass `--test objc`

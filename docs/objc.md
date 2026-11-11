@@ -50,7 +50,12 @@ immutable checked guest code. Unsupported ObjC sections reject explicitly.
 The checked compact profile uses header `0x8000000c` in the owning image's
 `__objc_methlist` section. That section is regular file-backed RX metadata,
 4-byte aligned, included in the metadata cap/snapshot, and excluded from guest
-instruction ranges. Executable-section flags are rejected. A list header plus
+instruction ranges. Executable-section flags are rejected. After all sections
+are collected, every retained ObjC metadata range must also be disjoint from
+**every** declared instruction range, regardless of section name/order. The
+same checked-overlap rule is applied to metadata snapshots at preparation,
+including callers that modify public `Image` ranges. This prevents a separate
+code-section declaration from aliasing otherwise non-code metadata. A list header plus
 `count × 12` bytes must fit entirely inside it; lists may be aligned to four
 bytes without eight-byte alignment. Absolute lists still require header 24 and
 owning `__objc_const` storage with eight-byte alignment.

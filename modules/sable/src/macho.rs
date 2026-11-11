@@ -427,6 +427,7 @@ impl Object {
         {
             return Err("overlapping/excessive instruction ranges".into());
         }
+        objc_sections.validate_code_ranges(&ranges)?;
         Ok(Self {
             image: Image {
                 segments,

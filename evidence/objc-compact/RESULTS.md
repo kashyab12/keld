@@ -101,3 +101,12 @@ Both disposable EC2 attempts have verified zero remaining instances, volumes,
 security groups and keys; [failed-attempt cleanup](aws-01/cleanup.json),
 [final cleanup](aws-02/cleanup.json) and the [verification summary](verification.json)
 retain those checks. No owned native/cloud processes remain.
+
+## Subsequent boundary correction
+
+Independent review found that a deliberately enlarged instruction-section header
+could alias compact metadata, making it count as code and admitting a metadata
+IMP. The original unmodified positive fixtures remain valid. The
+[overlap fix and regression receipts](../objc-boundary/RESULTS.md) reject these
+malformed aliases at parse/preparation time, independent of section name/order.
+No host escape or successful guest execution from metadata was demonstrated.

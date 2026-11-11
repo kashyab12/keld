@@ -1,0 +1,14 @@
+{
+  "reviewed_revision": "d318d31ca9edc9970bd13bceca0de1d167a30bdb",
+  "kind": "Independent rootless in-memory malformed-header reproduction; no guest execution",
+  "observed": {
+    "baseline_table_is_code": false,
+    "overlap_accepted": true,
+    "overlap_table_is_code": true,
+    "metadata_imp_accepted": true,
+    "table": 4294970816,
+    "table_len": 64,
+    "original_stub_len": 96,
+    "overlapping_stub_len": 288
+  }
+}

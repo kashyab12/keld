@@ -482,3 +482,79 @@ fn compact_section_shape_code_flags_and_mixed_malformed_list_reject() {
         );
     }
 }
+
+#[test]
+fn metadata_instruction_aliases_reject_before_registration_and_preparation() {
+    for mode in ["chained", "legacy"] {
+        let (raw, libs) = fixtures_profile("objc-compact", mode, 0);
+        let refs = libs.iter().map(Vec::as_slice).collect::<Vec<_>>();
+        let image = Image::link(&raw, &refs).unwrap();
+        let (table, len, metadata_header) = section(&raw, "__objc_methlist");
+        let (code, _, code_header) = section(&raw, "__objc_stubs");
+        let table_file = u32::from_le_bytes(
+            raw[metadata_header + 48..metadata_header + 52]
+                .try_into()
+                .unwrap(),
+        ) as usize;
+        assert!(!image.contains_pc(table));
+        for arbitrary_name in [false, true] {
+            for reverse_headers in [false, true] {
+                for metadata_imp in [false, true] {
+                    let mut alias = raw.clone();
+                    alias[code_header + 40..code_header + 48]
+                        .copy_from_slice(&(table + len as u64 - code).to_le_bytes());
+                    if arbitrary_name {
+                        alias[code_header..code_header + 16].fill(0);
+                        alias[code_header..code_header + 12].copy_from_slice(b"__alias_code");
+                    }
+                    if metadata_imp {
+                        alias[table_file + 16..table_file + 20]
+                            .copy_from_slice(&(-16i32).to_le_bytes());
+                    }
+                    if reverse_headers {
+                        let first = alias[code_header..code_header + 80].to_vec();
+                        let second = alias[metadata_header..metadata_header + 80].to_vec();
+                        alias[code_header..code_header + 80].copy_from_slice(&second);
+                        alias[metadata_header..metadata_header + 80].copy_from_slice(&first);
+                    }
+                    let result = Image::link(&alias, &refs);
+                    assert!(
+                        result.is_err(),
+                        "ObjC metadata/instruction alias was accepted"
+                    );
+                    let error = result.err().unwrap();
+                    assert!(
+                        error.contains("metadata overlaps guest instruction range"),
+                        "{mode}/{arbitrary_name}/{reverse_headers}/{metadata_imp}: {error}"
+                    );
+                }
+            }
+        }
+        // Public Image fields must not bypass the same boundary at preparation.
+        let mut prepared_alias = image.clone();
+        prepared_alias.extra_text.push((table, len as u64));
+        assert!(
+            Prepared::new(&prepared_alias, false)
+                .err()
+                .unwrap()
+                .contains("metadata overlaps guest instruction range")
+        );
+        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+        for dispatch in [false, true] {
+            assert!(
+                Prepared::new_with_dispatch(&prepared_alias, dispatch)
+                    .err()
+                    .unwrap()
+                    .contains("metadata overlaps guest instruction range")
+            );
+        }
+        let mut overflow = image.clone();
+        overflow.extra_text.push((u64::MAX - 3, 8));
+        assert!(
+            Prepared::new(&overflow, false)
+                .err()
+                .unwrap()
+                .contains("instruction range overflow")
+        );
+    }
+}
