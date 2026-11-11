@@ -14,6 +14,12 @@ pub struct Cpu {
     pub pc: u64,
     pub remaining: u64,
     pub nzcv: u64,
+    /// Only FPCR = 0 is representable: RN rounding, FZ = 0, DN = 0, no traps.
+    pub fpcr: u64,
+    /// Cumulative IOC/DZC/OFC/UFC/IXC/IDC and QC bits (`fp::FPSR_MASK`).
+    pub fpsr: u64,
+    /// V0-V31; scalar B/H/S/D writes zero the upper bits.
+    pub v: [u128; 32],
 }
 impl Cpu {
     pub fn new(entry: u64, budget: u64) -> Self {
@@ -23,7 +29,18 @@ impl Cpu {
             pc: entry,
             remaining: budget,
             nzcv: 0,
+            fpcr: 0,
+            fpsr: 0,
+            v: [0; 32],
         }
+    }
+    /// Write Xn (XZR discards).
+    pub fn set_x(&mut self, n: u8, value: u64) {
+        self.set(n, value, true, false);
+    }
+    /// Write Xn, or SP for register 31 (base-register writeback).
+    pub fn set_sp_or_x(&mut self, n: u8, value: u64) {
+        self.set(n, value, true, true);
     }
     pub fn reg(&self, n: u8, sp: bool) -> u64 {
         if n == 31 {
@@ -423,6 +440,7 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
         Op::Return { reg } => next = cpu.reg(reg, false),
         Op::Svc => trapped = true,
         Op::Nop => {}
+        Op::Fp(op) => crate::fp::execute(cpu, op, memory, cpu.pc)?,
     }
     cpu.remaining -= 1;
     cpu.pc = next;
@@ -671,10 +689,19 @@ impl<'a> Prepared<'a> {
                 if cpu.sp != saved.sp {
                     return Err("guest dealloc returned with unbalanced SP".into());
                 }
+                // AAPCS64: d8-d15 are callee-saved, so a dealloc that changes them is rejected.
+                if let Some(n) = (8..16).find(|&n| cpu.v[n] as u64 != saved.v[n] as u64) {
+                    return Err(format!(
+                        "guest dealloc clobbered callee-saved d{n} across the release service"
+                    ));
+                }
                 let plan = self.image.objc.as_ref().ok_or("ownership plan absent")?;
                 plan.finish_dealloc(memory, object)?;
                 // Native void ABI: restore callee-preserved state and the checked service resume.
+                // The trapping caller sees v0-v31 and FPCR exactly as it left them.
                 cpu.x[18..].copy_from_slice(&saved.x[18..]);
+                cpu.v = saved.v;
+                cpu.fpcr = saved.fpcr;
                 cpu.sp = saved.sp;
                 cpu.pc = saved.pc;
                 cpu.x[0] = 0;
@@ -942,5 +969,29 @@ mod ownership_execution_tests {
                 .exit,
             0
         );
+    }
+    #[test]
+    fn dealloc_continuation_detects_d8_clobber_and_restores_v_registers() {
+        let image = image();
+        let hook = dealloc(&image);
+        // FMOV d8, #1.0 then fall into the original dealloc: violates AAPCS64.
+        let mut clobber = image.clone();
+        patch(&mut clobber, hook, &[0x1e6e_1008, 0xd65f_03c0]);
+        let (cpu, _, _, err) = failed(&Prepared::new(&clobber, false).unwrap());
+        assert!(err.contains("clobbered callee-saved d8"), "{err}");
+        assert_eq!(cpu.v[8] as u64, 1f64.to_bits());
+        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+        for dispatch in [false, true] {
+            let other = failed(&Prepared::new_with_dispatch(&clobber, dispatch).unwrap());
+            assert_eq!(other.3, err);
+            assert_eq!(other.0, cpu);
+        }
+        // Caller-saved d0 and d16 may change inside dealloc; the caller still sees
+        // its own V state because the continuation restores v0-v31.
+        let mut scratch = image.clone();
+        patch(&mut scratch, hook, &[0x1e6e_1000, 0x1e6e_1010, 0xd65f_03c0]);
+        // The patched dealloc skips disposal, so the run fails, but only for that reason.
+        let err = failed(&Prepared::new(&scratch, false).unwrap()).3;
+        assert!(err.contains("without exactly one final disposal"), "{err}");
     }
 }

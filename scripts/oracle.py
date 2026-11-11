@@ -23,13 +23,29 @@ STACK=0x70000000
 SVC=0xd4001001
 
 
+D_EDGES=[0,1<<63,0x7ff0000000000000,0xfff0000000000000,0x7ff8000000000000,0x7ff8000000000123,0xfff8000000000456,
+         0x7ff0000000000001,0xfff4000000000789,1,0x8000000000000001,0x000fffffffffffff,0x0010000000000000,0x8010000000000000,
+         0x7fefffffffffffff,0xffefffffffffffff,0x3ff0000000000000,0xbff8000000000000,0x3ff0000000000001,0x3cb0000000000000,
+         0x3ca0000000000000,0x4340000000000000,0x4330000000000001,0x3fe0000000000000,0xbfe0000000000000,0x4004000000000000,
+         0x41e0000000000000,0xc1e0000000000000,0x43e0000000000000,0xc3e0000000000000,0x41efffffffe00000,0x3fd5555555555555,0x0008000000000000]
+S_EDGES=[0,0x80000000,0x7f800000,0xff800000,0x7fc00000,0x7fc00123,0xffc00456,0x7f800001,0xffa00789,1,0x80000001,0x007fffff,
+         0x00800000,0x80800000,0x7f7fffff,0xff7fffff,0x3f800000,0xbfc00000,0x3f800001,0x33800000,0x33000000,0x4b800000,0x3f000000,
+         0xbf000000,0x4f000000,0xcf000000,0x5f000000,0xdf000000,0x3eaaaaab,0x00400000]
+FP_SVC=0xd4001001
+
+
 def corpus(seed, count):
     rng=random.Random(seed)
     cases=[]
     edges=[0,1,0xffffffff,0x80000000,0x7fffffff,0xffffffffffffffff,0x8000000000000000,0x7fffffffffffffff]
+    def vreg():
+        pick=rng.randrange(4)
+        low=rng.choice(D_EDGES) if pick==0 else (rng.getrandbits(32)<<32|rng.choice(S_EDGES)) if pick==1 else rng.getrandbits(64)
+        return rng.getrandbits(64)<<64|low
     def case(words, kind):
         regs=[rng.choice(edges) if rng.randrange(2) else rng.getrandbits(64) for _ in range(31)]
-        cases.append(dict(kind=kind,words=words+[SVC],x=regs,sp=STACK+2048,nzcv=rng.randrange(16)<<28,data=rng.randbytes(512),stack=rng.randbytes(4096)))
+        cases.append(dict(kind=kind,words=words+[SVC],x=regs,sp=STACK+2048,nzcv=rng.randrange(16)<<28,data=rng.randbytes(512),stack=rng.randbytes(4096),
+                          v=[vreg() for _ in range(32)],fpcr=0,fpsr=rng.choice([0,0x9f,0x08000000,rng.randrange(32)])))
     for _ in range(count):
         words=[]
         for _ in range(32):
@@ -140,7 +156,106 @@ def corpus(seed, count):
     cases[-1]["x"][30]=BASE+12
     case([0xd61f0120,0xd503201f,0x91000400],"indirect_branch")
     cases[-1]["x"][9]=BASE+8
+    fp_corpus(rng,case,cases)
     return cases
+
+
+def fp_corpus(rng,case,cases):
+    """Every implemented FP/SIMD form with V/FPSR state and IEEE edge inputs."""
+    r=lambda:rng.randrange(32)
+    def setv(n,value,double):
+        pool=D_EDGES if double else S_EDGES
+        cases[-1]['v'][n]=(cases[-1]['v'][n]>>64<<64)|(value if value is not None else rng.choice(pool) if rng.randrange(4) else rng.getrandbits(64 if double else 32))
+    def edges(double,*regs):
+        for n in regs:setv(n,None,double)
+    for ftype in [0,1]:
+        dbl=ftype==1
+        for opcode,name in [(0,'fmul'),(1,'fdiv'),(2,'fadd'),(3,'fsub'),(6,'fmaxnm'),(7,'fminnm'),(8,'fnmul')]:
+            for _ in range(300):
+                d,n,m=r(),r(),r()
+                case([0x1e200800|ftype<<22|m<<16|opcode<<12|n<<5|d],'fp_'+name+('_d' if dbl else '_s'));edges(dbl,n,m)
+        for o1 in [0,1]:
+            for o0 in [0,1]:
+                for _ in range(300):
+                    d,n,m,a=r(),r(),r(),r()
+                    case([0x1f000000|ftype<<22|o1<<21|m<<16|o0<<15|a<<10|n<<5|d],'fp_fmadd_family'+('_d' if dbl else '_s'));edges(dbl,n,m,a)
+        for opcode in [0,1,2,3,9,10,11]:
+            for _ in range(150):
+                d,n=r(),r()
+                case([0x1e204000|ftype<<22|opcode<<15|n<<5|d],'fp_1src_%d'%opcode+('_d' if dbl else '_s'));edges(dbl,n)
+        for _ in range(150):
+            d,n=r(),r()
+            case([0x1e204000|ftype<<22|(4 if dbl else 5)<<15|n<<5|d],'fp_fcvt'+('_d2s' if dbl else '_s2d'));edges(dbl,n)
+        for opcode2 in [0,8,16,24]:
+            for _ in range(150):
+                n,m=r(),(0 if opcode2&8 else r())
+                case([0x1e202000|ftype<<22|m<<16|n<<5|opcode2],'fp_fcmp'+('_d' if dbl else '_s'));edges(dbl,n,m)
+        for cond in range(16):
+            for _ in range(8):
+                d,n,m=r(),r(),r()
+                case([0x1e200c00|ftype<<22|m<<16|cond<<12|n<<5|d],'fp_fcsel')
+        for imm in range(256):
+            case([0x1e201000|ftype<<22|imm<<13|r()],'fp_fmov_imm')
+        for sf in [0,1]:
+            for rmode,opcode in [(0,2),(0,3),(3,0),(3,1)]:
+                for _ in range(200):
+                    d,n=r(),r()
+                    case([0x1e200000|sf<<31|ftype<<22|rmode<<19|opcode<<16|n<<5|d],'fp_int_conv')
+                    if rmode==3:edges(dbl,n)
+            if sf==ftype:
+                for opcode in [6,7]:
+                    for _ in range(40):case([0x1e200000|sf<<31|ftype<<22|opcode<<16|r()<<5|r()],'fp_fmov_general')
+        for u in [0,1]:
+            for _ in range(150):
+                d,n=r(),r()
+                case([0x5e21d800|u<<29|ftype<<22|n<<5|d],'fp_scvtf_vector')
+    for q in [0,1]:
+        for _ in range(60):
+            n=r();case([0x0ea01c00|q<<30|n<<16|n<<5|r()],'simd_mov_vector')
+        for op in [0,1]:
+            for imm in range(0,256,7):
+                case([0x0f00e400|q<<30|op<<29|(imm>>5)<<16|(imm&31)<<5|r()],'simd_movi')
+    for word in [0x0f10a400,0x0f20a400]:
+        for _ in range(60):
+            case([word|r()<<5|r()],'simd_sxtl')
+    for reg,op2 in [(0,0),(1,1)]:
+        for _ in range(20):
+            t=r()
+            case([0xd53b4400|op2<<5|t],'fp_mrs')
+        for _ in range(20):
+            t=rng.choice([0,1,2,31])
+            case([0xd51b4400|op2<<5|t],'fp_msr')
+            if t!=31: cases[-1]['x'][t]=0 if op2==0 else rng.getrandbits(64)&0x0800009f  # AArch64 FPSR bits 31:28 are RES0
+    # Loads/stores: B/H/S/D/Q, unsigned, unscaled, pre/post, register, pairs, literal.
+    for size,opc_load,opc_store in [(0,1,0),(1,1,0),(2,1,0),(3,1,0),(0,3,2)]:
+        bytes_=16 if opc_load==3 else 1<<size
+        for opc in [opc_load,opc_store]:
+            for base in [20,31]:
+                case([0x3d000000|size<<30|opc<<22|3<<10|base<<5|r()],'fp_mem_unsigned');cases[-1]['x'][20]=DATA+128
+                for mode in [0,1,3]:
+                    for off in [-16,-1,0,7,16]:
+                        if base==31 and off%16: continue
+                        case([0x3c000000|size<<30|opc<<22|(off&511)<<12|mode<<10|base<<5|r()],'fp_mem_unscaled_pre_post');cases[-1]['x'][20]=DATA+128
+            for option in [2,3,6,7]:
+                for scaled in [0,1]:
+                    case([0x3c200800|size<<30|opc<<22|21<<16|option<<13|scaled<<12|20<<5|r()],'fp_mem_register')
+                    cases[-1]['x'][20]=DATA+128;cases[-1]['x'][21]=rng.choice([0,1,3,0xffffffffffffffff]) if option in [6,7] else 3
+    for opc in [0,1,2]:
+        for mode in [1,2,3]:
+            for load in [0,1]:
+                for base in [20,31]:
+                    for imm in [-2,0,3]:
+                        t=r();t2=(t+1+rng.randrange(31))%32
+                        case([0x2c000000|opc<<30|mode<<23|load<<22|(imm&127)<<15|t2<<10|base<<5|t],'fp_mem_pair');cases[-1]['x'][20]=DATA+128
+        case([0x1c000000|opc<<30|(((DATA-BASE)//4)<<5)|r()],'fp_literal')
+    # Two-instruction ABI sequences: compare then select, convert round trip.
+    for _ in range(100):
+        n,m,d=r(),r(),r()
+        case([0x1e602000|m<<16|n<<5,0x1e600c00|m<<16|rng.randrange(16)<<12|n<<5|d],'fp_fcmp_fcsel_sequence');edges(True,n,m)
+
+
+def vbytes(c):
+    return b''.join(v.to_bytes(16,'little') for v in c['v'])
 
 
 def oracle(case):
@@ -150,6 +265,8 @@ def oracle(case):
     mu.mem_write(DATA,case['data']);mu.mem_write(STACK,case['stack'])
     for i,value in enumerate(case['x']):mu.reg_write(getattr(arm,'UC_ARM64_REG_X'+str(i)),value)
     mu.reg_write(arm.UC_ARM64_REG_SP,case['sp']);mu.reg_write(arm.UC_ARM64_REG_NZCV,case['nzcv'])
+    for i,value in enumerate(case['v']):mu.reg_write(arm.UC_ARM64_REG_Q0+i,value)
+    mu.reg_write(arm.UC_ARM64_REG_FPCR,case['fpcr']);mu.reg_write(arm.UC_ARM64_REG_FPSR,case['fpsr'])
     instructions=0;stopped=False
     def instruction(uc,address,size,_):
         nonlocal instructions
@@ -161,18 +278,18 @@ def oracle(case):
     mu.hook_add(UC_HOOK_CODE,instruction);mu.hook_add(UC_HOOK_INTR,trap)
     mu.emu_start(BASE,BASE+len(case['words'])*4,count=10000)
     if not stopped:raise RuntimeError('Oracle did not reach SVC')
-    return dict(x=[mu.reg_read(getattr(arm,'UC_ARM64_REG_X'+str(i))) for i in range(31)],sp=mu.reg_read(arm.UC_ARM64_REG_SP),nzcv=mu.reg_read(arm.UC_ARM64_REG_NZCV),pc=mu.reg_read(arm.UC_ARM64_REG_PC),instructions=instructions,data=bytes(mu.mem_read(DATA,512)).hex(),stack=bytes(mu.mem_read(STACK,4096)).hex())
+    return dict(x=[mu.reg_read(getattr(arm,'UC_ARM64_REG_X'+str(i))) for i in range(31)],sp=mu.reg_read(arm.UC_ARM64_REG_SP),nzcv=mu.reg_read(arm.UC_ARM64_REG_NZCV),v=b''.join(mu.reg_read(arm.UC_ARM64_REG_Q0+i).to_bytes(16,'little') for i in range(32)).hex(),fpcr=mu.reg_read(arm.UC_ARM64_REG_FPCR),fpsr=mu.reg_read(arm.UC_ARM64_REG_FPSR),pc=mu.reg_read(arm.UC_ARM64_REG_PC),instructions=instructions,data=bytes(mu.mem_read(DATA,512)).hex(),stack=bytes(mu.mem_read(STACK,4096)).hex())
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--binary',default='target/release/examples/oracle_batch');p.add_argument('--engine',choices=['interp','jit'],default='interp');p.add_argument('--cases',type=int,default=2000);p.add_argument('--seed',type=int,default=12648430);p.add_argument('--output',type=Path,default=Path('artifacts/oracle-summary.json'));o=p.parse_args()
     input_started=time.monotonic()
     cases=corpus(o.seed,o.cases)
-    payload=bytearray(b'SABLE001'+struct.pack('<I',len(cases)))
+    payload=bytearray(b'SABLE002'+struct.pack('<I',len(cases)))
     for c in cases:
-        payload.extend(struct.pack('<I33Q',len(c['words']),*c['x'],c['sp'],c['nzcv'])+struct.pack('<'+'I'*len(c['words']),*c['words'])+c['data']+c['stack'])
+        payload.extend(struct.pack('<I33Q',len(c['words']),*c['x'],c['sp'],c['nzcv'])+vbytes(c)+struct.pack('<2Q',c['fpcr'],c['fpsr'])+struct.pack('<'+'I'*len(c['words']),*c['words'])+c['data']+c['stack'])
     input_elapsed=time.monotonic()-input_started
-    start=time.monotonic();result=subprocess.run([o.binary,o.engine],input=payload,capture_output=True,timeout=180)
+    start=time.monotonic();result=subprocess.run([o.binary,o.engine],input=payload,capture_output=True,timeout=900)
     o.output.parent.mkdir(parents=True,exist_ok=True)
     if result.returncode:
         o.output.with_suffix('.failed-input.bin').write_bytes(payload);raise RuntimeError(result.stderr.decode())

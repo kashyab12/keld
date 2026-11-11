@@ -143,6 +143,8 @@ pub enum Op {
     },
     Svc,
     Nop,
+    /// Bounded FP/SIMD subset; see `crate::fp`.
+    Fp(crate::fp::FpOp),
 }
 
 fn signed(value: u32, bits: u32) -> i64 {
@@ -150,6 +152,9 @@ fn signed(value: u32, bits: u32) -> i64 {
 }
 
 pub fn decode(word: u32, pc: u64) -> Result<Op> {
+    if let Some(fp) = crate::fp::decode(word, pc) {
+        return fp.map(Op::Fp);
+    }
     let wide = word >> 31 != 0;
     let dst = (word & 31) as u8;
     let src = ((word >> 5) & 31) as u8;

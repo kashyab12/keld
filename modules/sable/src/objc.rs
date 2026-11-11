@@ -12,6 +12,7 @@ pub(crate) mod instances;
 pub(crate) mod ownership;
 mod payload;
 pub(crate) mod protocol;
+pub mod signature;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const GET_CLASS: u32 = 0xd400_0001 | (0x5ab2 << 5);
@@ -346,40 +347,15 @@ fn relative(field: u64, encoded: u32) -> Result<u64> {
         .ok_or("ObjC relative target overflow".into())
 }
 fn scalar_signature(name: &str, encoding: &str, ordinary_method: bool) -> Result<()> {
-    let args = name.bytes().filter(|&b| b == b':').count();
-    if ordinary_method
-        && args == 0
-        && encoding == "r*16@0:8"
-        && !matches!(name, "load" | "initialize")
-    {
-        return Ok(());
+    // The one pointer-returning method in the constant-string profile.
+    if ordinary_method && encoding == "r*16@0:8" && name.bytes().all(|b| b != b':') {
+        return if matches!(name, "load" | "initialize") {
+            Err("unsupported/duplicate ObjC scalar method".into())
+        } else {
+            Ok(())
+        };
     }
-    let supported = |b| b == b'Q' || (ordinary_method && b == b'@');
-    if args > 6
-        || !encoding
-            .as_bytes()
-            .first()
-            .copied()
-            .is_some_and(|b| supported(b) || (ordinary_method && b == b'v'))
-        || matches!(name, "load" | "initialize")
-    {
-        return Err("unsupported/duplicate ObjC scalar method".into());
-    }
-    let mut rest = encoding[1..]
-        .strip_prefix(&format!("{}@0:8", 16 + args * 8))
-        .ok_or("unsupported ObjC scalar frame encoding")?;
-    for n in 0..args {
-        if !rest.as_bytes().first().copied().is_some_and(supported) {
-            return Err("unsupported ObjC scalar argument type".into());
-        }
-        rest = rest[1..]
-            .strip_prefix(&format!("{}", 16 + n * 8))
-            .ok_or("unsupported ObjC scalar argument offset")?;
-    }
-    if !rest.is_empty() {
-        return Err("unsupported ObjC scalar signature suffix".into());
-    }
-    Ok(())
+    signature::method_signature(name, encoding, ordinary_method).map(|_| ())
 }
 fn methods(
     object: &Object,
@@ -1151,14 +1127,14 @@ mod tests {
             if let Some(at) = types.checked_sub(s.address).map(|a| a as usize)
                 && at < s.bytes.len()
             {
-                std::sync::Arc::make_mut(&mut s.bytes)[at] = b'q';
+                std::sync::Arc::make_mut(&mut s.bytes)[at] = b's';
                 break;
             }
         }
         assert!(
             register(&mut [bad], &[0], &[0], Some(runtime))
                 .unwrap_err()
-                .contains("scalar method")
+                .contains("ObjC type encoding")
         );
         let (bad, _) = loaded();
         assert!(register(&mut [bad], &[0], &[0], None).is_err());

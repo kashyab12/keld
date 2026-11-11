@@ -173,18 +173,30 @@ mod tests {
             assert!(super::super::scalar_signature(name, ty, false).is_err());
         }
         assert!(super::super::scalar_signature("value:", "Q24@0:8Q16", false).is_ok());
+        // The typed walker accepts Class, SEL and double (FP/SIMD contract).
         for ty in [
             "#24@0:8Q16",
             ":24@0:8Q16",
+            "@24@0:8#16",
+            "@24@0:8:16",
+            "@24@0:8d16",
+        ] {
+            assert!(
+                super::super::scalar_signature("value:", ty, true).is_ok(),
+                "{ty}"
+            );
+            assert!(
+                super::super::scalar_signature("value:", ty, false).is_err(),
+                "{ty}"
+            );
+        }
+        for ty in [
             "^@24@0:8Q16",
             "r@24@0:8Q16",
             "@024@0:8Q16",
             "@24@0:8Q016",
             "@24@0:8Q8",
             "@24@0:8Q16Q24",
-            "@24@0:8#16",
-            "@24@0:8:16",
-            "@24@0:8d16",
             "@24@0:8@\"Thing\"16",
             "@24@0:8^v16",
             "@24@0:8Q18446744073709551616",

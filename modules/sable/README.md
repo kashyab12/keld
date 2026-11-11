@@ -1,5 +1,9 @@
 # Sable
 
+[FP/SIMD state and the HFA calling convention](../../docs/fp-simd.md): V registers,
+FPCR/FPSR and the scalar FP forms clang emits for CGRect/CGFloat code, checked
+against Unicorn; other FP/SIMD encodings reject by name.
+
 The [original constant-string framework slice](../../docs/strings.md) executes
 ASCII literal reads through a guest NSString method and scalar guest libc.
 The following [ordinary ownership slice](../../docs/ownership.md) adds bounded ARC

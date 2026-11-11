@@ -32,13 +32,13 @@ fn main() {
     let jit = std::env::args().nth(1).as_deref() == Some("jit");
     let mut input = Vec::new();
     io::stdin()
-        .take(128 * 1024 * 1024)
+        .take(1024 * 1024 * 1024)
         .read_to_end(&mut input)
         .unwrap();
     let mut input = input.as_slice();
-    assert_eq!(take(&mut input, 8), b"SABLE001");
+    assert_eq!(take(&mut input, 8), b"SABLE002");
     let cases = u32in(&mut input);
-    assert!(cases <= 20000);
+    assert!(cases <= 100_000);
     for id in 0..cases {
         let count = u32in(&mut input) as usize;
         assert!((1..=4096).contains(&count));
@@ -48,6 +48,11 @@ fn main() {
         }
         cpu.sp = u64in(&mut input);
         cpu.nzcv = u64in(&mut input);
+        for v in &mut cpu.v {
+            *v = u128::from_le_bytes(take(&mut input, 16).try_into().unwrap());
+        }
+        cpu.fpcr = u64in(&mut input);
+        cpu.fpsr = u64in(&mut input);
         let code = take(&mut input, count * 4).to_vec();
         let data = take(&mut input, 512).to_vec();
         let stack = take(&mut input, 4096);
@@ -89,16 +94,23 @@ fn main() {
         };
         match result {
             Ok(()) => println!(
-                "{{\"id\":{id},\"x\":{:?},\"sp\":{},\"nzcv\":{},\"pc\":{},\"instructions\":{},\"data\":\"{}\",\"stack\":\"{}\"}}",
+                "{{\"id\":{id},\"x\":{:?},\"sp\":{},\"nzcv\":{},\"v\":\"{}\",\"fpcr\":{},\"fpsr\":{},\"pc\":{},\"instructions\":{},\"data\":\"{}\",\"stack\":\"{}\"}}",
                 cpu.x,
                 cpu.sp,
                 cpu.nzcv,
+                hex(&cpu
+                    .v
+                    .iter()
+                    .flat_map(|v| v.to_le_bytes())
+                    .collect::<Vec<_>>()),
+                cpu.fpcr,
+                cpu.fpsr,
                 cpu.pc,
                 10000 - cpu.remaining,
                 hex(memory.read(0x20000, 512).unwrap()),
                 hex(memory.read(STACK_BASE, 4096).unwrap())
             ),
-            Err(e) => panic!("case {id}: {e}"),
+            Err(e) => println!("{{\"id\":{id},\"error\":{e:?}}}"),
         }
     }
     assert!(input.is_empty());

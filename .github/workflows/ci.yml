@@ -59,6 +59,8 @@ jobs:
         run: bash scripts/check-strings.sh
       - name: Rebuild and execute ordinary ARC ownership and guest ASCII uppercase
         run: bash scripts/check-ownership.sh
+      - name: Rebuild and execute the FP/SIMD HFA fixture
+        run: bash scripts/check-fp.sh
       - name: Check app oracle scripts and inventory graphics exposure
         run: |
           python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py scripts/firecracker-bench.py

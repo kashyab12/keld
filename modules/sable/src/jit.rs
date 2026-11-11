@@ -23,6 +23,8 @@ unsafe extern "C" {
 const PC: u32 = 256;
 const REMAINING: u32 = 264;
 const NZCV: u32 = 272;
+/// Exit reason: the instruction at PC is FP/SIMD and runs in the interpreter.
+const FP_DECLINED: u32 = 6;
 
 #[derive(Default)]
 struct Assembler {
@@ -554,8 +556,9 @@ impl Assembler {
             | Op::Literal { .. }
             | Op::Pair { .. }
             | Op::CondCompare { .. }
-            | Op::CondSelect { .. } => {
-                unreachable!("memory operations use checked Rust transition")
+            | Op::CondSelect { .. }
+            | Op::Fp(_) => {
+                unreachable!("memory and FP/SIMD operations use checked Rust transition")
             }
             Op::Address { dst, value } => {
                 self.imm64(value, false);
@@ -616,6 +619,7 @@ pub struct Compiled {
     length: usize,
     entries: HashMap<u64, usize>,
     layout: Vec<(u64, usize, u32)>,
+    declined: Vec<u64>,
 }
 
 impl Compiled {
@@ -703,7 +707,8 @@ impl Compiled {
                     | Op::Literal { .. }
                     | Op::Pair { .. }
                     | Op::CondCompare { .. }
-                    | Op::CondSelect { .. } => {
+                    | Op::CondSelect { .. }
+                    | Op::Fp(_) => {
                         boundaries.insert(pc);
                         boundaries.insert(pc + 4);
                     }
@@ -724,6 +729,7 @@ impl Compiled {
             ..Assembler::default()
         };
         let mut bodies = HashMap::new();
+        let mut declined = Vec::new();
         let mut previous = None;
         for (pc, op) in &decoded {
             if let Some(end) = previous
@@ -744,6 +750,14 @@ impl Compiled {
                     a.guard(*pc);
                     bodies.insert(*pc, a.bytes.len());
                     a.exit(4);
+                }
+                Ok(Op::Fp(_)) => {
+                    // FP/SIMD is never translated: each such instruction is its own
+                    // block whose body is an explicit decline to the interpreter.
+                    a.guard(*pc);
+                    bodies.insert(*pc, a.bytes.len());
+                    a.exit(FP_DECLINED);
+                    declined.push(*pc);
                 }
                 Ok(op) => {
                     if boundaries.contains(pc) {
@@ -879,7 +893,13 @@ impl Compiled {
             length,
             entries,
             layout,
+            declined,
         })
+    }
+
+    /// PCs of FP/SIMD instructions the translator declined to the interpreter.
+    pub fn declined_fp(&self) -> &[u64] {
+        &self.declined
     }
 
     pub fn execute_memory(&self, cpu: &mut Cpu, image: &Image, memory: &mut Memory) -> Result<()> {
@@ -929,7 +949,7 @@ impl Compiled {
                 2 => return Err("instruction budget exhausted".into()),
                 3 => continue,
                 5 => return Err(format!("guest memory/SP fault at PC {:#x}", cpu.pc)),
-                4 => {
+                4 | FP_DECLINED => {
                     if step_memory(cpu, image, memory)? {
                         return Ok(true);
                     }
@@ -959,6 +979,7 @@ mod tests {
         assert_eq!(std::mem::offset_of!(Cpu, pc), PC as usize);
         assert_eq!(std::mem::offset_of!(Cpu, remaining), REMAINING as usize);
         assert_eq!(std::mem::offset_of!(Cpu, nzcv), NZCV as usize);
-        assert_eq!(std::mem::size_of::<Cpu>(), 280);
+        assert_eq!(std::mem::offset_of!(Cpu, v), 304);
+        assert_eq!(std::mem::size_of::<Cpu>(), 816);
     }
 }
