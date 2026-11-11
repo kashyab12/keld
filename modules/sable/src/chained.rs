@@ -13,7 +13,7 @@ type Patch = (usize, usize, u64);
 pub(crate) fn patches(
     object: &Object,
     slide: u64,
-    mut resolve: impl FnMut(i64, &str) -> Result<u64>,
+    mut resolve: impl FnMut(i64, &str) -> Result<crate::linker::Symbol>,
 ) -> Result<Vec<Patch>> {
     let Some(data) = &object.chained else {
         return Ok(Vec::new());
@@ -103,9 +103,7 @@ pub(crate) fn patches(
             return Err("empty chained symbol".into());
         }
         let name = std::str::from_utf8(&tail[..length]).map_err(|_| "non-UTF8 chained symbol")?;
-        let value = resolve(ordinal, name)?
-            .checked_add_signed(addend)
-            .ok_or("chained import addend overflow")?;
+        let value = resolve(ordinal, name)?.addend(addend)?;
         bindings.push(value);
     }
     let base = object
@@ -179,9 +177,7 @@ pub(crate) fn patches(
                     let binding = *bindings
                         .get((raw & 0xffffff) as usize)
                         .ok_or("chained bind ordinal out of bounds")?;
-                    binding
-                        .checked_add((raw >> 24) & 0xff)
-                        .ok_or("chained pointer addend overflow")?
+                    binding.addend(((raw >> 24) & 0xff) as i64)?.address
                 } else {
                     if (raw >> 44) & 0x7f != 0 {
                         return Err("nonzero chained rebase reserved bits".into());
@@ -290,6 +286,24 @@ mod tests {
     }
 
     #[test]
+    fn tls_import_and_inline_addends_reject_before_patching() {
+        for pointer_format in [2, 6] {
+            for import_format in [1, 2, 3] {
+                let object = object(pointer_format, import_format, 0);
+                let before = object.image.segments.clone();
+                let error = patches(&object, 0, |_, _| {
+                    Ok(crate::linker::Symbol {
+                        address: 0x10_0000_0000,
+                        tls: true,
+                    })
+                })
+                .unwrap_err();
+                assert!(error.contains("TLS descriptor addends"));
+                assert_eq!(before, object.image.segments);
+            }
+        }
+    }
+    #[test]
     fn both_pointer_formats_import_addends_tags_and_slide() {
         for pointer_format in [2, 6] {
             for import_format in [1, 2, 3] {
@@ -297,7 +311,10 @@ mod tests {
                     let object = object(pointer_format, import_format, slide);
                     let got = patches(&object, slide, |ordinal, name| {
                         assert_eq!((ordinal, name), (1, "_target"));
-                        Ok(0x10_0000_0000)
+                        Ok(crate::linker::Symbol {
+                            address: 0x10_0000_0000,
+                            tls: false,
+                        })
                     })
                     .unwrap();
                     let addend = match import_format {
@@ -341,7 +358,14 @@ mod tests {
             let mut object = object(2, 1, 0);
             put32(object.chained.as_mut().unwrap(), at, value);
             let before = object.image.segments.clone();
-            assert!(patches(&object, 0, |_, _| Ok(100)).is_err(), "offset {at}");
+            assert!(
+                patches(&object, 0, |_, _| Ok(crate::linker::Symbol {
+                    address: 100,
+                    tls: false
+                }))
+                .is_err(),
+                "offset {at}"
+            );
             assert_eq!(object.image.segments, before);
         }
         for (at, value) in [
@@ -354,7 +378,13 @@ mod tests {
         ] {
             let mut object = object(2, 1, 0);
             put16(object.chained.as_mut().unwrap(), at, value);
-            assert!(patches(&object, 0, |_, _| Ok(100)).is_err());
+            assert!(
+                patches(&object, 0, |_, _| Ok(crate::linker::Symbol {
+                    address: 100,
+                    tls: false
+                }))
+                .is_err()
+            );
         }
         for raw in [
             (1 << 63) | 1,
@@ -368,14 +398,32 @@ mod tests {
                 16,
                 raw,
             );
-            assert!(patches(&object, 0, |_, _| Ok(100)).is_err());
+            assert!(
+                patches(&object, 0, |_, _| Ok(crate::linker::Symbol {
+                    address: 100,
+                    tls: false
+                }))
+                .is_err()
+            );
         }
         let mut object = object(2, 1, 0);
         object.segment_file_sizes[0] = 20;
-        assert!(patches(&object, 0, |_, _| Ok(100)).is_err());
+        assert!(
+            patches(&object, 0, |_, _| Ok(crate::linker::Symbol {
+                address: 100,
+                tls: false
+            }))
+            .is_err()
+        );
         object.segment_file_sizes[0] = 4096;
         object.image.segments[0].protection = 5;
-        assert!(patches(&object, 0, |_, _| Ok(100)).is_err());
+        assert!(
+            patches(&object, 0, |_, _| Ok(crate::linker::Symbol {
+                address: 100,
+                tls: false
+            }))
+            .is_err()
+        );
     }
 
     #[test]
@@ -387,7 +435,12 @@ mod tests {
             let data = object.chained.as_mut().unwrap();
             let at = (random >> 32) as usize % data.len();
             data[at] ^= (random as u8) | 1;
-            let _ = patches(&object, 0, |_, _| Ok(100));
+            let _ = patches(&object, 0, |_, _| {
+                Ok(crate::linker::Symbol {
+                    address: 100,
+                    tls: false,
+                })
+            });
         }
     }
 }

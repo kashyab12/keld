@@ -16,6 +16,7 @@ pub struct Image {
     pub extra_text: Vec<(u64, u64)>,
     pub platform: u32,
     pub startup: Option<Startup>,
+    pub tls: Vec<crate::tls::Block>,
 }
 
 #[derive(Clone, Debug)]
@@ -68,6 +69,7 @@ pub(crate) struct Object {
     pub header_base: u64,
     pub chained: Option<Vec<u8>>,
     pub init_sections: Vec<InitSection>,
+    pub tls_sections: crate::tls::Sections,
 }
 
 fn command_string(command: &[u8], offset: usize) -> Result<String> {
@@ -118,6 +120,7 @@ impl Object {
         let mut exports_seen = false;
         let mut extra_text = Vec::new();
         let mut init_sections = Vec::new();
+        let mut tls_sections = crate::tls::Sections::default();
         let mut cursor = 32;
         let mut segments: Vec<Segment> = Vec::new();
         let mut entry_offset = None;
@@ -228,9 +231,16 @@ impl Object {
                                 offsets: section_type == 0x16,
                             });
                         }
-                        if (section_type == 10 || (0x11..=0x15).contains(&section_type))
-                            && u64_at(s, 40)? != 0
-                        {
+                        if (0x11..=0x14).contains(&section_type) && u64_at(s, 40)? != 0 {
+                            if !dynamic {
+                                return Err("TLS requires explicit dynamic linking".into());
+                            }
+                            tls_sections.push(
+                                s,
+                                (address, memory_size, file_size, file_offset, protection),
+                            )?;
+                        }
+                        if (section_type == 10 || section_type == 0x15) && u64_at(s, 40)? != 0 {
                             return Err("initializers/terminators/TLS sections unsupported".into());
                         }
                         if &s[..16] == b"__text\0\0\0\0\0\0\0\0\0\0"
@@ -417,6 +427,7 @@ impl Object {
                 extra_text,
                 platform,
                 startup: None,
+                tls: Vec::new(),
             },
             kind,
             id,
@@ -429,6 +440,7 @@ impl Object {
             header_base: header_base.ok_or("missing mapped Mach-O header")?,
             chained,
             init_sections,
+            tls_sections,
         })
     }
 }

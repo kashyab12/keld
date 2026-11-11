@@ -8,6 +8,26 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 const LIMIT: usize = 1_000_000;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Symbol {
+    pub address: u64,
+    pub tls: bool,
+}
+impl Symbol {
+    pub fn addend(self, addend: i64) -> Result<Self> {
+        if self.tls && addend != 0 {
+            return Err("TLS descriptor addends unsupported".into());
+        }
+        Ok(Self {
+            address: self
+                .address
+                .checked_add_signed(addend)
+                .ok_or("bind addend overflow")?,
+            ..self
+        })
+    }
+}
+
 fn byte(data: &[u8], cursor: &mut usize) -> Result<u8> {
     let b = *data.get(*cursor).ok_or("truncated dyld stream")?;
     *cursor += 1;
@@ -49,14 +69,14 @@ fn cstring(data: &[u8], cursor: &mut usize) -> Result<String> {
         .map_err(|_| "non-UTF8 dyld symbol unsupported".into())
 }
 
-fn exports(data: &[u8], base: u64) -> Result<BTreeMap<String, u64>> {
+fn exports(data: &[u8], base: u64) -> Result<BTreeMap<String, Symbol>> {
     fn walk(
         data: &[u8],
         at: usize,
         prefix: String,
         base: u64,
         path: &mut BTreeSet<usize>,
-        out: &mut BTreeMap<String, u64>,
+        out: &mut BTreeMap<String, Symbol>,
         visits: &mut usize,
     ) -> Result<()> {
         *visits += 1;
@@ -75,7 +95,7 @@ fn exports(data: &[u8], base: u64) -> Result<BTreeMap<String, u64>> {
         if terminal > 0 {
             let mut t = cursor;
             let flags = uleb(&data[..end], &mut t)?;
-            if flags != 0 && flags != 2 {
+            if flags > 2 {
                 return Err(format!("unsupported export flags {flags:#x}"));
             }
             let value = uleb(&data[..end], &mut t)?;
@@ -87,7 +107,16 @@ fn exports(data: &[u8], base: u64) -> Result<BTreeMap<String, u64>> {
             } else {
                 base.checked_add(value).ok_or("export address overflow")?
             };
-            if out.insert(prefix.clone(), address).is_some() {
+            if out
+                .insert(
+                    prefix.clone(),
+                    Symbol {
+                        address,
+                        tls: flags == 1,
+                    },
+                )
+                .is_some()
+            {
                 return Err("duplicate export symbol".into());
             }
         }
@@ -248,9 +277,9 @@ fn resolve_symbol(
     object_index: usize,
     ordinal: i64,
     name: &str,
-    all_exports: &[BTreeMap<String, u64>],
+    all_exports: &[BTreeMap<String, Symbol>],
     ids: &HashMap<String, usize>,
-) -> Result<u64> {
+) -> Result<Symbol> {
     let source = match ordinal {
         0 => object_index,
         -1 => 0,
@@ -274,7 +303,7 @@ fn bind(
     object: &mut Object,
     stream: usize,
     object_index: usize,
-    all_exports: &[BTreeMap<String, u64>],
+    all_exports: &[BTreeMap<String, Symbol>],
     ids: &HashMap<String, usize>,
 ) -> Result<()> {
     let data = object.streams[stream].clone();
@@ -366,8 +395,8 @@ fn bind(
         };
         let name = symbol.as_ref().ok_or("bind symbol not selected")?;
         let value = resolve_symbol(object, object_index, ordinal, name, all_exports, ids)?
-            .checked_add_signed(addend)
-            .ok_or("bind addend overflow")?;
+            .addend(addend)?
+            .address;
         operations += count;
         if operations > LIMIT {
             return Err("excessive binding".into());
@@ -486,6 +515,15 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
                 .checked_add(slide)
                 .ok_or("slid header overflow")?,
         )?;
+        for symbol in all_exports[index].values() {
+            if symbol.tls
+                && !object
+                    .tls_sections
+                    .contains_descriptor(symbol.address, slide)
+            {
+                return Err("TLS export does not name an owning-image descriptor".into());
+            }
+        }
         if !object.streams[2].is_empty() {
             return Err("weak bind stream unsupported".into());
         }
@@ -563,11 +601,51 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
         }
     }
     let mut image = objects[0].image.clone();
+    for &index in &order {
+        let object = &objects[index];
+        if !object.tls_sections.is_empty() {
+            let ordinal = object
+                .dependencies
+                .iter()
+                .position(|(name, _)| name == "/usr/lib/libSystem.B.dylib")
+                .ok_or("TLS requires explicit LibSystem bootstrap dependency")?
+                as i64
+                + 1;
+            let bootstrap = resolve_symbol(
+                object,
+                index,
+                ordinal,
+                "__tlv_bootstrap",
+                &all_exports,
+                &ids,
+            )?;
+            if bootstrap.tls {
+                return Err("TLS bootstrap must be a regular code export".into());
+            }
+            image.tls.push(
+                object
+                    .tls_sections
+                    .finish(object, slides[index], bootstrap.address)?,
+            );
+        }
+    }
     if !initialization.is_empty() {
         image.startup = Some(crate::macho::Startup {
             header: objects[0].header_base,
             initializers: initialization,
         });
+    }
+    let tls_targets = image
+        .tls
+        .iter()
+        .flat_map(|b| b.descriptors.iter().map(|d| d.address))
+        .collect();
+    for &index in &order {
+        objects[index].tls_sections.validate_pointers(
+            &objects[index].image,
+            slides[index],
+            &tls_targets,
+        )?;
     }
     for index in order.into_iter().skip(1) {
         image.extra_text.extend(objects[index].image.code_ranges());
@@ -576,6 +654,7 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
     let mut ranges: Vec<_> = image.code_ranges().collect();
     ranges.sort_unstable();
     image.segments.sort_by_key(|s| s.address);
+    crate::tls::layout(&image)?;
     if image
         .segments
         .windows(2)
@@ -595,6 +674,37 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn tls_export_kind_and_addend_contract() {
+        let trie = [0, 1, b'x', 0, 5, 3, 1, 0x80, 0x20, 0];
+        let symbol = exports(&trie, 0x1000).unwrap()["x"];
+        assert_eq!(
+            symbol,
+            Symbol {
+                address: 0x2000,
+                tls: true
+            }
+        );
+        assert_eq!(symbol.addend(0).unwrap(), symbol);
+        for addend in [1, -1, i64::MAX, i64::MIN] {
+            assert!(symbol.addend(addend).is_err());
+        }
+        for flags in [3, 4, 8, 16, 32] {
+            let mut invalid = trie;
+            invalid[6] = flags;
+            assert!(exports(&invalid, 0x1000).is_err());
+        }
+        assert_eq!(
+            Symbol {
+                address: 0x1000,
+                tls: false
+            }
+            .addend(-1)
+            .unwrap()
+            .address,
+            0xfff
+        );
+    }
     #[test]
     fn bounded_integer_and_trie_parsing() {
         for bytes in [&[0x80][..], &[0xff; 10][..], &[0x80; 11][..]] {
@@ -629,7 +739,13 @@ mod tests {
             let snapshot = object.image.segments[0].bytes.clone();
             let maps = vec![
                 BTreeMap::new(),
-                BTreeMap::from([("_sable_mix".to_string(), 0x200000388)]),
+                BTreeMap::from([(
+                    "_sable_mix".to_string(),
+                    Symbol {
+                        address: 0x200000388,
+                        tls: false,
+                    },
+                )]),
             ];
             let ids = HashMap::from([("@loader_path/libsable_math.dylib".to_string(), 1)]);
             assert!(bind(&mut object, 1, 0, &maps, &ids).is_err());

@@ -68,6 +68,7 @@ fn main() {
             text: (0x1000, (count * 4) as u64),
             extra_text: Vec::new(),
             platform: 7,
+            tls: Vec::new(),
             startup: None,
         };
         let mut memory = Memory::new(&image).unwrap();

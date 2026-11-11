@@ -110,7 +110,7 @@ fn corrupted_import_and_version_are_not_silently_accepted() {
 }
 
 #[test]
-fn malformed_initializer_and_unsupported_tls_sections_are_rejected() {
+fn malformed_initializers_and_tls_metadata_are_rejected() {
     for kind in [9, 10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16] {
         let mut bytes = SHORT.to_vec();
         let mut at = 32;
@@ -138,10 +138,14 @@ fn malformed_initializer_and_unsupported_tls_sections_are_rejected() {
             at += u32::from_le_bytes(bytes[at + 4..at + 8].try_into().unwrap()) as usize;
         }
         assert!(replaced);
+        let error = Image::link(&bytes, &[MATH, HELPER, SYSTEM]).unwrap_err();
         assert!(
-            Image::link(&bytes, &[MATH, HELPER, SYSTEM])
-                .unwrap_err()
-                .contains("initializer")
+            if kind == 9 || kind == 22 {
+                error.contains("initializer")
+            } else {
+                error.contains("TLS") || error.contains("__tlv_bootstrap")
+            },
+            "{error}"
         );
     }
 }

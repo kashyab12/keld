@@ -238,6 +238,45 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
             }
             cpu.set(dst, result, wide, false);
         }
+        Op::LogicalImm {
+            dst,
+            src,
+            value,
+            kind,
+            wide,
+        } => {
+            let a = cpu.reg(src, false);
+            let result = match kind {
+                0 | 3 => a & value,
+                1 => a | value,
+                _ => a ^ value,
+            };
+            if kind == 3 {
+                let r = if wide { result } else { result as u32 as u64 };
+                cpu.nzcv = ((r >> if wide { 63 } else { 31 }) & 1) << 31 | ((r == 0) as u64) << 30;
+            }
+            cpu.set(dst, result, wide, kind != 3);
+        }
+        Op::CondCompare {
+            lhs,
+            rhs,
+            immediate,
+            subtract,
+            wide,
+            condition,
+            nzcv,
+        } => {
+            if condition_holds(cpu.nzcv, condition) {
+                let b = if immediate {
+                    u64::from(rhs)
+                } else {
+                    cpu.reg(rhs, false)
+                };
+                arithmetic(cpu, cpu.reg(lhs, false), b, subtract, wide, true);
+            } else {
+                cpu.nzcv = u64::from(nzcv) << 28;
+            }
+        }
         Op::CondBranch { target, condition } => {
             if condition_holds(cpu.nzcv, condition) {
                 next = target;
@@ -393,6 +432,7 @@ fn syscall(
 const CALL_RETURN: u64 = u64::MAX - 3;
 
 fn validate_startup(image: &Image) -> Result<()> {
+    crate::tls::layout(image)?;
     if let Some(startup) = &image.startup {
         image.read(startup.header, 32, 1)?;
         if image.contains_pc(CALL_RETURN)
@@ -578,6 +618,11 @@ impl<'a> Prepared<'a> {
             #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
             let trapped = step_memory(cpu, self.image, memory)?;
             if trapped {
+                let trap = cpu.pc.checked_sub(4).ok_or("invalid trap PC")?;
+                if self.image.instruction(trap)? == crate::tls::SVC {
+                    cpu.x[0] = memory.resolve_tlv(self.image, cpu.x[0], trap)?;
+                    continue;
+                }
                 *syscalls += 1;
                 if let Some(exit) = syscall(cpu, memory, out, *started)? {
                     return Ok(Some(exit));

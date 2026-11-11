@@ -14,6 +14,8 @@ pointer rebasing, export tries and two-level symbol binding, including supported
 [64-bit chained fixups](docs/chained-fixups.md).
 Supported C initializers run before main in a checked dependency order with a
 shared guest instruction budget; see [startup behavior](docs/initializers.md).
+Plain C [thread-local variables](docs/tls.md) support private scalar storage for
+one logical context per run, including constructor access and fresh-run reset.
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 
@@ -34,6 +36,7 @@ to build Sable or run these probes. See [fixture provenance](modules/sable/fixtu
 - [Loader, translation and Darwin design](docs/architecture.md)
 - [Milestones and benchmark gates](docs/roadmap.md)
 - [Real app interaction and GPU benchmark gates](docs/app-benchmarks.md)
+- [Scalar Darwin TLS contract and runtime checks](docs/tls.md)
 - [Sandbox containment and efficiency design](docs/sandbox-design.md)
 - [150 concurrent CPU microVMs, resource measurements and failed attempts](evidence/density/RESULTS.md)
 - [Recorded native app reference, explicitly separate from Sable](evidence/recordings/README.md)

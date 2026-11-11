@@ -52,6 +52,27 @@ def corpus(seed, count):
         for condition in range(16):
             case([0x54000040|condition,0x91000400],"condition_truth_table")
             cases[-1]["nzcv"]=flags<<28
+    # Logical immediates built as rotated runs within repeated elements. The
+    # independent CPU validates masks, width, flags and SP/ZR operand roles.
+    for wide in [0,1]:
+        for power in range(1,7 if wide else 6):
+            width=1<<power
+            for ones in sorted({1,width//2,width-1}):
+                for rotation in sorted({0,1,width-1}):
+                    for kind in range(4):
+                        for dst in [8,31]:
+                            for src in [9,31]:
+                                n=int(width==64);imms=((~(width*2-1))&63)|(ones-1)
+                                case([0x12000000|wide<<31|kind<<29|n<<22|rotation<<16|imms<<10|src<<5|dst],"logical_immediate_masks_sp_zr")
+    # Both CCMP/CCMN operand forms, all conditions and all incoming flags.
+    for wide in [0,1]:
+        for subtract in [0,1]:
+            for immediate in [0,1]:
+                for flags in range(16):
+                    for condition in range(16):
+                        rhs=rng.choice([0,1,15,31]);src=rng.choice([0,1,31])
+                        case([0x3a400000|wide<<31|subtract<<30|rhs<<16|condition<<12|immediate<<11|src<<5|rng.randrange(16)],"conditional_compare_flags")
+                        cases[-1]["nzcv"]=flags<<28
     # Memory widths, offsets, unaligned data access, signed offsets and writeback.
     for size in range(4):
         for mode in range(4):

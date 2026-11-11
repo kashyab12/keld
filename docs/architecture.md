@@ -35,12 +35,15 @@ Neither executes Apple's dyld or constructs a complete Darwin process startup st
 ## Execution
 
 `isa.rs` decodes selected 32/64-bit move-wide, add/subtract, shifted logical
-operations, ADR/ADRP, B/BL, B.cond, CBZ/CBNZ, RET, NOP and `svc #0x80` instructions.
+operations, logical immediates, conditional compares, ADR/ADRP, B/BL, B.cond,
+CBZ/CBNZ, RET, NOP and checked SVC instructions.
 Arithmetic flags use ARM's no-borrow carry convention for subtraction. Logical
 flag-setting operations set N/Z and clear C/V. Conditions read saved NZCV rather
 than relying on host flags that budget and address checks can change.
-Register 31 is SP for add/sub immediate and zero/discard for the other supported
-arithmetic operations. Flag-setting writes to register 31 discard the result.
+Register 31 reads SP for add/sub immediate. Non-flag-setting immediate arithmetic
+and logical-immediate destinations can write SP; logical sources use ZR. Other
+supported register arithmetic uses zero/discard. Flag-setting writes to register
+31 discard the result.
 W-register writes zero-extend into X-registers.
 
 Scalar memory access supports 1/2/4/8-byte loads/stores, unsigned immediate offsets,
@@ -52,8 +55,9 @@ semantics. Signed loads, SIMD, unprivileged access forms and atomics remain unsu
 `memory.rs` forks writable image buffers into each run, shares immutable image
 bytes through `Arc<Vec<u8>>`, and adds a reserved 1 MiB stack.
 The freestanding process starts with aligned SP at the stack top. Images with
-initializers use the bounded [startup arguments](initializers.md); TLS remains
-unsupported. Loads zero-extend, stores truncate to the access width, and
+initializers use the bounded [startup arguments](initializers.md). Scalar
+[TLS storage](tls.md) is fixed before compilation and private to each run.
+Loads zero-extend, stores truncate to the access width, and
 an access must fit wholly in one region with the required permission. SP-based
 accesses check 16-byte alignment. Failed memory operations preserve registers,
 base writeback, memory and the remaining instruction count; pair stores validate
@@ -99,7 +103,9 @@ security audit or a promise of sandbox isolation.
 
 ## Darwin boundary
 
-The SVC immediate is `0x80`, syscall/trap number is in X16, arguments in X0 onward.
+For Darwin calls the SVC immediate is `0x80`, number in X16, arguments in X0 onward.
+The separate `svc #0x5ab1` is a checked Sable-private scalar TLV resolver,
+described in [the TLS contract](tls.md); it supplies no Darwin service number.
 Current successful calls are deliberately narrow:
 
 | Number | Behavior |

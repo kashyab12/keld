@@ -5,7 +5,7 @@ use crate::{
     engine::{Cpu, condition_holds, step_memory},
     isa::{Op, decode},
     macho::Image,
-    memory::{Memory, STACK_BASE, STACK_SIZE},
+    memory::Memory,
 };
 use std::{
     collections::{BTreeSet, HashMap},
@@ -489,6 +489,31 @@ impl Assembler {
                 }
                 self.store(dst, false, wide);
             }
+            Op::LogicalImm {
+                dst,
+                src,
+                value,
+                kind,
+                wide,
+            } => {
+                self.load(src, false, false);
+                self.imm64(value, true);
+                if wide {
+                    self.emit(&[0x48]);
+                }
+                self.emit(&[
+                    match kind {
+                        0 | 3 => 0x21,
+                        1 => 0x09,
+                        _ => 0x31,
+                    },
+                    0xd0,
+                ]);
+                if kind == 3 {
+                    self.flags(false);
+                }
+                self.store(dst, kind != 3, wide);
+            }
             Op::CondBranch { target, condition } => {
                 let mask = (0..16).fold(0u32, |m, n| {
                     m | ((condition_holds(n << 28, condition) as u32) << n)
@@ -500,7 +525,11 @@ impl Assembler {
                 self.emit(&[0xd3, 0xe8, 0xa8, 1]);
                 self.branch(target, Some(true));
             }
-            Op::Memory { .. } | Op::MemoryReg { .. } | Op::Literal { .. } | Op::Pair { .. } => {
+            Op::Memory { .. }
+            | Op::MemoryReg { .. }
+            | Op::Literal { .. }
+            | Op::Pair { .. }
+            | Op::CondCompare { .. } => {
                 unreachable!("memory operations use checked Rust transition")
             }
             Op::Address { dst, value } => {
@@ -560,12 +589,7 @@ impl Compiled {
     }
     /// Diagnostic control for paired comparison against checked Rust dispatch.
     pub fn new_with_dispatch(image: &Image, native_indirect: bool) -> Result<Self> {
-        let mut layout: Vec<_> = image
-            .segments
-            .iter()
-            .map(|s| (s.address, s.bytes.len(), s.protection))
-            .collect();
-        layout.push((STACK_BASE, STACK_SIZE, 3));
+        let layout = Memory::prepared_layout(image)?;
         let mut decoded = Vec::new();
         let mut ranges: Vec<_> = image.code_ranges().collect();
         ranges.sort_unstable();
@@ -641,7 +665,8 @@ impl Compiled {
                     Op::Memory { .. }
                     | Op::MemoryReg { .. }
                     | Op::Literal { .. }
-                    | Op::Pair { .. } => {
+                    | Op::Pair { .. }
+                    | Op::CondCompare { .. } => {
                         boundaries.insert(pc);
                         boundaries.insert(pc + 4);
                     }
@@ -678,7 +703,7 @@ impl Compiled {
                     bodies.insert(*pc, a.bytes.len());
                     a.memory(*op)?;
                 }
-                Ok(Op::Pair { .. }) => {
+                Ok(Op::Pair { .. } | Op::CondCompare { .. }) => {
                     a.guard(*pc);
                     bodies.insert(*pc, a.bytes.len());
                     a.exit(4);

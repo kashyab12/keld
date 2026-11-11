@@ -6,5 +6,6 @@ pub mod jit;
 pub mod linker;
 pub mod macho;
 pub mod memory;
+pub mod tls;
 
 pub type Result<T> = std::result::Result<T, String>;

@@ -7,8 +7,9 @@ steps; neither supplies Foundation, Objective-C, pthread scheduling or graphics.
 
 Follow-up: the bounded C initializer gate is now implemented in
 [Sable startup](initializers.md), with independently checked original fixtures.
-TLS remains unsupported. The proposed gates and native observations below
-record the investigation that led to this work.
+The bounded single-context [plain C scalar TLV gate](tls.md) is also implemented.
+The proposed gates and native observations below record the investigation that
+led to this work. The Foundation/pthread companion remains unsupported.
 
 The original research ran in a private artifact directory. Its source and curated receipts have been reviewed and integrated here; Apple build products remain private.
 

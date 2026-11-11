@@ -61,6 +61,22 @@ pub enum Op {
         amount: u8,
         wide: bool,
     },
+    LogicalImm {
+        dst: u8,
+        src: u8,
+        value: u64,
+        kind: u8,
+        wide: bool,
+    },
+    CondCompare {
+        lhs: u8,
+        rhs: u8,
+        immediate: bool,
+        subtract: bool,
+        wide: bool,
+        condition: u8,
+        nzcv: u8,
+    },
     CondBranch {
         target: u64,
         condition: u8,
@@ -134,9 +150,57 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
     if word == 0xd503201f {
         return Ok(Op::Nop);
     }
+    if word & 0x1f80_0000 == 0x1200_0000 {
+        let n = (word >> 22) & 1;
+        let imms = (word >> 10) & 63;
+        let immr = (word >> 16) & 63;
+        let selector = (n << 6) | (!imms & 63);
+        if selector < 2 || (!wide && n != 0) {
+            return Err("reserved logical immediate".into());
+        }
+        let width = 1u32 << (31 - selector.leading_zeros());
+        let ones = (imms & (width - 1)) + 1;
+        let rotate = immr & (width - 1);
+        if ones == width || width > if wide { 64 } else { 32 } {
+            return Err("reserved logical immediate mask".into());
+        }
+        let bits = (1u64 << ones) - 1;
+        let mask = if width == 64 {
+            u64::MAX
+        } else {
+            (1u64 << width) - 1
+        };
+        let element = if rotate == 0 {
+            bits
+        } else {
+            ((bits >> rotate) | (bits << (width - rotate))) & mask
+        };
+        let mut value = 0;
+        for shift in (0..if wide { 64 } else { 32 }).step_by(width as usize) {
+            value |= element << shift;
+        }
+        return Ok(Op::LogicalImm {
+            dst,
+            src,
+            value,
+            kind: ((word >> 29) & 3) as u8,
+            wide,
+        });
+    }
+    if word & 0x3fe0_0410 == 0x3a40_0000 {
+        return Ok(Op::CondCompare {
+            lhs: src,
+            rhs: ((word >> 16) & 31) as u8,
+            immediate: word & (1 << 11) != 0,
+            subtract: word & (1 << 30) != 0,
+            wide,
+            condition: ((word >> 12) & 15) as u8,
+            nzcv: (word & 15) as u8,
+        });
+    }
     if word & 0xffe0001f == 0xd4000001 {
-        if (word >> 5) & 0xffff != 0x80 {
-            return Err("only Darwin svc #0x80 supported".into());
+        if (word >> 5) & 0xffff != 0x80 && word != crate::tls::SVC {
+            return Err("only Darwin svc #0x80 or checked Sable TLV trap supported".into());
         }
         return Ok(Op::Svc);
     }

@@ -1,0 +1,9 @@
+{
+  "kind": "actual UIKit executable attempted locally in Sable; no Apple binaries transferred",
+  "exit": 125,
+  "stdout_hex": "",
+  "stderr": "sable: required dylib not supplied: /System/Library/Frameworks/UIKit.framework/UIKit\n",
+  "completed_interactions": 0,
+  "app_sha256": "4088686070bc0a5dbb2b647732e2304a732d2e763cde411a52ec548099206393",
+  "sable_sha256": "4da8e0ac5b400f5d5ddd01ab51bdc2033a6b54b61374c0b01caab053d5e66e39"
+}

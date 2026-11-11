@@ -1,0 +1,18 @@
+{
+  "modules/sable/fixtures/tls-b.c": "91cdccbdcb7893c6512e99a7fa002a4d8dee779323c74997bf2faedd7577ef1d",
+  "modules/sable/fixtures/tls-a.c": "53524ba8078093293bb31ba721d7179e648e9003db9fe483467dbe9a9a39d82c",
+  "modules/sable/fixtures/tls-start.s": "f8ea922de78160eb3294f14b9275f1a0d1559843fac42a43236c0ef0f879b7c6",
+  "modules/sable/fixtures/tls-probe.S": "c12086a1f3abe94243a2ef3dc476ad00ec0d471834af7958cf8777bfb966f9fa",
+  "modules/sable/fixtures/tls-system.s": "0ca9800e8e029cc2488346f0df5e89b8fcfb9bc975e65df2875ec1214f63d55f",
+  "modules/sable/fixtures/tls-main.c": "1fb6eef6f7fe8723549b06a04afa1b8ec0516d87cda0e31c0f97cfce5691a877",
+  "modules/sable/fixtures/bin/tls/chained/tls-0.macho": "c97e8f09760dbd3aeb326180401a8b584fe6aaf6eeedb67b9334e0196f760fd4",
+  "modules/sable/fixtures/bin/tls/chained/libsable_system.dylib": "44d862196d174e62e85fe9b56965b9f15b2230f02bd3ae3b5e7c59a32b1532e4",
+  "modules/sable/fixtures/bin/tls/chained/tls-1.macho": "df66a467e5f48eb9da44507d4a5dbeb38559a375d2d4af4617cb43d0b1223cbd",
+  "modules/sable/fixtures/bin/tls/chained/libtlv_b.dylib": "70ff4ee8dca57188f1d5bd1b9bc0760ef36a8aa37d0f56c7abaaaf06f007542e",
+  "modules/sable/fixtures/bin/tls/chained/libtlv_a.dylib": "4dd9290bb7ba7ea4b54e39a417995c1d61d074c2cf67bea1ee14b5dbf9556fdc",
+  "modules/sable/fixtures/bin/tls/legacy/tls-0.macho": "f95498116dcda80b4a0e843a9d1fb9df7ad5398e9c0be5b1b4b8e87e262bb87e",
+  "modules/sable/fixtures/bin/tls/legacy/libsable_system.dylib": "d16dc86516c288501d2a5014c31c3e1a9defa4b71c68765ab2d3f6e1252d5f94",
+  "modules/sable/fixtures/bin/tls/legacy/tls-1.macho": "43b15b315b235e87ec53532b6e0590c6aa9a1441ff355f3802987ddea4fbb2da",
+  "modules/sable/fixtures/bin/tls/legacy/libtlv_b.dylib": "684c9e83192b18805e691b376b12c94808799d2150a2be76f1aea844ab86ea8b",
+  "modules/sable/fixtures/bin/tls/legacy/libtlv_a.dylib": "3966f40c039143e4c4612b0147f8cd7de1909cd2e230aa4bda8ae45cc14621d8"
+}

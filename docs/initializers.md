@@ -54,7 +54,8 @@ The [execution report](../evidence/initializers/RESULTS.md) retains native/cloud
 receipts. The [Foundation probes](foundation-contracts.md) explain why this
 startup contract was prioritized.
 
-TLS and terminators still reject explicitly. Objective-C `+load`, registration,
+Plain C scalar [TLS](tls.md) is now available before constructors. TLS
+initialization-function arrays and terminators still reject. Objective-C `+load`, registration,
 C++ destructors, delayed/shared-cache initialization, LC_ROUTINES_64, dlopen and
 reentrant initialization are outside this gate. A read-only startup plan does
 not model guest mutation of initializer metadata between callbacks. This change

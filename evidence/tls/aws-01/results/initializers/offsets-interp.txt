@@ -1,0 +1,7 @@
+INIT leaf 1
+INIT leaf 2
+INIT parent
+INIT sibling
+INIT executable
+ARGS
+MAIN

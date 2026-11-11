@@ -43,6 +43,8 @@ jobs:
         run: bash scripts/check-chained.sh
       - name: Rebuild and execute image initializers
         run: bash scripts/check-initializers.sh
+      - name: Rebuild and execute scalar thread-local variables
+        run: bash scripts/check-tls.sh
       - name: Check app oracle scripts and inventory graphics exposure
         run: |
           python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py scripts/firecracker-bench.py

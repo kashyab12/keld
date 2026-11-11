@@ -1,0 +1,60 @@
+{
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+  "version": "27.2",
+  "build": "24B8117",
+  "runs": [
+    {
+      "fixture": "hello",
+      "exit": 0,
+      "stdout_hex": "5341424c455f41524d36345f44415257494e5f4f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "compute",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": ""
+    },
+    {
+      "fixture": "workload",
+      "exit": 0,
+      "stdout_hex": "fa23b45693b4658e",
+      "stderr": ""
+    },
+    {
+      "fixture": "checksum",
+      "exit": 0,
+      "stdout_hex": "406b8988792d0000",
+      "stderr": ""
+    },
+    {
+      "fixture": "tls/chained/tls-0",
+      "exit": 0,
+      "stdout_hex": "544c56207363616c6172204142492c2074656d706c617465732c2074776f20696d616765732c20737461626c6520616464726573736573204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "tls/chained/tls-1",
+      "exit": 0,
+      "stdout_hex": "544c56207363616c6172204142492c2074656d706c617465732c2074776f20696d616765732c20737461626c6520616464726573736573204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "tls/legacy/tls-0",
+      "exit": 0,
+      "stdout_hex": "544c56207363616c6172204142492c2074656d706c617465732c2074776f20696d616765732c20737461626c6520616464726573736573204f4b0a",
+      "stderr": ""
+    },
+    {
+      "fixture": "tls/legacy/tls-1",
+      "exit": 0,
+      "stdout_hex": "544c56207363616c6172204142492c2074656d706c617465732c2074776f20696d616765732c20737461626c6520616464726573736573204f4b0a",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "cleanup": {
+    "delete_exit": 0,
+    "remaining_devices": 0
+  }
+}

@@ -168,6 +168,11 @@ cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test --release
 bash scripts/check-initializers.sh
+bash scripts/check-tls.sh
+for mode in chained legacy; do
+  mkdir -p "results/tls/$mode"
+  cp artifacts/tls/"$mode"/interp-*.txt artifacts/tls/"$mode"/jit-*.txt "results/tls/$mode/"
+done
 mkdir -p results/initializers
 for mode in offsets pointers; do
   cp "artifacts/initializers/$mode/interp.txt" "results/initializers/$mode-interp.txt"
