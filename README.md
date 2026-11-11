@@ -28,6 +28,10 @@ Validated [Q payload fields](docs/payload.md) add real getter/void-setter execut
 inherited storage and class-size-based extra-byte boundaries.
 An original [constant-string framework slice](docs/strings.md) executes non-ARC
 literal reads through guest NSString and scalar libc methods.
+The [ordinary ownership slice](docs/ownership.md) adds bounded ARC counts, nested
+pools and guest deallocation. Its guest ASCII uppercase method allocates and
+transforms real input; the retained SDK-linked Foundation console test also
+completes locally with our original providers.
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 
@@ -51,6 +55,7 @@ to build Sable or run these probes. See [fixture provenance](modules/sable/fixtu
 - [Static protocol registration, names and direct conformance](docs/protocols.md)
 - [Checked superclass lookup and Super2 execution](docs/super.md)
 - [Original framework constant strings and guest byte reads](docs/strings.md)
+- [Ordinary ARC ownership, guest uppercase and execution receipts](evidence/ownership/RESULTS.md)
 - [Q payload layouts, guest getters/setters and allocation boundaries](docs/payload.md)
 - [Fixed-layout guest instances, pointer methods and lifetime](docs/instances.md)
 - [Static scalar Objective-C2 registration and method execution](docs/objc.md)

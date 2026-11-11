@@ -1,0 +1,50 @@
+{
+  "verified_at": "2026-11-11T20:59:30.628099+00:00",
+  "runtime_commit": "1d7be04d6f46ad1700ae94e8abb9819ce80f9ef4",
+  "local_full_tests_at_base_commit": 94,
+  "local_ownership_tests_at_final_commit": 9,
+  "local_rebuilt_cli_at_base": 8,
+  "local_original_binary_rebuild_matches": 24,
+  "retained_exact_sdk_minimal_local_exit": 0,
+  "retained_exact_sdk_minimal_instructions": 463,
+  "ec2_remote_exit": 0,
+  "ec2_rust_tests": 101,
+  "ec2_rust_failure_count": 0,
+  "ec2_ownership_cli_passes": 16,
+  "ec2_ownership_format_reports": 4,
+  "ec2_ownership_inspected_inputs": 16,
+  "ec2_previous_positive_cli": {
+    "strings": 16,
+    "payload": 128,
+    "instances": 32,
+    "super": 40,
+    "protocols": 16
+  },
+  "ec2_independent_oracle_cases": 84702,
+  "ec2_runtime_hashes_matched": 459,
+  "source_fixture_hashes_matched": 38,
+  "cpu_only_benchmark_samples": 186,
+  "cpu_only_benchmark_failures": 0,
+  "actual_notes_exit": 125,
+  "sable_uikit_interactions": 0,
+  "sable_app_frames": 0,
+  "new_native_reference_runs": 0,
+  "new_microvm_density_runs": 0,
+  "competitor_runs": 0,
+  "limits": [
+    "Original bounded ASCII Foundation/ordinary ownership console slice; no general Apple Foundation runtime",
+    "Retained SDK-linked executable ran only in local Sable interpreter with original providers",
+    "EC2 used original headerless fixtures and original providers; both JIT paths covered by Rust tests",
+    "No UIKit renderer, UI FPS, input latency or concurrent iPhone capacity measurement",
+    "CPU oracle/benchmark sanity checks establish no app workflow or competitor advantage"
+  ],
+  "local_full_rust_source_commit": "0f0ae104cf92a3f6999b55d0b898a0b6563613ed",
+  "ec2_super_depth_rejections": 16,
+  "cloud_cleanup": {
+    "active_instances": 0,
+    "volumes": 0,
+    "security_groups": 0,
+    "key_pairs": 0
+  },
+  "controller_exit": 0
+}

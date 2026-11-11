@@ -1,0 +1,135 @@
+[
+  {
+    "file": "client.macho",
+    "sha256": "6203aa7823acaedde5f05c61a57d5e9a7c8cd868532dacd8b8f6a285a9b37aac",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [
+      {
+        "address": 4294983784,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 4294983816,
+        "flags": 1992,
+        "length": 0,
+        "bytes": ""
+      },
+      {
+        "address": 4294983848,
+        "flags": 1992,
+        "length": 63,
+        "bytes": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"
+      },
+      {
+        "address": 4294983880,
+        "flags": 1992,
+        "length": 8,
+        "bytes": "aZ09!?xy"
+      }
+    ],
+    "ownership_imports": [
+      "_objc_autoreleasePoolPop",
+      "_objc_autoreleasePoolPush",
+      "_objc_msgSend",
+      "_objc_release_x20",
+      "_objc_release_x21",
+      "_objc_release_x22",
+      "_objc_release_x23",
+      "_objc_retainAutorelease",
+      "_objc_retainAutoreleasedReturnValue"
+    ]
+  },
+  {
+    "file": "observer.macho",
+    "sha256": "f91aeb694143093955f3949cfc49f5cee68a104bfd9f4cb0484962835e93421a",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [
+      {
+        "address": 4294983800,
+        "flags": 1992,
+        "length": 8,
+        "bytes": "immortal"
+      }
+    ]
+  },
+  {
+    "file": "Foundation.dylib",
+    "sha256": "f208f1354f06efa1d473df3be5f0000ef44ba60f95b8b75cea1a85a9000d0923",
+    "dependencies": [
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [],
+    "getter": {
+      "selector": "UTF8String",
+      "encoding": "r*16@0:8",
+      "imp": 1736
+    },
+    "methods": {
+      "UTF8String": {
+        "selector": "UTF8String",
+        "encoding": "r*16@0:8",
+        "imp": 1736
+      },
+      "uppercaseString": {
+        "selector": "uppercaseString",
+        "encoding": "@16@0:8",
+        "imp": 1744
+      },
+      "dealloc": {
+        "selector": "dealloc",
+        "encoding": "v16@0:8",
+        "imp": 1896
+      }
+    },
+    "method_format": {
+      "file": "Foundation.dylib",
+      "sha256": "f208f1354f06efa1d473df3be5f0000ef44ba60f95b8b75cea1a85a9000d0923",
+      "format": "absolute",
+      "lists": []
+    },
+    "class_layout": {
+      "start": 0,
+      "size": 32
+    }
+  },
+  {
+    "file": "CoreFoundation.dylib",
+    "sha256": "b8dc08ef43f3cd9ae04cbb27bce1ca2bf9c997e873a61cc3343528ba749a0078",
+    "dependencies": [
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [],
+    "class_alias_address": 32952,
+    "class_layout": {
+      "start": 32,
+      "size": 32
+    }
+  }
+]

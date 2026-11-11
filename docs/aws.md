@@ -52,6 +52,12 @@ inspect emitted ivar cells, layouts and signatures. The constant-string matrix
 executes eight non-ARC programs in both engines with original framework classes,
 an inherited guest getter and guest strlen/strcmp. Four format reports inspect
 twenty executable/library inputs; no Apple framework enters Linux.
+The ordinary ownership matrix adds eight ARC/observer programs in both engines,
+including allocated ASCII uppercase, nested pools, real guest deallocation,
+specialized register helpers and main/constructor/TLV state. Four independent
+format reports inspect sixteen original executable/framework inputs. Rust tests
+also compare both JIT dispatch paths, budget boundaries and fresh-run ownership
+state. These remain console workflows; they supply no rendering or UI FPS result.
 The `--extended` path runs three independent oracle seeds in interpreter/JIT modes.
 It also rebuilds and checks four original chained-fixup programs in both engines;
 the eight outputs and rebuilt binary hashes are retained under `results/chained`.

@@ -1,0 +1,219 @@
+[
+  {
+    "file": "client.macho",
+    "sha256": "6203aa7823acaedde5f05c61a57d5e9a7c8cd868532dacd8b8f6a285a9b37aac",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [
+      {
+        "address": 4294983784,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 4294983816,
+        "flags": 1992,
+        "length": 0,
+        "bytes": ""
+      },
+      {
+        "address": 4294983848,
+        "flags": 1992,
+        "length": 63,
+        "bytes": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"
+      },
+      {
+        "address": 4294983880,
+        "flags": 1992,
+        "length": 8,
+        "bytes": "aZ09!?xy"
+      }
+    ],
+    "ownership_imports": [
+      "_objc_autoreleasePoolPop",
+      "_objc_autoreleasePoolPush",
+      "_objc_msgSend",
+      "_objc_release_x20",
+      "_objc_release_x21",
+      "_objc_release_x22",
+      "_objc_release_x23",
+      "_objc_retainAutorelease",
+      "_objc_retainAutoreleasedReturnValue"
+    ]
+  },
+  {
+    "file": "observer.macho",
+    "sha256": "f91aeb694143093955f3949cfc49f5cee68a104bfd9f4cb0484962835e93421a",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [
+      {
+        "address": 4294983800,
+        "flags": 1992,
+        "length": 8,
+        "bytes": "immortal"
+      }
+    ]
+  },
+  {
+    "file": "Foundation.dylib",
+    "sha256": "f1e7b11295249b0f03895d9292ebd0e0e5ca3299f661169ec62896dc371a0155",
+    "dependencies": [
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [],
+    "getter": {
+      "selector": "UTF8String",
+      "encoding": "r*16@0:8",
+      "imp": 1896
+    },
+    "methods": {
+      "UTF8String": {
+        "selector": "UTF8String",
+        "encoding": "r*16@0:8",
+        "imp": 1896
+      },
+      "uppercaseString": {
+        "selector": "uppercaseString",
+        "encoding": "@16@0:8",
+        "imp": 1904
+      },
+      "dealloc": {
+        "selector": "dealloc",
+        "encoding": "v16@0:8",
+        "imp": 2056
+      }
+    },
+    "method_format": {
+      "file": "Foundation.dylib",
+      "sha256": "f1e7b11295249b0f03895d9292ebd0e0e5ca3299f661169ec62896dc371a0155",
+      "format": "compact",
+      "lists": [
+        {
+          "address": 2260,
+          "header": 2147483660,
+          "count": 3,
+          "entries": [
+            {
+              "entry": 2268,
+              "offsets": [
+                31100,
+                -53,
+                -380
+              ],
+              "selector_slot": 33368,
+              "types": 2219,
+              "imp": 1896
+            },
+            {
+              "entry": 2280,
+              "offsets": [
+                31096,
+                -56,
+                -384
+              ],
+              "selector_slot": 33376,
+              "types": 2228,
+              "imp": 1904
+            },
+            {
+              "entry": 2292,
+              "offsets": [
+                31092,
+                -60,
+                -244
+              ],
+              "selector_slot": 33384,
+              "types": 2236,
+              "imp": 2056
+            }
+          ]
+        },
+        {
+          "address": 2304,
+          "header": 2147483660,
+          "count": 1,
+          "entries": [
+            {
+              "entry": 2312,
+              "offsets": [
+                31080,
+                -68,
+                -244
+              ],
+              "selector_slot": 33392,
+              "types": 2248,
+              "imp": 2076
+            }
+          ]
+        },
+        {
+          "address": 2324,
+          "header": 2147483660,
+          "count": 1,
+          "entries": [
+            {
+              "entry": 2332,
+              "offsets": [
+                31052,
+                -100,
+                -220
+              ],
+              "selector_slot": 33384,
+              "types": 2236,
+              "imp": 2120
+            }
+          ]
+        }
+      ],
+      "section": {
+        "address": 2260,
+        "length": 84,
+        "offset": 2260,
+        "protection": 5,
+        "flags": 268435456
+      }
+    },
+    "class_layout": {
+      "start": 0,
+      "size": 32
+    }
+  },
+  {
+    "file": "CoreFoundation.dylib",
+    "sha256": "b8dc08ef43f3cd9ae04cbb27bce1ca2bf9c997e873a61cc3343528ba749a0078",
+    "dependencies": [
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [],
+    "class_alias_address": 32952,
+    "class_layout": {
+      "start": 32,
+      "size": 32
+    }
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "source_commit": "1d7be04d6f46ad1700ae94e8abb9819ce80f9ef4",
+  "captured_files": 459,
+  "matches_commit": 459,
+  "mismatches": [],
+  "scope": "Exact captured runtime, test and original input bytes compared with Git objects; documentation updates after capture are separate"
+}

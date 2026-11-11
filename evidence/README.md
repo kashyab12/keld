@@ -4,9 +4,14 @@ These are raw receipts from bounded experiments, not a complete simulator or
 competitive benchmark. No Apple runtime, SDK, credentials, cloud account ID,
 instance IP or SSH key is distributed here.
 
-The [constant-string report](strings/RESULTS.md) adds original framework classes,
-validated ASCII literals and actual guest getter/libc execution. The retained
-ARC Foundation workflow still fails at its pool import.
+The [ordinary ownership report](ownership/RESULTS.md) adds bounded ARC counts,
+nested pools, guest deallocation and allocated ASCII uppercase. The retained
+SDK-linked Foundation console input now completes locally with original providers.
+UIKit rendering and app performance remain unproved.
+
+The earlier [constant-string report](strings/RESULTS.md) adds original framework
+classes, validated ASCII literals and guest getter/libc execution. Its unresolved
+pool receipt describes that checkpoint and remains unchanged.
 
 The [Q payload report](payload/RESULTS.md) adds original getters, void setters,
 inherited fields and exact class-size allocation bounds. Native Apple reference,

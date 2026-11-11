@@ -3,7 +3,9 @@
 Sable executes original non-ARC constant-string programs through genuine original
 Foundation/CoreFoundation classes, an inherited guest UTF8String getter and guest
 strlen/strcmp/write. [Exact profile](../../docs/strings.md).
-The ARC Foundation uppercase workflow and UIKit app remain unsupported.
+At this checkpoint, the ARC Foundation uppercase workflow and UIKit app remained
+unsupported. The later [ownership gate](../ownership/RESULTS.md) advances the
+console workflow; the observations below retain their original scope.
 
 All eight variants passed Apple's native iOS27.2 reference, alongside four prior
 controls. [Native receipt](native-reference.json): delete exit0, zero owned devices

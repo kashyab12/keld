@@ -1,0 +1,90 @@
+{
+  "base_implementation_commit": "0f0ae104cf92a3f6999b55d0b898a0b6563613ed",
+  "base_full_rust_tests": 94,
+  "final_source_commit": "1d7be04d6f46ad1700ae94e8abb9819ce80f9ef4",
+  "final_source_ownership_tests": 9,
+  "final_source_test_summary": [
+    {
+      "label": "ownership-unit",
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "--locked",
+        "--lib",
+        "ownership"
+      ],
+      "exit": 0,
+      "tests": [
+        {
+          "name": "objc::ownership::fallback_trace_tests::ordinary_minimal_count_trace_and_invalid_drain_preflight",
+          "result": "ok"
+        },
+        {
+          "name": "objc::ownership::tests::zero_count_requires_hook_finalizing_callback_and_single_scrubbed_disposal",
+          "result": "ok"
+        },
+        {
+          "name": "objc::ownership::tests::continuation_boundaries_validate_metadata_before_ownership_effects",
+          "result": "ok"
+        },
+        {
+          "name": "engine::ownership_execution_tests::checked_dealloc_return_disposal_reentrancy_and_precise_fault_state",
+          "result": "ok"
+        },
+        {
+          "name": "objc::ownership::tests::atomic_counts_caps_tokens_and_exact_owned_or_immortal_identities",
+          "result": "ok"
+        }
+      ],
+      "summary": "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.00s"
+    },
+    {
+      "label": "ownership-integration",
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "--locked",
+        "--test",
+        "ownership"
+      ],
+      "exit": 0,
+      "tests": [
+        {
+          "name": "explicit_main_entry_preserves_freestanding_policy_and_actual_arguments",
+          "result": "ok"
+        },
+        {
+          "name": "complete_bridges_stub_origin_actual_getter_transform_and_data_are_required",
+          "result": "ok"
+        },
+        {
+          "name": "original_arc_transform_and_nested_ownership_matrix_private_state",
+          "result": "ok"
+        },
+        {
+          "name": "every_budget_prefix_including_service_and_callback_returns_resets_privately",
+          "result": "ok"
+        }
+      ],
+      "summary": "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s"
+    }
+  ],
+  "platform": "Darwin arm64 interpreter",
+  "base_matrix_rebuilt_cli_passes": 8,
+  "independent_format_reports": 4,
+  "recipe": 19,
+  "recipe_published": true,
+  "manual_hello": {
+    "stdout": "SABLE_ARM64_DARWIN_OK\n",
+    "exit": 0,
+    "instructions": 9,
+    "syscalls": 2
+  },
+  "not_run_locally": [
+    "Linux JIT",
+    "new native Apple references",
+    "new graphics or density benchmarks"
+  ]
+}

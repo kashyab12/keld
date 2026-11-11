@@ -1,0 +1,117 @@
+[
+  {
+    "file": "instance-0.macho",
+    "sha256": "3744f78daf72598aa75d64d5cb18629ec828e8ced58e43f10dc8e641172a6634",
+    "classes": {
+      "AllocChild": {
+        "address": 4295000128,
+        "meta": 4295000168,
+        "superclass": "_OBJC_CLASS_$_AllocBase",
+        "meta_isa": "_OBJC_METACLASS_$_AllocBase",
+        "meta_superclass": "_OBJC_METACLASS_$_AllocBase"
+      }
+    },
+    "superref_targets": [
+      4295000128
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "instance-0.macho",
+      "sha256": "3744f78daf72598aa75d64d5cb18629ec828e8ced58e43f10dc8e641172a6634",
+      "format": "absolute",
+      "lists": []
+    },
+    "methods": [
+      {
+        "owner": "AllocChild",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      }
+    ]
+  },
+  {
+    "file": "instance-1.macho",
+    "sha256": "561303fb442ec8d5abfda97664aa3d193e9c3edefe44b8653faa7882bdfaafc8",
+    "classes": {
+      "AllocChild": {
+        "address": 4295000128,
+        "meta": 4295000168,
+        "superclass": "_OBJC_CLASS_$_AllocBase",
+        "meta_isa": "_OBJC_METACLASS_$_AllocBase",
+        "meta_superclass": "_OBJC_METACLASS_$_AllocBase"
+      }
+    },
+    "superref_targets": [
+      4295000128
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "instance-1.macho",
+      "sha256": "561303fb442ec8d5abfda97664aa3d193e9c3edefe44b8653faa7882bdfaafc8",
+      "format": "absolute",
+      "lists": []
+    },
+    "methods": [
+      {
+        "owner": "AllocChild",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      }
+    ]
+  },
+  {
+    "file": "libsable_base.dylib",
+    "sha256": "c1763d4b36297fef051095984b342df0ee81a41b792e91c6d0f04b3280f5a84d",
+    "classes": {
+      "AllocBase": {
+        "address": 32784,
+        "meta": 32824,
+        "superclass": 0,
+        "meta_isa": 32824,
+        "meta_superclass": 32784
+      }
+    },
+    "superref_targets": [],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "libsable_base.dylib",
+      "sha256": "c1763d4b36297fef051095984b342df0ee81a41b792e91c6d0f04b3280f5a84d",
+      "format": "absolute",
+      "lists": []
+    },
+    "methods": [
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "identity",
+        "encoding": "@16@0:8"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "choose:",
+        "encoding": "@24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "matches:",
+        "encoding": "Q24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "class",
+        "name": "make:",
+        "encoding": "@24@0:8Q16"
+      }
+    ]
+  }
+]

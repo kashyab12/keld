@@ -1,0 +1,1 @@
+Constant strings, guest UTF8String and libc checks OK

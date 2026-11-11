@@ -2,7 +2,12 @@
 
 The [original constant-string framework slice](../../docs/strings.md) executes
 ASCII literal reads through a guest NSString method and scalar guest libc.
-This covers no ARC pools, uppercase results or general Foundation behavior.
+The following [ordinary ownership slice](../../docs/ownership.md) adds bounded ARC
+counts, nested pools and guest deallocation. Its guest ASCII uppercase method
+allocates and transforms actual bytes; the retained SDK-linked Foundation console
+executable also completes locally with our original providers.
+[Execution receipts and limits](../../evidence/ownership/RESULTS.md).
+General Foundation behavior and UIKit remain unsupported.
 
 [Q payload layouts](../../docs/payload.md) support validated instance fields up to
 64-byte class sizes, genuine void setters/getters and allocation spans derived
@@ -10,7 +15,8 @@ from class metadata. Signed word literal loads cover emitted ivar-offset access.
 
 [Fixed-layout guest instances](../../docs/instances.md) support bounded
 `class_createInstance`/`object_dispose`, scalar object-pointer methods, zeroed
-extra storage and private lifetime tracking. These add no ARC or automatic init.
+extra storage and private lifetime tracking. Ownership is an explicit additional
+profile; neither profile adds automatic initialization.
 
 The bounded [superclass/Super2 profile](../../docs/super.md) supports roots and
 direct subclasses with validated layout prefixes, inherited scalar method lookup and

@@ -1,0 +1,125 @@
+[
+  {
+    "file": "client.macho",
+    "sha256": "7acc101948218f98d0fc558a8d5b265e978662e76c782509cca1ddc6cab7d6a6",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [
+      {
+        "address": 4294983688,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 4294983720,
+        "flags": 1992,
+        "length": 0,
+        "bytes": ""
+      },
+      {
+        "address": 4294983752,
+        "flags": 1992,
+        "length": 63,
+        "bytes": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"
+      },
+      {
+        "address": 4294983784,
+        "flags": 1992,
+        "length": 8,
+        "bytes": "aZ09!?xy"
+      }
+    ],
+    "ownership_imports": [
+      "_objc_autoreleasePoolPop",
+      "_objc_autoreleasePoolPush",
+      "_objc_msgSend",
+      "_objc_release",
+      "_objc_release_x20",
+      "_objc_retainAutorelease",
+      "_objc_retainAutoreleasedReturnValue"
+    ]
+  },
+  {
+    "file": "observer.macho",
+    "sha256": "64b9b2b9695c6a3c2407696a0786247b46ada9668a20dfb25ba23134000c827b",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [
+      {
+        "address": 4294983688,
+        "flags": 1992,
+        "length": 8,
+        "bytes": "immortal"
+      }
+    ]
+  },
+  {
+    "file": "Foundation.dylib",
+    "sha256": "1ffa9ec052874f09892da3b56ea47520474692a2a6fba23d8c56a0b3752f49b2",
+    "dependencies": [
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [],
+    "getter": {
+      "selector": "UTF8String",
+      "encoding": "r*16@0:8",
+      "imp": 1992
+    },
+    "methods": {
+      "UTF8String": {
+        "selector": "UTF8String",
+        "encoding": "r*16@0:8",
+        "imp": 1992
+      },
+      "uppercaseString": {
+        "selector": "uppercaseString",
+        "encoding": "@16@0:8",
+        "imp": 2008
+      },
+      "dealloc": {
+        "selector": "dealloc",
+        "encoding": "v16@0:8",
+        "imp": 2188
+      }
+    },
+    "method_format": {
+      "file": "Foundation.dylib",
+      "sha256": "1ffa9ec052874f09892da3b56ea47520474692a2a6fba23d8c56a0b3752f49b2",
+      "format": "absolute",
+      "lists": []
+    },
+    "class_layout": {
+      "start": 0,
+      "size": 32
+    }
+  },
+  {
+    "file": "CoreFoundation.dylib",
+    "sha256": "561ba1bb75ba922e537e5b555952ce0b5a5fb4e8ba532fe6c87ddf6c4779fbc1",
+    "dependencies": [
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [],
+    "constants": [],
+    "class_alias_address": 32952,
+    "class_layout": {
+      "start": 32,
+      "size": 32
+    }
+  }
+]

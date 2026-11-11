@@ -1,0 +1,14 @@
+{
+  "source_commit": "1d7be04d6f46ad1700ae94e8abb9819ce80f9ef4",
+  "source_observation": "Guest dealloc completion cleared callback and resumed cached drain without checking current Objective-C metadata snapshots at that boundary",
+  "correction": "Plan validates metadata/cache/protocol snapshots before callback completion and independently at drain entry; unchecked Memory completion is private",
+  "regression": "continuation_boundaries_validate_metadata_before_ownership_effects",
+  "coverage": [
+    "changed writable metadata and cache after disposal",
+    "pending count decrements and final pool removal",
+    "no ownership-state or arena effects on validation failure"
+  ],
+  "final_source_focused_tests": 9,
+  "platform": "Darwin arm64 interpreter",
+  "scope": "Normal runtime consistency review and unit/integration coverage; no security-boundary audit or standalone guest reproduction"
+}

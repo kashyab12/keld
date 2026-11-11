@@ -1,0 +1,39 @@
+{
+  "kind": "Development failures and corrections, retained rather than treating intermediate attempts as success",
+  "final_state": "94 Rust tests pass;8 rebuilt interpreter CLI pass;zero pending owned state required at success",
+  "attempts": [
+    {
+      "failure": "Original provider class-address C declaration acquired an extra assembler underscore and failed linking",
+      "correction": "Use an explicit assembler label for the real original NSString class symbol"
+    },
+    {
+      "failure": "Compiler emitted release_x21/x22/x23, then observer release_x24/retain_x22, beyond the initial x20 bridge",
+      "correction": "Add only observed scalar helper forms to the complete checked original bridge set"
+    },
+    {
+      "failure": "Initial CLI reached a new ownership SVC before its family was admitted by the ISA service whitelist",
+      "correction": "Add that bounded service family; no arithmetic, SIMD or memory instruction added"
+    },
+    {
+      "failure": "First combined filtered cargo invocation ran the2 ownership units and filtered out the integration tests",
+      "correction": "Separate unfiltered integration run and final full-suite receipts; no claim that filtered tests executed"
+    },
+    {
+      "failure": "Dealloc negative-test finder expected a direct branch to object_dispose, but the Mach-O uses its own linker stub",
+      "correction": "Private engine test resolves the checked real dealloc IMP via registered class metadata instead of guessing a cross-image direct branch"
+    },
+    {
+      "failure": "An additional guest ASCII-validation precheck candidate emitted a signed byte load outside the scalar ISA profile",
+      "correction": "Remove that extra precheck; the tested inputs are validated immutable ASCII constants or allocated transformations of those bytes. Keep actual scalar data-dependent uppercase and the count<=63 guard; do not add signed/vector instructions"
+    },
+    {
+      "failure": "Transform perturbation assertion demanded an engine error, while the actual ARC client correctly returned nonzero after cleanup",
+      "correction": "Assert the real nonzero guest status for that perturbation; getter/dealloc/data perturbations retain their own expected rejection/fault assertions"
+    },
+    {
+      "failure": "While restricting dealloc-signature enforcement to ownership mode to preserve legacy signatures, one existing test call missed the new boolean argument",
+      "correction": "Supply the legacy false profile argument; final all-target lint and full94-test suite pass"
+    }
+  ],
+  "checkpoint_commit": "0f0ae104cf92a3f6999b55d0b898a0b6563613ed"
+}

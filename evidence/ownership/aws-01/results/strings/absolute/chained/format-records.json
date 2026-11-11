@@ -1,0 +1,141 @@
+[
+  {
+    "file": "strings-0.macho",
+    "sha256": "08c07178e1f44871388c61b464ed32e1570a59826b1814259b2324681eac00ab",
+    "dependencies": [
+      "@loader_path/libsable_literals.dylib",
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [
+      {
+        "address": 4294983736,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 4294983768,
+        "flags": 1992,
+        "length": 0,
+        "bytes": ""
+      },
+      {
+        "address": 4294983800,
+        "flags": 1992,
+        "length": 63,
+        "bytes": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"
+      }
+    ]
+  },
+  {
+    "file": "strings-1.macho",
+    "sha256": "f760991406be3001c7883f5d6e12423c5b22c914dd534cb85a20ac3f0b3db748",
+    "dependencies": [
+      "@loader_path/libsable_literals.dylib",
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [
+      {
+        "address": 4294983736,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 4294983768,
+        "flags": 1992,
+        "length": 0,
+        "bytes": ""
+      },
+      {
+        "address": 4294983800,
+        "flags": 1992,
+        "length": 63,
+        "bytes": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"
+      }
+    ]
+  },
+  {
+    "file": "libsable_literals.dylib",
+    "sha256": "991667c6b9cd2fc49748e7150e28f2ce86a53417f1d84fe0669ab5e6bc7aff48",
+    "dependencies": [
+      "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [
+      {
+        "address": 16384,
+        "flags": 1992,
+        "length": 16,
+        "bytes": "sable foundation"
+      },
+      {
+        "address": 16416,
+        "flags": 1992,
+        "length": 13,
+        "bytes": "dylib Alpha09"
+      }
+    ]
+  },
+  {
+    "file": "Foundation.dylib",
+    "sha256": "9dc733cd4bc375fbae36d53298c1e2a6cb02983dde601a3d099fa2d37b63e65e",
+    "dependencies": [
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [],
+    "getter": {
+      "selector": "UTF8String",
+      "encoding": "r*16@0:8",
+      "imp": 1432
+    },
+    "method_format": {
+      "file": "Foundation.dylib",
+      "sha256": "9dc733cd4bc375fbae36d53298c1e2a6cb02983dde601a3d099fa2d37b63e65e",
+      "format": "absolute",
+      "lists": []
+    },
+    "class_layout": {
+      "start": 0,
+      "size": 32
+    }
+  },
+  {
+    "file": "CoreFoundation.dylib",
+    "sha256": "b8dc08ef43f3cd9ae04cbb27bce1ca2bf9c997e873a61cc3343528ba749a0078",
+    "dependencies": [
+      "/System/Library/Frameworks/Foundation.framework/Foundation",
+      "/usr/lib/libobjc.A.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "constants": [],
+    "class_alias_address": 32952,
+    "class_layout": {
+      "start": 32,
+      "size": 32
+    }
+  }
+]

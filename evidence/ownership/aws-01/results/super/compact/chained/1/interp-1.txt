@@ -1,0 +1,1 @@
+Superclass lookup, Super2 guest methods, nesting and ABI OK

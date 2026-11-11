@@ -1,0 +1,12 @@
+{
+  "kind": "Actual original UIKit Notes input in local Sable; no native execution or transfer",
+  "source_commit": "1d7be04d6f46ad1700ae94e8abb9819ce80f9ef4",
+  "at_utc": "2026-11-11T20:52:38.598675+00:00",
+  "input_sha256_before": "4088686070bc0a5dbb2b647732e2304a732d2e763cde411a52ec548099206393",
+  "input_sha256_after": "4088686070bc0a5dbb2b647732e2304a732d2e763cde411a52ec548099206393",
+  "exit": 125,
+  "stdout": "",
+  "stderr": "sable: required dylib not supplied: /System/Library/Frameworks/UIKit.framework/UIKit\n",
+  "sable_interactions_completed": 0,
+  "ui_frames_rendered": 0
+}

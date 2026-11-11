@@ -1,0 +1,23 @@
+{
+  "kind": "Retained exact SDK-linked original executable through Sable locally, not native Apple execution or EC2",
+  "source_commit": "1d7be04d6f46ad1700ae94e8abb9819ce80f9ef4",
+  "at_utc": "2026-11-11T20:51:48.908312+00:00",
+  "host": "Darwin arm64",
+  "engine": "interpreter",
+  "input": "local-only retained iOS Simulator Foundation minimal",
+  "input_sha256_before": "20dd9adda8624c7e350617bd605d3b83e09f52f075642040b27ad28938c67937",
+  "input_sha256_after": "20dd9adda8624c7e350617bd605d3b83e09f52f075642040b27ad28938c67937",
+  "sable_sha256": "7259b1658ccd0012091c70170d08e4c47a560a102690c6d1b0bee46ba7063f70",
+  "original_provider_sha256": {
+    "CoreFoundation.dylib": "b8dc08ef43f3cd9ae04cbb27bce1ca2bf9c997e873a61cc3343528ba749a0078",
+    "Foundation.dylib": "f208f1354f06efa1d473df3be5f0000ef44ba60f95b8b75cea1a85a9000d0923",
+    "libsable_objc.dylib": "65ff14c58993cad5f17a0053918577a8424d6a230263cf6110fb2c243d4bd41a",
+    "libsable_system.dylib": "40ef35302ec2b88083e2cf901e61e6e017c7d55e28c7f447e2b206122e79b4b9"
+  },
+  "exit": 0,
+  "stdout": "SABLE FOUNDATION\n",
+  "stderr": "instructions=463 syscalls=2 exit=0 x9=1\n",
+  "input_copied_or_rebuilt": false,
+  "input_transferred_to_EC2": false,
+  "native_execution": false
+}
