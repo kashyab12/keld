@@ -5,7 +5,8 @@ isa instance layout. Ordinary scalar messages search the receiver's own method
 table and then its parent's corresponding table. An explicit original
 `objc_msgSendSuper2` bridge searches the supplied current class's superclass,
 then tail-calls a checked guest ARM64 IMP. [Execution receipts](../evidence/super/RESULTS.md).
-This is static method execution, not allocation, NSObject initialization or UIKit.
+This is static method execution. Separate [fixed-layout instance services](instances.md)
+now add bounded creation/disposal; NSObject initialization and UIKit remain absent.
 
 ## Graph and lookup
 
@@ -92,7 +93,7 @@ SP and incoming platform state. Separate Sable probes test additional modeled
 scalar state and every call/return budget edge, including both Linux dispatch
 modes. Third-level class metadata is explicitly rejected.
 
-Deeper or dynamic hierarchies, added instance storage, allocation/ARC, categories,
+Deeper or dynamic hierarchies, added instance storage, general allocation/ARC, categories,
 +load/+initialize, forwarding, general Protocol objects, inherited protocol
 records, tagged/PAC isa, exceptions, FP/SIMD/aggregate ABI and guest threads remain
 unsupported. Foundation/UIKit execution, UI recordings on Sable/Linux, concurrent

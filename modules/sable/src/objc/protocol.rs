@@ -188,7 +188,7 @@ pub(super) fn register(
                             owned_string(object, slide, "__objc_methname", selector_address)?;
                         let encoding =
                             owned_string(object, slide, "__objc_methtype", type_address)?;
-                        scalar_signature(&selector, &encoding)?;
+                        scalar_signature(&selector, &encoding, false)?;
                         if !seen.insert(selector.clone()) {
                             return Err("duplicate protocol description".into());
                         }

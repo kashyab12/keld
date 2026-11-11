@@ -1,0 +1,138 @@
+[
+  {
+    "file": "instance-0.macho",
+    "sha256": "880ab8345fd3ca384db0d3193aaee0be2bbcba6023a6f6af61a90a0a6249d3ef",
+    "classes": {
+      "AllocBase": {
+        "address": 4295000160,
+        "meta": 4295000200,
+        "superclass": 0,
+        "meta_isa": 4295000200,
+        "meta_superclass": 4295000160
+      },
+      "AllocChild": {
+        "address": 4295000240,
+        "meta": 4295000280,
+        "superclass": 4295000160,
+        "meta_isa": 4295000200,
+        "meta_superclass": 4295000200
+      }
+    },
+    "superref_targets": [
+      4295000240
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "instance-0.macho",
+      "sha256": "880ab8345fd3ca384db0d3193aaee0be2bbcba6023a6f6af61a90a0a6249d3ef",
+      "format": "absolute",
+      "lists": []
+    },
+    "methods": [
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "identity",
+        "encoding": "@16@0:8"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "choose:",
+        "encoding": "@24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "matches:",
+        "encoding": "Q24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "class",
+        "name": "make:",
+        "encoding": "@24@0:8Q16"
+      },
+      {
+        "owner": "AllocChild",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      }
+    ]
+  },
+  {
+    "file": "instance-1.macho",
+    "sha256": "108714d47b3bc2110e335cf55338688be96f506ed1f6ddf5151ab5884d8747bb",
+    "classes": {
+      "AllocBase": {
+        "address": 4295000160,
+        "meta": 4295000200,
+        "superclass": 0,
+        "meta_isa": 4295000200,
+        "meta_superclass": 4295000160
+      },
+      "AllocChild": {
+        "address": 4295000240,
+        "meta": 4295000280,
+        "superclass": 4295000160,
+        "meta_isa": 4295000200,
+        "meta_superclass": 4295000200
+      }
+    },
+    "superref_targets": [
+      4295000240
+    ],
+    "pointer_formats": [],
+    "method_format": {
+      "file": "instance-1.macho",
+      "sha256": "108714d47b3bc2110e335cf55338688be96f506ed1f6ddf5151ab5884d8747bb",
+      "format": "absolute",
+      "lists": []
+    },
+    "methods": [
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "identity",
+        "encoding": "@16@0:8"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "choose:",
+        "encoding": "@24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "matches:",
+        "encoding": "Q24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "class",
+        "name": "make:",
+        "encoding": "@24@0:8Q16"
+      },
+      {
+        "owner": "AllocChild",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      }
+    ]
+  }
+]

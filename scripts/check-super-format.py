@@ -10,7 +10,8 @@ import struct
 method_format=runpy.run_path(str(Path(__file__).with_name('check-objc-format.py')))['inspect']
 
 
-def inspect(path, expected, split):
+def inspect(path, expected, split, class_names=("SableBase","SableChild","SableGrandchild"), pointer_signatures=False):
+    base_name,child_name,deep_name=class_names
     raw=path.read_bytes();sections={};segments=[];binds={};imports=[];chain=None;bind_stream=None;at=32
     def u32(at):return struct.unpack_from('<I',raw,at)[0]
     def u64(at):return struct.unpack_from('<Q',raw,at)[0]
@@ -102,31 +103,53 @@ def inspect(path, expected, split):
     classes={};cl=sections['__objc_classlist'];is_base=path.suffix=='.dylib'
     for offset in range(0,cl['length'],8):
         p=pointer(cl['address']+offset);meta=pointer(p);ro=pointer(p+32);mr=pointer(meta+32)
-        name=string(pointer(ro+24));root=name=='SableBase'
-        assert name in ['SableBase','SableChild','SableGrandchild']
+        name=string(pointer(ro+24));root=name==base_name
+        assert name in class_names
         assert read(ro,'<4I')==(2 if root else 0,0 if root else 8,8,0)
         assert read(mr,'<4I')==(3 if root else 1,40,40,0)
         assert string(pointer(mr+24))==name
         if not root:assert pointer(ro+48)==0
         classes[name]=dict(address=p,meta=meta,superclass=pointer(p+8),meta_isa=pointer(meta),meta_superclass=pointer(meta+8))
-    expected_names={'SableBase'} if is_base else ({'SableChild'} if split else {'SableBase','SableChild'})
-    if path.stem=='super-2':expected_names.add('SableGrandchild')
+    expected_names={base_name} if is_base else ({child_name} if split else {base_name,child_name})
+    if path.stem.endswith('-2'):expected_names.add(deep_name)
     assert set(classes)==expected_names
-    if 'SableBase' in classes:
-        b=classes['SableBase'];assert b['superclass']==0 and b['meta_isa']==b['meta'] and b['meta_superclass']==b['address']
-    if 'SableChild' in classes:
-        c=classes['SableChild']
-        parent='_OBJC_CLASS_$_SableBase' if split else classes['SableBase']['address']
-        parent_meta='_OBJC_METACLASS_$_SableBase' if split else classes['SableBase']['meta']
+    if base_name in classes:
+        b=classes[base_name];assert b['superclass']==0 and b['meta_isa']==b['meta'] and b['meta_superclass']==b['address']
+    if child_name in classes:
+        c=classes[child_name]
+        parent='_OBJC_CLASS_$_'+base_name if split else classes[base_name]['address']
+        parent_meta='_OBJC_METACLASS_$_'+base_name if split else classes[base_name]['meta']
         assert c['superclass']==parent and c['meta_isa']==c['meta_superclass']==parent_meta, (path, c, parent, parent_meta)
-        refs=sections['__objc_superrefs'];assert refs['length']==16 and refs['align']==3 and refs['flags']&255==0
-        targets=[pointer(refs['address']+i) for i in [0,8]]
-        assert set(targets)=={c['address'],c['meta']}
+        refs=sections['__objc_superrefs'];assert refs['length']==(8 if pointer_signatures else 16) and refs['align']==3 and refs['flags']&255==0
+        targets=[pointer(refs['address']+i) for i in range(0,refs['length'],8)]
+        assert set(targets)==({c['address']} if pointer_signatures else {c['address'],c['meta']})
         assert '_objc_msgSendSuper2' in imports
     else:targets=[]
-    if 'SableGrandchild' in classes:
-        g=classes['SableGrandchild'];c=classes['SableChild'];assert g['superclass']==c['address'] and g['meta_superclass']==c['meta']
-    return dict(file=path.name,sha256=hashlib.sha256(raw).hexdigest(),classes=classes,superref_targets=targets,pointer_formats=sorted(formats),method_format=method_format(path,expected))
+    if deep_name in classes:
+        g=classes[deep_name];c=classes[child_name];assert g['superclass']==c['address'] and g['meta_superclass']==c['meta']
+    result=dict(file=path.name,sha256=hashlib.sha256(raw).hexdigest(),classes=classes,superref_targets=targets,pointer_formats=sorted(formats),method_format=method_format(path,expected))
+    if pointer_signatures:
+        methods=[]
+        for label,cls in classes.items():
+            for kind,address in [('instance',cls['address']),('class',cls['meta'])]:
+                table=pointer(pointer(address+32)+32)
+                if not table:continue
+                flags,count=read(table,'<II');assert flags in [24,0x8000000c]
+                stride=12 if flags>>31 else 24
+                for n in range(count):
+                    row=table+8+n*stride
+                    if stride==24:sel,types=pointer(row),pointer(row+8)
+                    else:
+                        off=read(row,'<iii');sel=pointer(row+off[0]);types=row+4+off[1]
+                    method=string(sel);encoding=string(types)
+                    expected_type={'make:':'@24@0:8Q16','identity':'@16@0:8','choose:':'@24@0:8@16','matches:':'Q24@0:8@16','value:':'Q24@0:8Q16'}[method]
+                    assert encoding==expected_type
+                    methods.append(dict(owner=label,kind=kind,name=method,encoding=encoding))
+        assert len(methods)==(5 if is_base else 1 if split else 6)
+        assert '_class_createInstance' in imports
+        if not is_base:assert '_object_dispose' in imports
+        result['methods']=methods
+    return result
 
 
 def main():

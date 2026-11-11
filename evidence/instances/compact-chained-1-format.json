@@ -1,0 +1,252 @@
+[
+  {
+    "file": "instance-0.macho",
+    "sha256": "37c531f5926f06e5742e6f9299715eb4212e587460b9d008ff65605c1030ab29",
+    "classes": {
+      "AllocChild": {
+        "address": 4295000064,
+        "meta": 4295000104,
+        "superclass": "_OBJC_CLASS_$_AllocBase",
+        "meta_isa": "_OBJC_METACLASS_$_AllocBase",
+        "meta_superclass": "_OBJC_METACLASS_$_AllocBase"
+      }
+    },
+    "superref_targets": [
+      4295000064
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "instance-0.macho",
+      "sha256": "37c531f5926f06e5742e6f9299715eb4212e587460b9d008ff65605c1030ab29",
+      "format": "compact",
+      "lists": [
+        {
+          "address": 4294971264,
+          "header": 2147483660,
+          "count": 1,
+          "entries": [
+            {
+              "entry": 4294971272,
+              "offsets": [
+                28920,
+                -26,
+                -1640
+              ],
+              "selector_slot": 4295000192,
+              "types": 4294971250,
+              "imp": 4294969640
+            }
+          ]
+        }
+      ],
+      "section": {
+        "address": 4294971264,
+        "length": 20,
+        "offset": 3968,
+        "protection": 5,
+        "flags": 268435456
+      }
+    },
+    "methods": [
+      {
+        "owner": "AllocChild",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      }
+    ]
+  },
+  {
+    "file": "instance-1.macho",
+    "sha256": "02c2522b15d0a62eb94060669669266dcc544dbe5055eaa57b66fb7c6d65048d",
+    "classes": {
+      "AllocChild": {
+        "address": 4295000064,
+        "meta": 4295000104,
+        "superclass": "_OBJC_CLASS_$_AllocBase",
+        "meta_isa": "_OBJC_METACLASS_$_AllocBase",
+        "meta_superclass": "_OBJC_METACLASS_$_AllocBase"
+      }
+    },
+    "superref_targets": [
+      4295000064
+    ],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "instance-1.macho",
+      "sha256": "02c2522b15d0a62eb94060669669266dcc544dbe5055eaa57b66fb7c6d65048d",
+      "format": "compact",
+      "lists": [
+        {
+          "address": 4294971620,
+          "header": 2147483660,
+          "count": 1,
+          "entries": [
+            {
+              "entry": 4294971628,
+              "offsets": [
+                28564,
+                -26,
+                -1916
+              ],
+              "selector_slot": 4295000192,
+              "types": 4294971606,
+              "imp": 4294969720
+            }
+          ]
+        }
+      ],
+      "section": {
+        "address": 4294971620,
+        "length": 20,
+        "offset": 4324,
+        "protection": 5,
+        "flags": 268435456
+      }
+    },
+    "methods": [
+      {
+        "owner": "AllocChild",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      }
+    ]
+  },
+  {
+    "file": "libsable_base.dylib",
+    "sha256": "a823b3d1f40552d123e567a0ca37c9ee1ed4737499e50d5f5da0304a0b424cee",
+    "classes": {
+      "AllocBase": {
+        "address": 32816,
+        "meta": 32856,
+        "superclass": 0,
+        "meta_isa": 32856,
+        "meta_superclass": 32816
+      }
+    },
+    "superref_targets": [],
+    "pointer_formats": [
+      2
+    ],
+    "method_format": {
+      "file": "libsable_base.dylib",
+      "sha256": "a823b3d1f40552d123e567a0ca37c9ee1ed4737499e50d5f5da0304a0b424cee",
+      "format": "compact",
+      "lists": [
+        {
+          "address": 2172,
+          "header": 2147483660,
+          "count": 1,
+          "entries": [
+            {
+              "entry": 2180,
+              "offsets": [
+                30596,
+                -67,
+                -460
+              ],
+              "selector_slot": 32776,
+              "types": 2117,
+              "imp": 1728
+            }
+          ]
+        },
+        {
+          "address": 2192,
+          "header": 2147483660,
+          "count": 4,
+          "entries": [
+            {
+              "entry": 2200,
+              "offsets": [
+                30584,
+                -76,
+                -472
+              ],
+              "selector_slot": 32784,
+              "types": 2128,
+              "imp": 1736
+            },
+            {
+              "entry": 2212,
+              "offsets": [
+                30580,
+                -80,
+                -480
+              ],
+              "selector_slot": 32792,
+              "types": 2136,
+              "imp": 1740
+            },
+            {
+              "entry": 2224,
+              "offsets": [
+                30576,
+                -81,
+                -480
+              ],
+              "selector_slot": 32800,
+              "types": 2147,
+              "imp": 1752
+            },
+            {
+              "entry": 2236,
+              "offsets": [
+                30572,
+                -82,
+                -480
+              ],
+              "selector_slot": 32808,
+              "types": 2158,
+              "imp": 1764
+            }
+          ]
+        }
+      ],
+      "section": {
+        "address": 2172,
+        "length": 76,
+        "offset": 2172,
+        "protection": 5,
+        "flags": 268435456
+      }
+    },
+    "methods": [
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "identity",
+        "encoding": "@16@0:8"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "choose:",
+        "encoding": "@24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "matches:",
+        "encoding": "Q24@0:8@16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "instance",
+        "name": "value:",
+        "encoding": "Q24@0:8Q16"
+      },
+      {
+        "owner": "AllocBase",
+        "kind": "class",
+        "name": "make:",
+        "encoding": "@24@0:8Q16"
+      }
+    ]
+  }
+]

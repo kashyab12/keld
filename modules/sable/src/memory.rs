@@ -12,12 +12,14 @@ pub struct Memory {
     pub(crate) regions: Vec<Segment>,
     tls_bases: Vec<u64>,
     tls_ready: Vec<bool>,
+    pub(crate) objects: Option<crate::objc::instances::Allocations>,
 }
 
 impl Memory {
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     pub(crate) fn prepared_layout(image: &Image) -> Result<Vec<(u64, usize, u32)>> {
         let (tls_length, _) = crate::tls::layout(image)?;
+        let object_length = crate::objc::instances::layout(image, tls_length)?;
         if image.segments.iter().any(|s| {
             s.address < STACK_BASE + STACK_SIZE as u64
                 && STACK_BASE < s.address + s.bytes.len() as u64
@@ -33,10 +35,14 @@ impl Memory {
         if tls_length != 0 {
             layout.push((crate::tls::BASE, tls_length, 3));
         }
+        if object_length != 0 {
+            layout.push((crate::objc::instances::BASE, object_length, 3));
+        }
         Ok(layout)
     }
     pub fn new(image: &Image) -> Result<Self> {
         let (tls_length, tls_bases) = crate::tls::layout(image)?;
+        let object_length = crate::objc::instances::layout(image, tls_length)?;
         let mut regions = image.segments.clone();
         for region in &mut regions {
             if region.protection & 2 != 0 {
@@ -61,10 +67,18 @@ impl Memory {
                 protection: 3,
             });
         }
+        if object_length != 0 {
+            regions.push(Segment {
+                address: crate::objc::instances::BASE,
+                bytes: vec![0; object_length].into(),
+                protection: 3,
+            });
+        }
         Ok(Self {
             regions,
             tls_bases,
             tls_ready: vec![false; image.tls.len()],
+            objects: (object_length != 0).then(Default::default),
         })
     }
 

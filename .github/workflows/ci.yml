@@ -51,6 +51,8 @@ jobs:
         run: bash scripts/check-protocols.sh
       - name: Rebuild and execute checked superclass and Super2 calls
         run: bash scripts/check-super.sh
+      - name: Rebuild and execute guest instances and pointer methods
+        run: bash scripts/check-instances.sh
       - name: Check app oracle scripts and inventory graphics exposure
         run: |
           python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py scripts/firecracker-bench.py

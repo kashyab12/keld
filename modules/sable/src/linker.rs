@@ -655,6 +655,17 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
             get_class: symbol("_objc_getClass")?,
             msg_send: symbol("_objc_msgSend")?,
             empty_cache,
+            instances: if ["_class_createInstance", "_object_dispose"]
+                .iter()
+                .any(|name| all_exports[index].contains_key(*name))
+            {
+                Some(crate::objc::instances::Runtime {
+                    create: symbol("_class_createInstance")?,
+                    dispose: symbol("_object_dispose")?,
+                })
+            } else {
+                None
+            },
             super_send: all_exports[index]
                 .contains_key("_objc_msgSendSuper2")
                 .then(|| symbol("_objc_msgSendSuper2"))

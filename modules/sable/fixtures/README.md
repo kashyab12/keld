@@ -1,5 +1,13 @@
 # Original fixtures
 
+`instance-main.m` and `instance-runtime.s` are original headerless creation and
+disposal probes. `build-instances.sh` uses the original TLS/System and scalar ABI
+helpers, both method/fixup formats and same-image/dylib parents. The sixteen
+positive programs exercise object-pointer results/arguments, zeroed, isolated extra
+bytes, actual inherited/super methods and constructor/main/TLV coexistence. The
+independent `check-instance-format.py` validates the emitted graph and exact Q/@
+encodings. `bin/instances` contains only original LLVM outputs, no Apple code.
+
 `super-main.m`, `super-runtime.s` and `super-abi.s` are original headerless
 inheritance/Super2 probes. `scripts/build-super.sh` links both method-list and
 fixup formats with same-image or supplied-dylib parents, plain/constructor

@@ -22,8 +22,9 @@ match the supplied profile, and methods must name aligned code in their owning
 image. Instances have one raw eight-byte isa word. An optional single explicit
 isa ivar must have offset 0, type `#`, alignment 8 and size 8.
 
-Supported method signatures return unsigned 64-bit scalars with zero through
-six unsigned 64-bit arguments. Encodings must exactly match the selector's
+Supported class/instance method signatures return Q or @ with zero through
+six Q/@ arguments, using the same 64-bit scalar register channel. Protocol
+descriptions retain the unsigned-Q-only profile. Encodings exactly match the selector's
 colon count and argument positions. Classrefs name registered ordinary classes.
 Selectors are interned by byte name into deterministic guest SEL addresses;
 method name pointers and selref slots are patched together, including duplicate
@@ -98,7 +99,9 @@ nil:
 
 The lookup trap is accepted only at the registered runtime instruction. It
 checks a canonical selector and either a registered class receiver or an
-aligned readable object whose raw isa names a registered class. A class message
+aligned readable object whose raw isa names a registered class. Arena instance
+receivers also use [owned lifetime checks](instances.md); retired, interior or
+forged identities reject. A class message
 uses the metaclass method table. The trap returns the checked guest IMP in x16;
 self, _cmd, arguments, LR, SP, x18 and modeled flags survive the lookup. The
 guest tail branch leaves LR intact, so the actual IMP returns to the original
@@ -142,10 +145,12 @@ become executable IMPs; declaring conformance does not prove implementation.
 
 [Bounded depth-two superclass lookup and Super2 calls](super.md) now support
 static children with no added instance storage, including supplied dylib parents.
+[Fixed-layout creation/disposal](instances.md) now supplies bounded runtime-owned
+objects and object-pointer method transport without automatic init/ARC.
 
 Deeper/dynamic inheritance, categories, inherited/dynamic/optional protocol forms,
 +load/+initialize, ARC/retain-release,
-allocation, forwarding, dynamic class changes, caches, tagged/nonpointer isa,
+general allocation/lifecycle, forwarding, dynamic class changes, caches, tagged/nonpointer isa,
 shared-cache direct/signed method lists, PAC, exceptions, vector/FP/aggregate returns,
 pthreads and destructors remain unsupported. These console checks do not prove
 Foundation/UIKit startup, GPU-free app interactions or any competitor advantage.

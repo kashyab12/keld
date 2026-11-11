@@ -670,6 +670,7 @@ impl<'a> Prepared<'a> {
                     || word == crate::objc::LOOKUP
                     || word == crate::objc::SUPER_LOOKUP
                     || crate::objc::protocol::is_service(word)
+                    || crate::objc::instances::is_service(word)
                 {
                     let plan = self.image.objc.as_ref().ok_or("unregistered ObjC trap")?;
                     let result = plan.trap(memory, trap, word, cpu.x[0], cpu.x[1], cpu.x[17])?;

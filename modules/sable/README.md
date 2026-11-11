@@ -1,5 +1,9 @@
 # Sable
 
+[Fixed-layout guest instances](../../docs/instances.md) support bounded
+`class_createInstance`/`object_dispose`, scalar object-pointer methods, zeroed
+extra storage and private lifetime tracking. These add no ARC or automatic init.
+
 The bounded [superclass/Super2 profile](../../docs/super.md) supports roots and
 direct subclasses with no added storage, inherited scalar method lookup and
 real guest super calls, including supplied dylib parents. This does not add

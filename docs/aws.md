@@ -43,6 +43,8 @@ declared adoption, real method execution, constructor access and mutable storage
 with both method-list and fixup formats. These are console programs, not UIKit
 apps. The superclass matrix additionally checks same-image/dylib parents, inherited and
 Super2 method calls, ABI, direct-adoption controls and explicit depth rejection.
+The instance matrix checks real creation/disposal, pointer methods, requested
+extra-byte zeroing/isolation, ABI and constructor/main/TLV state in both engines.
 The `--extended` path runs three independent oracle seeds in interpreter/JIT modes.
 It also rebuilds and checks four original chained-fixup programs in both engines;
 the eight outputs and rebuilt binary hashes are retained under `results/chained`.

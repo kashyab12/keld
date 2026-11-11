@@ -176,3 +176,13 @@ bridge loads the guest pair, returns the checked IMP in x16 and tail-transfers
 with real self/LR intact. Methods and returns run under the existing shared budget.
 Legacy binding accepts LLVM's wrapped backwards cursor deltas only within the
 selected mapped segment; each pointer write remains bounded and non-executable.
+
+## Bounded object storage
+
+[Instance services](instances.md) add one fixed private 32 KiB RW guest arena
+and a preallocated ledger before translation. Creation zeros a slot and writes
+the registered class; disposal scrubs and retires it. Neither service resizes
+mapped memory or exposes host pointers. Normal/Super2 messaging checks arena
+liveness and expected isa. Static raw-isa objects remain supported separately.
+Q/@ method arguments/results use real scalar guest IMPs; no ARC or init service
+is synthesized. Arena state is shared across constructors/main and reset per run.

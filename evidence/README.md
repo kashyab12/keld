@@ -4,6 +4,10 @@ These are raw receipts from bounded experiments, not a complete simulator or
 competitive benchmark. No Apple runtime, SDK, credentials, cloud account ID,
 instance IP or SSH key is distributed here.
 
+The [fixed-layout instance report](instances/RESULTS.md) adds actual guest storage,
+object-pointer method transport, lifetime checks and TLS/constructor coexistence.
+It remains separate from UIKit rendering or a competitor benchmark.
+
 The [superclass/Super2 report](super/RESULTS.md) adds original inherited and
 super-call execution with same-image/dylib parents. Native and Sable results,
 failed expectations and the still-missing UIKit dependency remain separate.

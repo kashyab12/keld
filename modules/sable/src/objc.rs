@@ -7,6 +7,7 @@ use crate::{
 };
 #[cfg(test)]
 mod hierarchy_tests;
+pub(crate) mod instances;
 pub(crate) mod protocol;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -243,6 +244,7 @@ pub(crate) struct Runtime {
     pub msg_send: u64,
     pub empty_cache: u64,
     pub super_send: Option<u64>,
+    pub instances: Option<instances::Runtime>,
     pub protocols: Option<protocol::Runtime>,
 }
 
@@ -318,17 +320,28 @@ fn relative(field: u64, encoded: u32) -> Result<u64> {
         .checked_add_signed(i64::from(encoded as i32))
         .ok_or("ObjC relative target overflow".into())
 }
-fn scalar_signature(name: &str, encoding: &str) -> Result<()> {
+fn scalar_signature(name: &str, encoding: &str, objects: bool) -> Result<()> {
     let args = name.bytes().filter(|&b| b == b':').count();
-    let expected = format!(
-        "Q{}@0:8{}",
-        16 + args * 8,
-        (0..args)
-            .map(|i| format!("Q{}", 16 + i * 8))
-            .collect::<String>()
-    );
-    if args > 6 || encoding != expected || matches!(name, "load" | "initialize") {
+    let supported = |b| b == b'Q' || (objects && b == b'@');
+    if args > 6
+        || !encoding.as_bytes().first().copied().is_some_and(supported)
+        || matches!(name, "load" | "initialize")
+    {
         return Err("unsupported/duplicate ObjC scalar method".into());
+    }
+    let mut rest = encoding[1..]
+        .strip_prefix(&format!("{}@0:8", 16 + args * 8))
+        .ok_or("unsupported ObjC scalar frame encoding")?;
+    for n in 0..args {
+        if !rest.as_bytes().first().copied().is_some_and(supported) {
+            return Err("unsupported ObjC scalar argument type".into());
+        }
+        rest = rest[1..]
+            .strip_prefix(&format!("{}", 16 + n * 8))
+            .ok_or("unsupported ObjC scalar argument offset")?;
+    }
+    if !rest.is_empty() {
+        return Err("unsupported ObjC scalar signature suffix".into());
     }
     Ok(())
 }
@@ -403,7 +416,7 @@ fn methods(
         };
         let name = owned_string(object, slide, "__objc_methname", name_address)?;
         let encoding = owned_string(object, slide, "__objc_methtype", types)?;
-        scalar_signature(&name, &encoding)?;
+        scalar_signature(&name, &encoding, true)?;
         if !seen.insert(name.clone()) {
             return Err("unsupported/duplicate ObjC scalar method".into());
         }
@@ -720,7 +733,11 @@ pub(crate) fn register(
     }))
 }
 impl Plan {
+    pub(crate) fn instances_enabled(&self) -> bool {
+        self.runtime.instances.is_some()
+    }
     pub(crate) fn validate(&self, image: &Image) -> Result<()> {
+        instances::validate_runtime(image, self.runtime.instances)?;
         self.protocols.validate(image)?;
         for (address, bytes) in &self.snapshots {
             metadata_not_code(*address, bytes.len(), image.code_ranges())?;
@@ -771,7 +788,7 @@ impl Plan {
     }
     pub(crate) fn trap(
         &self,
-        memory: &Memory,
+        memory: &mut Memory,
         trap: u64,
         word: u32,
         x0: u64,
@@ -783,6 +800,7 @@ impl Plan {
             || (word == SUPER_LOOKUP
                 && self.runtime.super_send.and_then(|a| a.checked_add(4)) == Some(trap))
             || self.protocols.registered_trap(trap, word))
+            && !instances::registered_trap(self.runtime.instances, trap, word)
         {
             return Err("unregistered ObjC trap".into());
         }
@@ -794,6 +812,29 @@ impl Plan {
         self.protocols.validate_memory(memory)?;
         if memory.read(self.runtime.empty_cache, 8)? != [0; 8] {
             return Err("mutated ObjC cache unsupported".into());
+        }
+        if word == instances::CREATE {
+            if x0 == 0 {
+                return Ok(0);
+            }
+            let class = self
+                .classes
+                .iter()
+                .find(|c| c.address == x0)
+                .ok_or("unregistered instance allocation class")?;
+            return memory.create_instance(class.address, x1);
+        }
+        if word == instances::DISPOSE {
+            if x0 == 0 {
+                return Ok(0);
+            }
+            let class = memory
+                .instance_class(x0)?
+                .ok_or("disposal requires an owned instance")?;
+            if !self.classes.iter().any(|c| c.address == class) {
+                return Err("unregistered owned instance class".into());
+            }
+            return memory.dispose_instance(x0);
         }
         if word == protocol::GET {
             return self.protocols.lookup(memory, x0);
@@ -833,7 +874,11 @@ impl Plan {
             if x0 == 0 || !x0.is_multiple_of(8) {
                 return Err("unsupported ObjC receiver".into());
             }
-            let isa = u64_at(memory.read(x0, 8)?, 0)?;
+            let isa = if let Some(class) = memory.instance_class(x0)? {
+                class
+            } else {
+                u64_at(memory.read(x0, 8)?, 0)?
+            };
             (
                 self.classes
                     .iter()
