@@ -5,6 +5,7 @@ use crate::{
     macho::{Image, Object, u32_at, u64_at},
     memory::Memory,
 };
+pub(crate) mod protocol;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const GET_CLASS: u32 = 0xd400_0001 | (0x5ab2 << 5);
@@ -22,6 +23,8 @@ struct Section {
 #[derive(Debug, Default)]
 pub(crate) struct Sections {
     parts: Vec<Section>,
+    ordinary_data: Vec<protocol::DataSection>,
+    data_overflow: bool,
 }
 fn metadata_not_code(
     address: u64,
@@ -57,6 +60,17 @@ impl Sections {
         let name = std::str::from_utf8(&s[..16])
             .map_err(|_| "invalid ObjC section name")?
             .trim_end_matches('\0');
+        if name == "__data" {
+            if dynamic {
+                if self.ordinary_data.len() == 64 {
+                    self.data_overflow = true;
+                } else {
+                    self.ordinary_data
+                        .push(protocol::DataSection::new(s, segment));
+                }
+            }
+            return Ok(());
+        }
         if (!name.starts_with("__objc_") && name != "__cstring") || u64_at(s, 40)? == 0 {
             return Ok(());
         }
@@ -78,6 +92,8 @@ impl Sections {
                 | "__objc_classlist"
                 | "__objc_classrefs"
                 | "__objc_selrefs"
+                | "__objc_protolist"
+                | "__objc_protorefs"
                 | "__objc_const"
                 | "__objc_methlist"
                 | "__objc_data"
@@ -100,7 +116,11 @@ impl Sections {
         );
         let pointer_array = matches!(
             name,
-            "__objc_classlist" | "__objc_classrefs" | "__objc_selrefs"
+            "__objc_classlist"
+                | "__objc_classrefs"
+                | "__objc_selrefs"
+                | "__objc_protolist"
+                | "__objc_protorefs"
         );
         if exponent > 12
             || (name != "__cstring" && length > CAP as u64)
@@ -113,14 +133,17 @@ impl Sections {
                 != file_offset
                     .checked_add(address - base)
                     .ok_or("ObjC file offset overflow")?
-            || u32_at(s, 64)? & 255
-                != if is_string {
+            || !(u32_at(s, 64)? & 255
+                == if is_string {
                     2
                 } else if name == "__objc_selrefs" {
                     5
+                } else if name == "__objc_protorefs" {
+                    11
                 } else {
                     0
                 }
+                || (name == "__objc_protolist" && u32_at(s, 64)? & 255 == 11))
             || (pointer_array
                 && (!address.is_multiple_of(8) || length % 8 != 0 || length / 8 > 1024))
             || (name == "__objc_methlist"
@@ -198,6 +221,7 @@ struct Class {
     name: String,
     instance: Vec<Method>,
     class: Vec<Method>,
+    protocols: Vec<u64>,
 }
 #[derive(Clone, Debug)]
 pub struct Plan {
@@ -205,12 +229,14 @@ pub struct Plan {
     selectors: BTreeSet<u64>,
     snapshots: Vec<(u64, Vec<u8>)>,
     runtime: Runtime,
+    protocols: protocol::Plan,
 }
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Runtime {
     pub get_class: u64,
     pub msg_send: u64,
     pub empty_cache: u64,
+    pub protocols: Option<protocol::Runtime>,
 }
 
 fn string(read: impl Fn(u64, usize) -> Result<Vec<u8>>, address: u64) -> Result<String> {
@@ -285,6 +311,20 @@ fn relative(field: u64, encoded: u32) -> Result<u64> {
         .checked_add_signed(i64::from(encoded as i32))
         .ok_or("ObjC relative target overflow".into())
 }
+fn scalar_signature(name: &str, encoding: &str) -> Result<()> {
+    let args = name.bytes().filter(|&b| b == b':').count();
+    let expected = format!(
+        "Q{}@0:8{}",
+        16 + args * 8,
+        (0..args)
+            .map(|i| format!("Q{}", 16 + i * 8))
+            .collect::<String>()
+    );
+    if args > 6 || encoding != expected || matches!(name, "load" | "initialize") {
+        return Err("unsupported/duplicate ObjC scalar method".into());
+    }
+    Ok(())
+}
 fn methods(
     object: &Object,
     slide: u64,
@@ -356,19 +396,8 @@ fn methods(
         };
         let name = owned_string(object, slide, "__objc_methname", name_address)?;
         let encoding = owned_string(object, slide, "__objc_methtype", types)?;
-        let args = name.bytes().filter(|&b| b == b':').count();
-        let expected = format!(
-            "Q{}@0:8{}",
-            16 + args * 8,
-            (0..args)
-                .map(|i| format!("Q{}", 16 + i * 8))
-                .collect::<String>()
-        );
-        if args > 6
-            || encoding != expected
-            || matches!(name.as_str(), "load" | "initialize")
-            || !seen.insert(name.clone())
-        {
+        scalar_signature(&name, &encoding)?;
+        if !seen.insert(name.clone()) {
             return Err("unsupported/duplicate ObjC scalar method".into());
         }
         if !object.image.contains_pc(imp) {
@@ -389,6 +418,7 @@ struct Pending {
     name: String,
     instance: Vec<(String, u64)>,
     class: Vec<(String, u64)>,
+    protocols: Vec<u64>,
 }
 
 pub(crate) fn register(
@@ -411,7 +441,29 @@ pub(crate) fn register(
     let mut pending = Vec::new();
     let mut names = BTreeSet::new();
     let mut addresses = BTreeSet::new();
-    let mut total = 0;
+    let mut total: usize = active
+        .iter()
+        .map(|&i| {
+            objects[i]
+                .objc_sections
+                .parts
+                .iter()
+                .map(|p| p.length)
+                .sum::<usize>()
+        })
+        .sum();
+    if total > CAP {
+        return Err("aggregate ObjC metadata exceeds cap".into());
+    }
+    let protocols = protocol::register(
+        objects,
+        &active,
+        slides,
+        runtime.protocols,
+        &mut selectors,
+        &mut patches,
+        &mut total,
+    )?;
     for &index in &active {
         let object = &objects[index];
         let slide = slides[index];
@@ -430,15 +482,6 @@ pub(crate) fn register(
         if u32_at(bytes, 0)? != 0 || u32_at(bytes, 4)? != 0x40 {
             return Err("unsupported ObjC image flags".into());
         }
-        total += object
-            .objc_sections
-            .parts
-            .iter()
-            .map(|p| p.length)
-            .sum::<usize>();
-        if total > CAP {
-            return Err("aggregate ObjC metadata exceeds cap".into());
-        }
         if let Some((base, len)) = object.objc_sections.section("__objc_classlist", slide)? {
             for at in (0..len).step_by(8) {
                 let address = u64_at(object.image.read(base + at as u64, 8, 1)?, 0)?;
@@ -456,6 +499,7 @@ pub(crate) fn register(
                     return Err("unsupported ObjC root class graph".into());
                 }
                 let mut tables = Vec::new();
+                let mut adoption = None;
                 let mut class_name = None;
                 for (words, is_meta) in [(class, false), (metaclass, true)] {
                     if u64_at(words, 16)? != runtime.empty_cache || u64_at(words, 24)? != 0 {
@@ -466,9 +510,7 @@ pub(crate) fn register(
                         || u32_at(ro, 4)? != if is_meta { 40 } else { 0 }
                         || u32_at(ro, 8)? != if is_meta { 40 } else { 8 }
                         || u32_at(ro, 12)? != 0
-                        || [16, 40, 56, 64]
-                            .iter()
-                            .any(|&at| u64_at(ro, at).unwrap() != 0)
+                        || [16, 56, 64].iter().any(|&at| u64_at(ro, at).unwrap() != 0)
                     {
                         return Err("unsupported ObjC class RO layout/flags".into());
                     }
@@ -479,6 +521,14 @@ pub(crate) fn register(
                         }
                     } else {
                         class_name = Some(name);
+                    }
+                    let list = u64_at(ro, 40)?;
+                    if let Some((old, _)) = &adoption {
+                        if *old != list {
+                            return Err("class/metaclass protocol adoption mismatch".into());
+                        }
+                    } else {
+                        adoption = Some((list, protocols.adoption(object, slide, list)?));
                     }
                     let ivars = u64_at(ro, 48)?;
                     if is_meta && ivars != 0 {
@@ -526,6 +576,7 @@ pub(crate) fn register(
                     name,
                     instance,
                     class,
+                    protocols: adoption.unwrap().1,
                 });
             }
         }
@@ -598,6 +649,7 @@ pub(crate) fn register(
             name: p.name,
             instance: convert(p.instance),
             class: convert(p.class),
+            protocols: p.protocols,
         })
         .collect();
     Ok(Some(Plan {
@@ -605,10 +657,12 @@ pub(crate) fn register(
         selectors: selectors.into_values().collect(),
         snapshots,
         runtime,
+        protocols,
     }))
 }
 impl Plan {
     pub(crate) fn validate(&self, image: &Image) -> Result<()> {
+        self.protocols.validate(image)?;
         for (address, bytes) in &self.snapshots {
             metadata_not_code(*address, bytes.len(), image.code_ranges())?;
             if image.read(*address, bytes.len(), 1)? != bytes {
@@ -654,7 +708,8 @@ impl Plan {
         x1: u64,
     ) -> Result<u64> {
         if !((word == GET_CLASS && trap == self.runtime.get_class)
-            || (word == LOOKUP && trap == self.runtime.msg_send + 4))
+            || (word == LOOKUP && trap == self.runtime.msg_send + 4)
+            || self.protocols.registered_trap(trap, word))
         {
             return Err("unregistered ObjC trap".into());
         }
@@ -663,8 +718,27 @@ impl Plan {
                 return Err("mutated ObjC metadata unsupported".into());
             }
         }
+        self.protocols.validate_memory(memory)?;
         if memory.read(self.runtime.empty_cache, 8)? != [0; 8] {
             return Err("mutated ObjC cache unsupported".into());
+        }
+        if word == protocol::GET {
+            return self.protocols.lookup(memory, x0);
+        }
+        if word == protocol::NAME {
+            return self.protocols.name(x0);
+        }
+        if word == protocol::CONFORMS {
+            if x0 == 0 || x1 == 0 {
+                return Ok(0);
+            }
+            self.protocols.contains(x1)?;
+            let class = self
+                .classes
+                .iter()
+                .find(|c| c.address == x0)
+                .ok_or("unregistered protocol class identity")?;
+            return Ok(u64::from(class.protocols.contains(&x1)));
         }
         if word == GET_CLASS {
             let name = string(|a, n| Ok(memory.read(a, n)?.to_vec()), x0)?;

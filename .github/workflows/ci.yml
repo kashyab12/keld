@@ -47,6 +47,8 @@ jobs:
         run: bash scripts/check-tls.sh
       - name: Rebuild and execute absolute/compact Objective-C dispatch
         run: bash scripts/check-objc.sh
+      - name: Rebuild and execute static protocol introspection
+        run: bash scripts/check-protocols.sh
       - name: Check app oracle scripts and inventory graphics exposure
         run: |
           python3 -m py_compile scripts/apple-app-check.py scripts/graphics-inventory.py scripts/aws-smoke.py scripts/firecracker-bench.py

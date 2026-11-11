@@ -68,6 +68,14 @@ pub enum Op {
         kind: u8,
         wide: bool,
     },
+    UnsignedBitfield {
+        dst: u8,
+        src: u8,
+        right: u8,
+        left: u8,
+        mask: u64,
+        wide: bool,
+    },
     CondSelect {
         dst: u8,
         lhs: u8,
@@ -117,6 +125,12 @@ pub enum Op {
         target: u64,
         link: bool,
     },
+    TestBranch {
+        reg: u8,
+        bit: u8,
+        target: u64,
+        nonzero: bool,
+    },
     CompareBranch {
         reg: u8,
         target: u64,
@@ -139,6 +153,35 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
     let dst = (word & 31) as u8;
     let src = ((word >> 5) & 31) as u8;
     let rhs = ((word >> 16) & 31) as u8;
+    if word & 0x7f80_0000 == 0x5300_0000 {
+        let n = word & (1 << 22) != 0;
+        let r = ((word >> 16) & 63) as u8;
+        let s = ((word >> 10) & 63) as u8;
+        if n != wide || (!wide && (r >= 32 || s >= 32)) {
+            return Err("reserved unsigned bitfield encoding".into());
+        }
+        let (right, left, bits) = if s >= r {
+            (r, 0, s - r + 1)
+        } else {
+            (0, (if wide { 64 } else { 32 }) - r, s + 1)
+        };
+        return Ok(Op::UnsignedBitfield {
+            dst,
+            src,
+            right,
+            left,
+            mask: u64::MAX >> (64 - bits),
+            wide,
+        });
+    }
+    if word & 0x7e000000 == 0x36000000 {
+        return Ok(Op::TestBranch {
+            reg: dst,
+            bit: (((word >> 31) << 5) | ((word >> 19) & 31)) as u8,
+            target: pc.wrapping_add_signed(signed((word >> 5) & 0x3fff, 14) << 2),
+            nonzero: word & (1 << 24) != 0,
+        });
+    }
     if word & 0xfffffc1f == 0xd61f0000 || word & 0xfffffc1f == 0xd63f0000 {
         return Ok(Op::Indirect {
             reg: src,
@@ -223,6 +266,7 @@ pub fn decode(word: u32, pc: u64) -> Result<Op> {
             && word != crate::tls::SVC
             && word != crate::objc::GET_CLASS
             && word != crate::objc::LOOKUP
+            && !crate::objc::protocol::is_service(word)
         {
             return Err("only Darwin svc #0x80 or registered Sable runtime traps supported".into());
         }

@@ -1,0 +1,84 @@
+[
+  {
+    "file": "protocol-0.macho",
+    "sha256": "33628e7f8d3f5fac49bbe825d132e1278d8f4b6f731a6f4c61ff2e0aa1bddf50",
+    "pointer_formats": [],
+    "protocols": [
+      {
+        "name": "SableScalar",
+        "address": 4295001112,
+        "name_address": 4294971320,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      },
+      {
+        "name": "SableOtherScalar",
+        "address": 4295001216,
+        "name_address": 4294971363,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      }
+    ],
+    "classes": {
+      "ProtocolRoot": [
+        "SableScalar"
+      ],
+      "UnrelatedRoot": [],
+      "DeclaredOnlyRoot": [
+        "SableScalar"
+      ]
+    },
+    "data_section": {
+      "address": 4295001112,
+      "length": 208,
+      "offset": 33816,
+      "flags": 0,
+      "protection": 3
+    }
+  },
+  {
+    "file": "protocol-1.macho",
+    "sha256": "1afbfcf531699cf8b70f7bd2250a703ccfef88ee4a3dd74599d596cbf522f172",
+    "pointer_formats": [],
+    "protocols": [
+      {
+        "name": "SableScalar",
+        "address": 4295001112,
+        "name_address": 4294971512,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      },
+      {
+        "name": "SableOtherScalar",
+        "address": 4295001216,
+        "name_address": 4294971555,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      }
+    ],
+    "classes": {
+      "ProtocolRoot": [
+        "SableScalar"
+      ],
+      "UnrelatedRoot": [],
+      "DeclaredOnlyRoot": [
+        "SableScalar"
+      ]
+    },
+    "data_section": {
+      "address": 4295001112,
+      "length": 208,
+      "offset": 33816,
+      "flags": 0,
+      "protection": 3
+    }
+  }
+]

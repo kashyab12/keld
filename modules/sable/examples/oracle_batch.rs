@@ -38,7 +38,7 @@ fn main() {
     let mut input = input.as_slice();
     assert_eq!(take(&mut input, 8), b"SABLE001");
     let cases = u32in(&mut input);
-    assert!(cases <= 10000);
+    assert!(cases <= 20000);
     for id in 0..cases {
         let count = u32in(&mut input) as usize;
         assert!((1..=4096).contains(&count));

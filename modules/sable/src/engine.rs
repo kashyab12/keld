@@ -257,6 +257,18 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
             }
             cpu.set(dst, result, wide, kind != 3);
         }
+        Op::UnsignedBitfield {
+            dst,
+            src,
+            right,
+            left,
+            mask,
+            wide,
+        } => {
+            let value = cpu.reg(src, false);
+            let value = if wide { value } else { value as u32 as u64 };
+            cpu.set(dst, ((value >> right) & mask) << left, wide, false);
+        }
         Op::CondSelect {
             dst,
             lhs,
@@ -375,6 +387,16 @@ fn transition(cpu: &mut Cpu, image: &Image, mut memory: Option<&mut Memory>) -> 
                 cpu.x[30] = next;
             }
             next = target;
+        }
+        Op::TestBranch {
+            reg,
+            bit,
+            target,
+            nonzero,
+        } => {
+            if ((cpu.reg(reg, false) & (1u64 << bit)) != 0) == nonzero {
+                next = target;
+            }
         }
         Op::CompareBranch {
             reg,
@@ -644,10 +666,13 @@ impl<'a> Prepared<'a> {
                     continue;
                 }
                 let word = self.image.instruction(trap)?;
-                if word == crate::objc::GET_CLASS || word == crate::objc::LOOKUP {
+                if word == crate::objc::GET_CLASS
+                    || word == crate::objc::LOOKUP
+                    || crate::objc::protocol::is_service(word)
+                {
                     let plan = self.image.objc.as_ref().ok_or("unregistered ObjC trap")?;
                     let result = plan.trap(memory, trap, word, cpu.x[0], cpu.x[1])?;
-                    if word == crate::objc::GET_CLASS {
+                    if word != crate::objc::LOOKUP {
                         cpu.x[0] = result;
                     } else {
                         cpu.x[16] = result;

@@ -1,0 +1,30 @@
+{
+  "oracle": "Unicorn",
+  "version": "2.1.4",
+  "engine": "interp",
+  "seed": 8675309,
+  "cases": 14087,
+  "kinds": {
+    "arithmetic_flags_conditions": 2000,
+    "condition_truth_table": 256,
+    "logical_immediate_masks_sp_zr": 1360,
+    "conditional_compare_flags": 2048,
+    "conditional_select_zr_aliases": 2048,
+    "test_bit_branches_signed_zr": 1024,
+    "unsigned_bitfield_all_immediates": 5120,
+    "ubuntu_clang_protocol_ubfiz": 8,
+    "memory_unscaled_pre_post": 120,
+    "memory_unsigned": 8,
+    "memory_register_offset": 64,
+    "memory_pair": 24,
+    "call_return": 1,
+    "literal_data_load": 2,
+    "literal_code_load_backward": 2,
+    "indirect_call_x30_alias": 1,
+    "indirect_branch": 1
+  },
+  "input_sha256": "b72fcf0593d58d17faf7cceea77b3bdcc875c14fd6ff06f1cf6ab4cd3e8a6b27",
+  "elapsed_seconds": 16.496135015999982,
+  "input_build_elapsed_seconds": 0.5946377079999934,
+  "full_registers_flags_memory_equal": true
+}

@@ -1,0 +1,1 @@
+{"operation": "DescribeInstances", "exit": 254, "stderr": "\naws: [ERROR]: An error occurred (InvalidInstanceID.NotFound) when calling the DescribeInstances operation: The instance ID 'i-070864b2326508bf4' does not exist\n"}

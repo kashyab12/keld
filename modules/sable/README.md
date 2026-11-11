@@ -41,7 +41,9 @@ general/dynamic TLS, weak/re-export lookup or general dynamic-loader APIs.
 Bounded [plain-C TLS](../../docs/tls.md) and an original
 [static scalar Objective-C2 runtime](../../docs/objc.md), including absolute and
 non-shared-cache compact method lists, now execute the documented
-console profiles. There is no Foundation, UIKit, Swift runtime, Mach message transport,
+console profiles. [Static protocols](../../docs/protocols.md) support checked
+name lookup and direct conformance introspection without inventing method
+implementations. There is no Foundation, UIKit, Swift runtime, Mach message transport,
 thread scheduler, atomics, NEON, PAC, graphics or app-bundle support. Ordinary
 compiler-generated programs will encounter unsupported instructions. ARM64e is
 rejected. Run only the trusted research fixtures; Sable has not been audited as a

@@ -82,6 +82,27 @@ def corpus(seed, count):
                         dst=rng.choice([0,1,31]);src=rng.choice([0,1,31]);rhs=rng.choice([0,1,31])
                         case([0x1a800000|wide<<31|invert<<30|rhs<<16|condition<<12|increment<<10|src<<5|dst],"conditional_select_zr_aliases")
                         cases[-1]["nzcv"]=flags<<28
+    # TBZ/TBNZ: every bit, zero-register, both outcomes and signed displacements.
+    for bit in range(64):
+        for nonzero in [0,1]:
+            for reg in [0,31]:
+                for value in [0,1]:
+                    for backward in [0,1]:
+                        op=0x36000000|(bit>>5)<<31|nonzero<<24|(bit&31)<<19|reg
+                        words=([0x14000002,SVC,op|0x3fff<<5,0x91000508] if backward else [op|2<<5,0x91000508])
+                        case(words,"test_bit_branches_signed_zr")
+                        if reg!=31:
+                            cases[-1]["x"][reg]=(cases[-1]["x"][reg]&~(1<<bit))|(value<<bit)
+    # Every valid UBFM immediate pair in both widths, with normal/ZR/alias roles.
+    # Includes the UBFIZ emitted by Ubuntu Clang 18 for the protocol Bool caller.
+    for wide in [0,1]:
+        for r in range(64 if wide else 32):
+            for s in range(64 if wide else 32):
+                dst,src=[(0,1),(0,0),(31,1),(0,31)][(r+s)%4]
+                case([0x53000000|wide<<31|wide<<22|r<<16|s<<10|src<<5|dst],"unsigned_bitfield_all_immediates")
+    for value in edges:
+        case([0x531e7500],"ubuntu_clang_protocol_ubfiz")
+        cases[-1]["x"][8]=value
     # Memory widths, offsets, unaligned data access, signed offsets and writeback.
     for size in range(4):
         for mode in range(4):

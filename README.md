@@ -18,7 +18,8 @@ Plain C [thread-local variables](docs/tls.md) support private scalar storage for
 one logical context per run, including constructor access and fresh-run reset.
 A bounded [Objective-C2 root-class runtime](docs/objc.md) registers original
 metadata in absolute/compact formats and dispatches scalar class/instance
-messages to guest ARM64 methods.
+messages to guest ARM64 methods. Static [protocol registration and introspection](docs/protocols.md)
+checks names, identities and direct declared adoption.
 Sable does not boot Apple's Simulator, load UIKit or run ordinary iOS apps yet.
 There is no measured performance comparison against Macbox or Limrun.
 
@@ -39,6 +40,7 @@ to build Sable or run these probes. See [fixture provenance](modules/sable/fixtu
 - [Loader, translation and Darwin design](docs/architecture.md)
 - [Milestones and benchmark gates](docs/roadmap.md)
 - [Real app interaction and GPU benchmark gates](docs/app-benchmarks.md)
+- [Static protocol registration, names and direct conformance](docs/protocols.md)
 - [Static scalar Objective-C2 registration and method execution](docs/objc.md)
 - [Scalar Darwin TLS contract and runtime checks](docs/tls.md)
 - [Sandbox containment and efficiency design](docs/sandbox-design.md)

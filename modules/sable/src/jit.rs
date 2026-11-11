@@ -373,6 +373,23 @@ impl Assembler {
                 }
                 self.store(dst, false, wide);
             }
+            Op::UnsignedBitfield {
+                dst,
+                src,
+                right,
+                left,
+                mask,
+                wide,
+            } => {
+                self.load(src, false, false);
+                if !wide {
+                    self.emit(&[0x89, 0xc0]); // MOV EAX,EAX: truncate the input first.
+                }
+                self.emit(&[0x48, 0xc1, 0xe8, right]);
+                self.imm64(mask, true);
+                self.emit(&[0x48, 0x21, 0xd0, 0x48, 0xc1, 0xe0, left]);
+                self.store(dst, false, wide);
+            }
             Op::AddImm {
                 dst,
                 src,
@@ -544,6 +561,16 @@ impl Assembler {
                 }
                 self.branch(target, None);
             }
+            Op::TestBranch {
+                reg,
+                bit,
+                target,
+                nonzero,
+            } => {
+                self.load(reg, false, false);
+                self.emit(&[0x48, 0x0f, 0xba, 0xe0, bit, 0x0f, 0x92, 0xc0, 0x84, 0xc0]);
+                self.branch(target, Some(nonzero));
+            }
             Op::CompareBranch {
                 reg,
                 target,
@@ -613,7 +640,7 @@ impl Compiled {
                 };
                 match op {
                     Op::MovWide { dst, .. } | Op::Address { dst, .. } => count(dst),
-                    Op::AddImm { dst, src, .. } => {
+                    Op::AddImm { dst, src, .. } | Op::UnsignedBitfield { dst, src, .. } => {
                         count(dst);
                         count(src);
                     }
@@ -648,12 +675,13 @@ impl Compiled {
                     Op::Return { reg } | Op::Indirect { reg, .. } | Op::Literal { reg, .. } => {
                         count(reg)
                     }
-                    Op::CompareBranch { reg, .. } => count(reg),
+                    Op::CompareBranch { reg, .. } | Op::TestBranch { reg, .. } => count(reg),
                     _ => {}
                 }
                 match op {
                     Op::Branch { target, .. }
                     | Op::CompareBranch { target, .. }
+                    | Op::TestBranch { target, .. }
                     | Op::CondBranch { target, .. } => {
                         if image.contains_pc(target) {
                             boundaries.insert(target);

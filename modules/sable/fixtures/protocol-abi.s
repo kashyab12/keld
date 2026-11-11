@@ -1,0 +1,72 @@
+// Original scalar C ABI probe for the three protocol services.
+.text
+.p2align 2
+.globl _protocol_abi_call
+_protocol_abi_call:
+    stp x29,x30,[sp,#-96]!
+    mov x29,sp
+    stp x19,x20,[sp,#16]
+    stp x21,x22,[sp,#32]
+    stp x23,x24,[sp,#48]
+    stp x25,x26,[sp,#64]
+    stp x27,x28,[sp,#80]
+    mov x19,x3
+    mov x20,x0
+    mov x0,x1
+    mov x1,x2
+    str x18,[x19,#256]
+    str x29,[x19,#264]
+    mov x17,sp
+    str x17,[x19,#272]
+    adr x17,1f
+    str x17,[x19,#280]
+    mov x21,#221
+    mov x22,#222
+    mov x23,#223
+    mov x24,#224
+    mov x25,#225
+    mov x26,#226
+    mov x27,#227
+    mov x28,#228
+    blr x20
+1:
+    str x0,[x19,#0]
+    str x1,[x19,#8]
+    str x2,[x19,#16]
+    str x3,[x19,#24]
+    str x4,[x19,#32]
+    str x5,[x19,#40]
+    str x6,[x19,#48]
+    str x7,[x19,#56]
+    str x8,[x19,#64]
+    str x9,[x19,#72]
+    str x10,[x19,#80]
+    str x11,[x19,#88]
+    str x12,[x19,#96]
+    str x13,[x19,#104]
+    str x14,[x19,#112]
+    str x15,[x19,#120]
+    str x16,[x19,#128]
+    str x17,[x19,#136]
+    str x18,[x19,#144]
+    str x19,[x19,#152]
+    str x20,[x19,#160]
+    str x21,[x19,#168]
+    str x22,[x19,#176]
+    str x23,[x19,#184]
+    str x24,[x19,#192]
+    str x25,[x19,#200]
+    str x26,[x19,#208]
+    str x27,[x19,#216]
+    str x28,[x19,#224]
+    str x29,[x19,#232]
+    str x30,[x19,#240]
+    mov x17,sp
+    str x17,[x19,#248]
+    ldp x19,x20,[sp,#16]
+    ldp x21,x22,[sp,#32]
+    ldp x23,x24,[sp,#48]
+    ldp x25,x26,[sp,#64]
+    ldp x27,x28,[sp,#80]
+    ldp x29,x30,[sp],#96
+    ret

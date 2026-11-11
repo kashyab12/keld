@@ -1,0 +1,88 @@
+[
+  {
+    "file": "protocol-0.macho",
+    "sha256": "a6e68e47f34dd5e2b32ed51936dc4ed85c7c2617e790377fbf5f6e94d94a5835",
+    "pointer_formats": [
+      2
+    ],
+    "protocols": [
+      {
+        "name": "SableScalar",
+        "address": 4295001064,
+        "name_address": 4294971032,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      },
+      {
+        "name": "SableOtherScalar",
+        "address": 4295001168,
+        "name_address": 4294971075,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      }
+    ],
+    "classes": {
+      "ProtocolRoot": [
+        "SableScalar"
+      ],
+      "UnrelatedRoot": [],
+      "DeclaredOnlyRoot": [
+        "SableScalar"
+      ]
+    },
+    "data_section": {
+      "address": 4295001064,
+      "length": 200,
+      "offset": 33768,
+      "flags": 0,
+      "protection": 3
+    }
+  },
+  {
+    "file": "protocol-1.macho",
+    "sha256": "8050ae9583fc63e0f828be2bf25d7c5c9c0cdfe6047cdda500dfc563acdcc14c",
+    "pointer_formats": [
+      2
+    ],
+    "protocols": [
+      {
+        "name": "SableScalar",
+        "address": 4295001064,
+        "name_address": 4294971260,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      },
+      {
+        "name": "SableOtherScalar",
+        "address": 4295001168,
+        "name_address": 4294971303,
+        "size": 96,
+        "description_selector": "value:",
+        "description_types": "Q24@0:8Q16",
+        "description_imp": 0
+      }
+    ],
+    "classes": {
+      "ProtocolRoot": [
+        "SableScalar"
+      ],
+      "UnrelatedRoot": [],
+      "DeclaredOnlyRoot": [
+        "SableScalar"
+      ]
+    },
+    "data_section": {
+      "address": 4295001064,
+      "length": 200,
+      "offset": 33768,
+      "flags": 0,
+      "protection": 3
+    }
+  }
+]

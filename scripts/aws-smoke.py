@@ -170,6 +170,13 @@ cargo test --release
 bash scripts/check-initializers.sh
 bash scripts/check-tls.sh
 bash scripts/check-objc.sh
+bash scripts/check-protocols.sh
+for format in absolute compact; do
+  for mode in chained legacy; do
+    mkdir -p "results/protocols/$format/$mode"
+    cp artifacts/protocols/"$format"/"$mode"/interp-*.txt artifacts/protocols/"$format"/"$mode"/jit-*.txt artifacts/protocols/"$format"/"$mode"/format-records.json "results/protocols/$format/$mode/"
+  done
+done
 for profile in objc objc-compact; do
   for mode in chained legacy; do
     mkdir -p "results/$profile/$mode"

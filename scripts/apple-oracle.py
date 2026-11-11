@@ -30,6 +30,7 @@ def main():
     parser.add_argument("--initializers",action="store_true")
     parser.add_argument("--tls",action="store_true")
     parser.add_argument("--objc",action="store_true")
+    parser.add_argument("--protocols",action="store_true")
     options=parser.parse_args()
     runtimes = json.loads(sim("list", "runtimes", "--json").stdout)["runtimes"]
     runtime = next(r for r in runtimes if r["isAvailable"] and r.get("platform") == "iOS" and any(t["identifier"] == "com.apple.CoreSimulator.SimDeviceType.iPhone-17" for t in r["supportedDeviceTypes"]))
@@ -48,6 +49,7 @@ def main():
         if options.initializers:expected.update({f"initializers/{mode}/initialize":b"INIT leaf 1\nINIT leaf 2\nINIT parent\nINIT sibling\nINIT executable\nARGS\nMAIN\n" for mode in ["offsets","pointers"]})
         if options.tls:expected.update({f"tls/{mode}/tls-{ctor}":b"TLV scalar ABI, templates, two images, stable addresses OK\n" for mode in ['chained','legacy'] for ctor in [0,1]})
         if options.objc:expected.update({f"{profile}/{mode}/objc-{ctor}":b"ObjC root class, scalar instance/class dispatch, nil and selectors OK\n" for profile in ['objc','objc-compact'] for mode in ['chained','legacy'] for ctor in [0,1]})
+        if options.protocols:expected.update({f"protocols/{fmt}/{mode}/protocol-{ctor}":b"Protocol lookup, names, declared adoption and guest IMP OK\n" for fmt in ['absolute','compact'] for mode in ['chained','legacy'] for ctor in [0,1]})
         for name in expected:
             result = sim("spawn", device, str(ROOT / "modules/sable/fixtures/bin" / (name + ".macho")), owned_set=owned_set, check=False, text=False)
             receipt["runs"].append({"fixture": name, "exit": result.returncode, "stdout_hex": result.stdout.hex(), "stderr": result.stderr.decode(errors="replace")})

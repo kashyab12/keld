@@ -1,0 +1,7 @@
+{
+  "kind": "Actual original UIKit executable in local Sable; no Apple binary transferred",
+  "exit": 125,
+  "stdout": "",
+  "stderr": "sable: unsupported ObjC section: __objc_superrefs\n",
+  "sable_interactions_completed": 0
+}

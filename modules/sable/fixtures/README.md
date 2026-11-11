@@ -95,3 +95,13 @@ lists. `check-objc-format.py` independently asserts the final emitted format,
 field-relative targets and negative IMP displacements. All built fixtures run
 through the same output/ABI/constructor tests; format acceptance is not counted
 as execution. Compact RX bytes must remain unchanged after linking/execution.
+
+## Static protocol fixtures
+
+`protocol-main.m`, `protocol-abi.s` and `protocol-runtime.s` are original headerless
+probes and explicit runtime stubs. `build-protocols.sh` emits both class method
+formats and both fixup modes, with plain/constructor variants; checked-in files
+are in `bin/protocols`. `check-protocol-format.py` independently inspects emitted
+protocol bodies, null-IMP descriptions, extended types and class adoption before
+execution. The same final binaries are checked on native Apple Simulator locally.
+No Apple implementation or SDK is distributed.

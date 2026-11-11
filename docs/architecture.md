@@ -154,3 +154,15 @@ Metadata mutation rejects rather than using stale dispatch information.
 [Supported records, limits and exclusions](objc.md) define this console profile;
 Foundation/UIKit remain unsupported. CSEL/CSINC/CSINV/CSNEG are scalar operations
 with checked JIT fallback and independent Unicorn validation.
+
+## Static protocol introspection
+
+Original protocol definitions are validated separately from class methods. Only
+validated 96-byte bodies in ordinary `__data` are snapshotted; neighboring program
+storage stays writable. Registered names and direct class adoption drive three
+checked scalar services, not a fake Protocol object or a blanket conformance
+answer. [Exact profile and limits](protocols.md). TBZ/TBNZ is translated natively
+with checked targets/budgets and independent CPU comparisons.
+Unsigned bitfield moves (UBFM, including UBFIZ/UBFX and immediate LSL/LSR aliases)
+also have direct scalar translations. Width/N/reserved-immediate validation
+precedes execution; W inputs are truncated, register 31 is ZR and NZCV is retained.

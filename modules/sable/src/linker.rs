@@ -620,10 +620,29 @@ pub fn link(main: &[u8], libraries: &[&[u8]]) -> Result<Image> {
         };
         let empty_cache = symbol("__objc_empty_cache")?;
         objects[index].image.read(empty_cache, 8, 3)?;
+        let protocols = if [
+            "_objc_getProtocol",
+            "_protocol_getName",
+            "_class_conformsToProtocol",
+            "_sable_protocol_nil",
+        ]
+        .iter()
+        .any(|name| all_exports[index].contains_key(*name))
+        {
+            Some(crate::objc::protocol::Runtime {
+                get: symbol("_objc_getProtocol")?,
+                name: symbol("_protocol_getName")?,
+                conforms: symbol("_class_conformsToProtocol")?,
+                nil_name: symbol("_sable_protocol_nil")?,
+            })
+        } else {
+            None
+        };
         Some(crate::objc::Runtime {
             get_class: symbol("_objc_getClass")?,
             msg_send: symbol("_objc_msgSend")?,
             empty_cache,
+            protocols,
         })
     } else {
         None

@@ -135,7 +135,12 @@ lists, foreign IMPs, unsupported sections and missing dependencies. Runtime
 tests cover metadata mutation, foreign traps, bad receivers/selectors and every
 instruction-budget edge in a lookup/tail-call/return sequence.
 
-Inheritance/super, categories/protocols, +load/+initialize, ARC/retain-release,
+Bounded [static protocol registration and direct introspection](protocols.md)
+now works separately from method dispatch. Protocol method descriptions never
+become executable IMPs; declaring conformance does not prove implementation.
+
+Inheritance/super, categories, inherited/dynamic/optional protocol forms,
++load/+initialize, ARC/retain-release,
 allocation, forwarding, dynamic class changes, caches, tagged/nonpointer isa,
 shared-cache direct/signed method lists, PAC, exceptions, vector/FP/aggregate returns,
 pthreads and destructors remain unsupported. These console checks do not prove

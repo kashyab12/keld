@@ -4,6 +4,11 @@ These are raw receipts from bounded experiments, not a complete simulator or
 competitive benchmark. No Apple runtime, SDK, credentials, cloud account ID,
 instance IP or SSH key is distributed here.
 
+The [static protocol report](protocols/RESULTS.md) separates native Apple
+reference execution, Sable on Linux and the still-rejected UIKit app. It adds
+name/identity/adoption checks and compiler-driven CPU coverage; it establishes
+no graphical or competitor performance result.
+
 The [S2 report](s2/RESULTS.md) adds original dynamic libraries, minimal LibSystem
 ABI calls, immutable image sharing and reusable execution, with paired dispatch
 and preparation measurements. Earlier phase receipts remain unchanged below.
