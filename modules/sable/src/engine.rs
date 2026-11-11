@@ -671,13 +671,13 @@ impl<'a> Prepared<'a> {
                 if cpu.sp != saved.sp {
                     return Err("guest dealloc returned with unbalanced SP".into());
                 }
-                memory.finish_dealloc(object)?;
+                let plan = self.image.objc.as_ref().ok_or("ownership plan absent")?;
+                plan.finish_dealloc(memory, object)?;
                 // Native void ABI: restore callee-preserved state and the checked service resume.
                 cpu.x[18..].copy_from_slice(&saved.x[18..]);
                 cpu.sp = saved.sp;
                 cpu.pc = saved.pc;
                 cpu.x[0] = 0;
-                let plan = self.image.objc.as_ref().ok_or("ownership plan absent")?;
                 if let crate::objc::ownership::Action::Dealloc {
                     object,
                     selector,

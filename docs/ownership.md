@@ -40,8 +40,10 @@ Memory, output buffers, clock and remaining instruction budget. It saves the
 service resume and ABI-preserved state, supplies self/SEL and an unmapped private
 return sentinel, and passes that active sentinel to compiled dispatch too. It
 checks balanced SP and exactly one disposal of the expected finalizing object,
-restores the caller, and continues any pool drain. Guest object_dispose scrubs the
-whole slot and retires its identity. No fresh Prepared/run, startup CPU reset or
+validates current metadata/cache/protocol snapshots before clearing the callback
+or restoring the caller, and continues any pool drain. Drain entry independently
+validates those snapshots before changing queued releases, counts or pools.
+Guest object_dispose scrubs the whole slot and retires its identity. No fresh Prepared/run, startup CPU reset or
 recursive host callback is used. Successful execution requires zero live owned
 objects, pools, queued releases and callbacks. Old non-ownership instance-service
 programs keep their explicit create/dispose behavior.

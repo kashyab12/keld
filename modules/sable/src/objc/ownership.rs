@@ -152,7 +152,7 @@ impl Memory {
         }
         Ok(())
     }
-    pub(crate) fn finish_dealloc(&mut self, a: u64) -> Result<()> {
+    fn finish_dealloc(&mut self, a: u64) -> Result<()> {
         let s = self.ownership.as_mut().ok_or("ownership state absent")?;
         if s.callback != Some(a)
             || !(BASE..BASE + LENGTH as u64).contains(&a)
@@ -228,7 +228,12 @@ impl Plan {
             imp,
         })
     }
+    pub(crate) fn finish_dealloc(&self, memory: &mut Memory, object: u64) -> Result<()> {
+        self.check_memory(memory)?;
+        memory.finish_dealloc(object)
+    }
     pub(crate) fn drain_next(&self, memory: &mut Memory) -> Result<Action> {
+        self.check_memory(memory)?;
         loop {
             let s = memory.ownership.as_ref().ok_or("ownership state absent")?;
             let Some(begin) = s.drain else {
@@ -372,6 +377,81 @@ mod tests {
         assert_eq!(m.read(BASE, LENGTH).unwrap(), bytes);
     }
     #[test]
+    fn continuation_boundaries_validate_metadata_before_ownership_effects() {
+        let image = image();
+        let plan = image.objc.as_ref().unwrap();
+        let mut m = Memory::new(&image).unwrap();
+        let token = scalar(plan, &mut m, 0, 0);
+        let a = make(plan, &mut m);
+        let b = make(plan, &mut m);
+        scalar(plan, &mut m, 2, b);
+        // Leave a second object's count decrements and disposal pending behind a.
+        for object in [b, b, a] {
+            scalar(plan, &mut m, 4, object);
+        }
+        assert!(
+            matches!(service(plan, &mut m, 1, token).unwrap(), Action::Dealloc { object, .. } if object == a)
+        );
+        m.dispose_instance(a).unwrap();
+        let metadata = plan
+            .snapshots
+            .iter()
+            .map(|(address, _)| *address)
+            .find(|&address| {
+                m.regions.iter().any(|s| {
+                    s.protection & 2 != 0
+                        && s.address <= address
+                        && address < s.address + s.bytes.len() as u64
+                })
+            })
+            .expect("writable metadata snapshot");
+        let mutations = [
+            (metadata, "mutated ObjC metadata"),
+            (plan.runtime.empty_cache, "mutated ObjC cache"),
+        ];
+        for (address, expected) in mutations {
+            let original = m.read(address, 1).unwrap()[0];
+            m.write(address, &[original ^ 1]).unwrap();
+            let before = snapshot(&m);
+            let arena = m.read(BASE, LENGTH).unwrap().to_vec();
+            assert!(
+                plan.finish_dealloc(&mut m, a)
+                    .unwrap_err()
+                    .contains(expected)
+            );
+            assert_eq!(snapshot(&m), before);
+            assert_eq!(m.read(BASE, LENGTH).unwrap(), arena);
+            m.write(address, &[original]).unwrap();
+        }
+        plan.finish_dealloc(&mut m, a).unwrap();
+        // Check both a nonempty drain and the final pool-removal boundary.
+        for pending_object in [Some(b), None] {
+            for (address, expected) in mutations {
+                let original = m.read(address, 1).unwrap()[0];
+                m.write(address, &[original ^ 1]).unwrap();
+                let before = snapshot(&m);
+                let arena = m.read(BASE, LENGTH).unwrap().to_vec();
+                assert!(plan.drain_next(&mut m).unwrap_err().contains(expected));
+                assert_eq!(snapshot(&m), before);
+                assert_eq!(m.read(BASE, LENGTH).unwrap(), arena);
+                m.write(address, &[original]).unwrap();
+            }
+            if let Some(object) = pending_object {
+                assert!(
+                    matches!(plan.drain_next(&mut m).unwrap(), Action::Dealloc { object: actual, .. } if actual == object)
+                );
+                m.dispose_instance(object).unwrap();
+                plan.finish_dealloc(&mut m, object).unwrap();
+            } else {
+                assert!(matches!(
+                    plan.drain_next(&mut m).unwrap(),
+                    Action::Return(0)
+                ));
+            }
+        }
+        m.ownership_complete().unwrap();
+    }
+    #[test]
     fn atomic_counts_caps_tokens_and_exact_owned_or_immortal_identities() {
         let image = image();
         let plan = image.objc.as_ref().unwrap();
@@ -472,7 +552,7 @@ mod tests {
             m.objects.as_ref().unwrap().rows[0].lifetime,
             Lifetime::Finalizing
         );
-        assert!(m.finish_dealloc(a).is_err());
+        assert!(plan.finish_dealloc(&mut m, a).is_err());
         for op in 0..NAMES.len() {
             assert!(service(plan, &mut m, op, a).is_err());
         }
@@ -504,8 +584,8 @@ mod tests {
         );
         assert!(m.dispose_instance(a).is_err());
         assert!(m.instance_class(a).is_err());
-        m.finish_dealloc(a).unwrap();
-        assert!(m.finish_dealloc(a).is_err());
+        plan.finish_dealloc(&mut m, a).unwrap();
+        assert!(plan.finish_dealloc(&mut m, a).is_err());
         assert!(matches!(
             plan.drain_next(&mut m).unwrap(),
             Action::Return(0)
@@ -588,7 +668,7 @@ mod fallback_trace_tests {
         };
         assert_eq!(object, a);
         memory.dispose_instance(a).unwrap();
-        memory.finish_dealloc(a).unwrap();
+        plan.finish_dealloc(&mut memory, a).unwrap();
         plan.drain_next(&mut memory).unwrap();
         memory.ownership_complete().unwrap();
         // A freshly created live row with an invalid count is never treated as an immortal or zero release.
